@@ -14,7 +14,7 @@ export const LoginForm = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp, user, loading: authLoading } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -114,6 +114,24 @@ export const LoginForm = () => {
               ) : (
                 isSignUp ? 'Sign Up' : 'Sign In'
               )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={async () => {
+                setError('');
+                setLoading(true);
+                const { error } = await signInWithGoogle();
+                if (error) {
+                  setError(error.message);
+                  setLoading(false);
+                }
+              }}
+            >
+              Continue with Google
             </Button>
             
             <div className="text-center">

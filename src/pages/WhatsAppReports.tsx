@@ -295,7 +295,28 @@ const WhatsAppReports = () => {
                             <Badge variant="outline" className="text-xs">
                               {new Date(report.created_at).toLocaleDateString()}
                             </Badge>
-                            {!isProcessed && (
+                            {isProcessed ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => processWithDeepseek(report.id)}
+                                disabled={processing === report.id}
+                                className="h-7 px-2 text-xs"
+                                title="إعادة تحليل التقرير"
+                              >
+                                {processing === report.id ? (
+                                  <>
+                                    <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
+                                    جاري المعالجة...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Brain className="w-3 h-3 mr-1" />
+                                    إعادة تحليل
+                                  </>
+                                )}
+                              </Button>
+                            ) : (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -646,10 +667,34 @@ const WhatsAppReports = () => {
                           </Card>
                         )}
 
-                        {/* Original Report */}
+                         {/* Original Report */}
                         <Card>
                           <CardHeader>
-                            <CardTitle className="text-sm">Original Report Data</CardTitle>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-sm">Original Report Data</CardTitle>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setDialogOpen(false);
+                                  processWithDeepseek(selectedReport.id);
+                                }}
+                                disabled={processing === selectedReport?.id}
+                                className="h-8 px-3 text-xs"
+                              >
+                                {processing === selectedReport?.id ? (
+                                  <>
+                                    <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
+                                    إعادة المعالجة...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Brain className="w-3 h-3 mr-1" />
+                                    إعادة تحليل
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </CardHeader>
                           <CardContent>
                             <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg overflow-x-auto max-h-40">

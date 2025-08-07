@@ -23,7 +23,7 @@ interface ChartData {
     datasets: Array<{
       label: string;
       data: number[];
-      backgroundColor?: string[];
+      backgroundColor?: string | string[];
       borderColor?: string;
     }>;
   };
@@ -145,9 +145,24 @@ const WeeklyOverview: React.FC = () => {
       value: chart.data.datasets[0]?.data[i] || 0
     }));
 
-    const colors = chart.data.datasets[0]?.backgroundColor || [
-      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'
+    // Ensure we have valid colors with proper fallbacks
+    const defaultColors = [
+      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
     ];
+    
+    const rawColors = chart.data.datasets[0]?.backgroundColor;
+    let colors: string[];
+    
+    if (Array.isArray(rawColors)) {
+      colors = rawColors.map(color => 
+        color && typeof color === 'string' && color.trim() !== '' ? color : defaultColors[0]
+      );
+    } else if (rawColors && typeof rawColors === 'string' && rawColors.trim() !== '') {
+      colors = [rawColors];
+    } else {
+      colors = defaultColors;
+    }
 
     switch (chart.type) {
       case 'bar':
@@ -158,7 +173,7 @@ const WeeklyOverview: React.FC = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="value" fill={colors[0]} />
+              <Bar dataKey="value" fill={colors[0] || defaultColors[0]} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -170,7 +185,7 @@ const WeeklyOverview: React.FC = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey="value" stroke={colors[0]} strokeWidth={2} />
+              <Line type="monotone" dataKey="value" stroke={colors[0] || defaultColors[0]} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         );
@@ -189,7 +204,7 @@ const WeeklyOverview: React.FC = () => {
                 dataKey="value"
               >
                 {chartData.map((entry, i) => (
-                  <Cell key={`cell-${i}`} fill={colors[i % colors.length]} />
+                  <Cell key={`cell-${i}`} fill={colors[i % colors.length] || defaultColors[i % defaultColors.length]} />
                 ))}
               </Pie>
               <ChartTooltip content={<ChartTooltipContent />} />

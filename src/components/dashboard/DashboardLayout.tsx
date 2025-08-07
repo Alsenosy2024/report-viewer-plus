@@ -31,7 +31,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: TrendingUp, label: 'Productivity Reports', path: '/productivity-reports', section: 'productivity_reports' },
     { icon: BarChart3, label: 'Ads Analysis', path: '/ads-reports', section: 'ads_reports' },
     { icon: Mail, label: 'Mail Reports', path: '/mail-reports', section: 'mail_reports' },
-    ...(profile?.role === 'admin' ? [{ icon: Settings, label: 'Settings', path: '/admin/settings' }] : []),
+    { icon: Bot, label: 'Bot Controls', section: 'bot_controls' },
   ];
 
   return (
@@ -76,7 +76,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate('/admin/settings')}>
+              <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>

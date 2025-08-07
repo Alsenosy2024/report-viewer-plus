@@ -13,8 +13,6 @@ import ProductivityReports from "./pages/ProductivityReports";
 import AdsReports from "./pages/AdsReports";
 import MailReports from "./pages/MailReports";
 import NotFound from "./pages/NotFound";
-import AdminSettings from "./pages/AdminSettings";
-import AwaitingApproval from "./pages/AwaitingApproval";
 
 const queryClient = new QueryClient();
 
@@ -28,11 +26,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/awaiting-approval" element={
-              <ProtectedRoute>
-                <AwaitingApproval />
-              </ProtectedRoute>
-            } />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -56,11 +49,6 @@ const App = () => (
             <Route path="/mail-reports" element={
               <ProtectedRoute>
                 <MailReports />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/settings" element={
-              <ProtectedRoute>
-                <AdminSettings />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

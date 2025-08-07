@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, profile, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -22,12 +22,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!user) {
     window.location.href = '/auth';
-    return null;
-  }
-
-  // If user is not approved and not admin, redirect to awaiting approval page
-  if (profile && profile.role !== 'admin' && profile.is_approved === false) {
-    window.location.href = '/awaiting-approval';
     return null;
   }
 

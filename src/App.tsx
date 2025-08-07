@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WhatsAppReports from "./pages/WhatsAppReports";
+import ProductivityReports from "./pages/ProductivityReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,11 @@ const App = () => (
             <Route path="/whatsapp-reports" element={
               <ProtectedRoute>
                 <WhatsAppReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/productivity-reports" element={
+              <ProtectedRoute>
+                <ProductivityReports />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

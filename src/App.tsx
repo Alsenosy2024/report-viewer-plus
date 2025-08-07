@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import AdminSettings from "./pages/AdminSettings";
 import AwaitingApproval from "./pages/AwaitingApproval";
 import BotControls from "./pages/BotControls";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SiteHeader />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />

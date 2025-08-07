@@ -204,12 +204,17 @@ const ProductivityReports = () => {
                         }`}
                         onClick={() => setSelectedReport(report)}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {formatDate(report.report_date)}
-                          </Badge>
-                        </div>
+                         <div className="flex items-center justify-between mb-2">
+                           <Badge variant="outline" className="text-xs">
+                             <Calendar className="w-3 h-3 mr-1" />
+                             {formatDate(report.report_date)}
+                           </Badge>
+                           {report.content_type === 'html' && (
+                             <Badge variant="secondary" className="text-xs">
+                               HTML
+                             </Badge>
+                           )}
+                         </div>
                         <p className="text-sm text-muted-foreground">
                           {report.content.substring(0, 100)}...
                         </p>
@@ -450,20 +455,48 @@ const ProductivityReports = () => {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="raw">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">Raw Report Content</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="max-h-60 overflow-y-auto">
-                          <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="auto" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                            {selectedReport?.content || 'No content available'}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                   <TabsContent value="raw" className="space-y-6">
+                     {/* Full Report View */}
+                     {selectedReport?.content_type === 'html' ? (
+                       <Card>
+                         <CardHeader>
+                           <CardTitle className="flex items-center justify-between">
+                             <span>Productivity Report - {formatDate(selectedReport.report_date)}</span>
+                             <Button 
+                               onClick={() => window.open(`data:text/html;charset=utf-8,${encodeURIComponent(selectedReport.content)}`, '_blank')}
+                               size="sm"
+                               variant="outline"
+                             >
+                               Open Full View
+                             </Button>
+                           </CardTitle>
+                         </CardHeader>
+                         <CardContent>
+                           <div className="border rounded-lg overflow-hidden">
+                             <iframe
+                               srcDoc={selectedReport.content}
+                               className="w-full h-96"
+                               style={{ border: 'none' }}
+                               title={`Productivity Report - ${formatDate(selectedReport.report_date)}`}
+                             />
+                           </div>
+                         </CardContent>
+                       </Card>
+                     ) : (
+                       <Card>
+                         <CardHeader>
+                           <CardTitle className="text-sm">Raw Report Content</CardTitle>
+                         </CardHeader>
+                         <CardContent>
+                           <div className="max-h-60 overflow-y-auto">
+                             <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="auto" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                               {selectedReport?.content || 'No content available'}
+                             </div>
+                           </div>
+                         </CardContent>
+                       </Card>
+                     )}
+                   </TabsContent>
                 </Tabs>
               )}
             </div>

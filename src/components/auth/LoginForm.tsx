@@ -12,7 +12,8 @@ export const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +21,14 @@ export const LoginForm = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = isSignUp 
+        ? await signUp(email, password)
+        : await signIn(email, password);
       
       if (error) {
         setError(error.message);
+      } else if (isSignUp) {
+        setError('Please check your email to confirm your account.');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -40,9 +45,11 @@ export const LoginForm = () => {
             <Shield className="w-6 h-6 text-dashboard-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold text-foreground">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-bold text-foreground">
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </CardTitle>
             <CardDescription className="text-muted-foreground">
-              Sign in to access your dashboard
+              {isSignUp ? 'Sign up to get started' : 'Sign in to access your dashboard'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -90,12 +97,30 @@ export const LoginForm = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
+                  {isSignUp ? 'Creating account...' : 'Signing in...'}
                 </>
               ) : (
-                'Sign In'
+                isSignUp ? 'Sign Up' : 'Sign In'
               )}
             </Button>
+            
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-sm text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                }}
+                disabled={loading}
+              >
+                {isSignUp 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Sign up"
+                }
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

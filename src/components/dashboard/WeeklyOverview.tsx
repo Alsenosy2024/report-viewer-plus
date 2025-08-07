@@ -94,7 +94,7 @@ const WeeklyOverview: React.FC = () => {
       setOverviewData(data);
       toast({
         title: data.fromCache ? "تم تحميل النظرة العامة" : "تم إنشاء النظرة العامة بنجاح",
-        description: data.fromCache ? "تم استرجاع التحليل المحفوظ" : "تم تحليل جميع تقارير الأسبوع",
+        description: data.fromCache ? "تم استرجاع التحليل المحفوظ مسبقاً" : "تم تحليل جميع تقارير الأسبوع باستخدام الذكاء الاصطناعي",
       });
     } catch (error) {
       console.error('Error generating overview:', error);

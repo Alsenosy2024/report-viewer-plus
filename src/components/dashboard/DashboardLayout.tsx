@@ -29,7 +29,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: BarChart3, label: 'Overview', path: '/dashboard' },
     { icon: MessageSquare, label: 'WhatsApp Reports', path: '/whatsapp-reports', section: 'whatsapp_reports' },
     { icon: TrendingUp, label: 'Productivity Reports', path: '/productivity-reports', section: 'productivity_reports' },
-    { icon: BarChart3, label: 'Ads Analysis', section: 'ads_reports' },
+    { icon: BarChart3, label: 'Ads Analysis', path: '/ads-reports', section: 'ads_reports' },
     { icon: Mail, label: 'Mail Reports', section: 'mail_reports' },
     { icon: Bot, label: 'Bot Controls', section: 'bot_controls' },
   ];

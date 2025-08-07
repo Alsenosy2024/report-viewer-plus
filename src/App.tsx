@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WhatsAppReports from "./pages/WhatsAppReports";
 import ProductivityReports from "./pages/ProductivityReports";
+import AdsReports from "./pages/AdsReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,11 @@ const App = () => (
             <Route path="/productivity-reports" element={
               <ProtectedRoute>
                 <ProductivityReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/ads-reports" element={
+              <ProtectedRoute>
+                <AdsReports />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import DOMPurify from 'dompurify';
 
 const WhatsAppReports = () => {
   const [reports, setReports] = useState<any[]>([]);
@@ -479,8 +480,8 @@ const WhatsAppReports = () => {
                           </CardHeader>
                           <CardContent>
                             <div className="max-h-60 overflow-y-auto">
-                              <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="rtl" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                                {processedContent?.original || selectedReport?.content || 'Original content not available'}
+                              <div className="text-sm bg-muted p-4 rounded-lg leading-relaxed break-words" dir="rtl" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((processedContent?.original || selectedReport?.content || 'Original content not available') as string).replace(/\n/g, '<br/>')) }} />
                               </div>
                             </div>
                           </CardContent>
@@ -539,24 +540,29 @@ const WhatsAppReports = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="max-h-60 overflow-y-auto">
-                          <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg break-words">
-                            {(() => {
-                              try {
-                                if (typeof selectedReport?.content === 'string') {
-                                  // Try to parse and format as JSON if possible
-                                  try {
-                                    const parsed = JSON.parse(selectedReport.content);
-                                    return JSON.stringify(parsed, null, 2);
-                                  } catch {
-                                    return selectedReport.content;
+                          {selectedReport?.content_type === 'html' ? (
+                            <div className="text-sm bg-muted p-4 rounded-lg leading-relaxed break-words" dir="rtl">
+                              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((selectedReport?.content || '') as string).replace(/\n/g, '<br/>')) }} />
+                            </div>
+                          ) : (
+                            <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg break-words">
+                              {(() => {
+                                try {
+                                  if (typeof selectedReport?.content === 'string') {
+                                    try {
+                                      const parsed = JSON.parse(selectedReport.content);
+                                      return JSON.stringify(parsed, null, 2);
+                                    } catch {
+                                      return selectedReport.content;
+                                    }
                                   }
+                                  return JSON.stringify(selectedReport?.content, null, 2);
+                                } catch {
+                                  return selectedReport?.content || 'No content available';
                                 }
-                                return JSON.stringify(selectedReport?.content, null, 2);
-                              } catch {
-                                return selectedReport?.content || 'No content available';
-                              }
-                            })()}
-                          </pre>
+                              })()}
+                            </pre>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

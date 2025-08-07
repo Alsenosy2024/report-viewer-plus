@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import DOMPurify from 'dompurify';
 
 const MailReports = () => {
   const [reports, setReports] = useState<any[]>([]);
@@ -431,7 +432,7 @@ const MailReports = () => {
                           </CardHeader>
                           <CardContent>
                             <ScrollArea className="max-h-[300px]">
-                              <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedReport.content}</pre>
+                              <div className="text-sm leading-relaxed break-words text-foreground" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((processedContent?.original || selectedReport.content || '') as string).replace(/\n/g, '<br/>')) }} />
                             </ScrollArea>
                           </CardContent>
                         </Card>
@@ -457,7 +458,11 @@ const MailReports = () => {
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="max-h-[300px]">
-                          <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedReport?.content}</pre>
+                          {selectedReport?.content_type === 'html' ? (
+                            <div className="text-sm leading-relaxed break-words text-foreground" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((selectedReport?.content || '') as string).replace(/\n/g, '<br/>')) }} />
+                          ) : (
+                            <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedReport?.content}</pre>
+                          )}
                         </ScrollArea>
                       </CardContent>
                     </Card>

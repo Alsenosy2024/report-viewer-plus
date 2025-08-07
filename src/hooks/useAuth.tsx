@@ -7,6 +7,8 @@ interface Profile {
   email: string;
   full_name: string | null;
   role: 'admin' | 'user';
+  is_approved?: boolean;
+  approved_at?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -8,6 +9,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -25,8 +27,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return null;
   }
 
-  // If user is not approved and not admin, redirect to awaiting approval page
-  if (profile && profile.role !== 'admin' && profile.is_approved === false) {
+  // Admins always have access
+  if (profile?.role === 'admin') {
+    return <>{children}</>;
+  }
+
+  // If not approved (or profile not ready yet), send to awaiting page (avoid loop)
+  const isAwaiting = location.pathname === '/awaiting-approval';
+  if (!isAwaiting && (profile?.is_approved === false || profile == null)) {
     window.location.href = '/awaiting-approval';
     return null;
   }

@@ -478,9 +478,27 @@ const WhatsAppReports = () => {
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg overflow-x-auto max-h-40">
-                              {processedContent?.original || 'Original content not available'}
-                            </pre>
+                            <div className="max-h-60 overflow-y-auto">
+                              <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg break-words">
+                                {(() => {
+                                  try {
+                                    const originalContent = processedContent?.original || selectedReport?.content;
+                                    if (typeof originalContent === 'string') {
+                                      // Try to parse and format as JSON if possible
+                                      try {
+                                        const parsed = JSON.parse(originalContent);
+                                        return JSON.stringify(parsed, null, 2);
+                                      } catch {
+                                        return originalContent;
+                                      }
+                                    }
+                                    return JSON.stringify(originalContent, null, 2);
+                                  } catch {
+                                    return 'Original content not available';
+                                  }
+                                })()}
+                              </pre>
+                            </div>
                           </CardContent>
                         </Card>
                       </div>
@@ -536,9 +554,26 @@ const WhatsAppReports = () => {
                         <CardTitle className="text-sm">Raw Report Content</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
-                          {selectedReport?.content}
-                        </pre>
+                        <div className="max-h-60 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg break-words">
+                            {(() => {
+                              try {
+                                if (typeof selectedReport?.content === 'string') {
+                                  // Try to parse and format as JSON if possible
+                                  try {
+                                    const parsed = JSON.parse(selectedReport.content);
+                                    return JSON.stringify(parsed, null, 2);
+                                  } catch {
+                                    return selectedReport.content;
+                                  }
+                                }
+                                return JSON.stringify(selectedReport?.content, null, 2);
+                              } catch {
+                                return selectedReport?.content || 'No content available';
+                              }
+                            })()}
+                          </pre>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>

@@ -50,64 +50,64 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert data analyst specializing in WhatsApp business communications. Your task is to analyze WhatsApp reports and create beautifully structured, actionable insights.
+            content: `أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ باللغة العربية.
 
-For each report, provide:
-1. **Executive Summary** - Key highlights in 2-3 sentences
-2. **Performance Metrics** - Extract and highlight important numbers
-3. **Trends & Patterns** - Identify significant trends
-4. **Actionable Recommendations** - 3-5 specific recommendations
-5. **Risk Assessment** - Any potential issues or concerns
-6. **Visual Data Suggestions** - Suggest chart types for key metrics
+لكل تقرير، قدم:
+1. **الملخص التنفيذي** - النقاط الرئيسية في 2-3 جمل
+2. **مقاييس الأداء** - استخراج وإبراز الأرقام المهمة
+3. **الاتجاهات والأنماط** - تحديد الاتجاهات المهمة
+4. **التوصيات القابلة للتنفيذ** - 3-5 توصيات محددة
+5. **تقييم المخاطر** - أي مشاكل أو مخاوف محتملة
+6. **اقتراحات البيانات المرئية** - اقتراح أنواع الرسوم البيانية للمقاييس الرئيسية
 
-Format your response as structured JSON with the following schema:
+قم بتنسيق إجابتك كـ JSON منظم مع المخطط التالي:
 {
-  "executiveSummary": "string",
+  "executiveSummary": "ملخص تنفيذي باللغة العربية",
   "performanceMetrics": [
     {
-      "metric": "string",
-      "value": "string",
+      "metric": "اسم المقياس باللغة العربية",
+      "value": "القيمة",
       "trend": "positive|negative|neutral",
-      "description": "string"
+      "description": "وصف باللغة العربية"
     }
   ],
   "trendsAndPatterns": [
     {
-      "title": "string",
-      "description": "string",
+      "title": "عنوان الاتجاه باللغة العربية",
+      "description": "وصف باللغة العربية",
       "impact": "high|medium|low"
     }
   ],
   "recommendations": [
     {
       "priority": "high|medium|low",
-      "action": "string",
-      "expectedImpact": "string",
-      "timeframe": "string"
+      "action": "إجراء باللغة العربية",
+      "expectedImpact": "التأثير المتوقع باللغة العربية",
+      "timeframe": "الإطار الزمني باللغة العربية"
     }
   ],
   "riskAssessment": {
     "overallRisk": "high|medium|low",
     "risks": [
       {
-        "risk": "string",
+        "risk": "المخاطرة باللغة العربية",
         "severity": "high|medium|low",
-        "mitigation": "string"
+        "mitigation": "استراتيجية التخفيف باللغة العربية"
       }
     ]
   },
   "visualSuggestions": [
     {
-      "chartType": "string",
-      "dataPoints": "string",
-      "purpose": "string"
+      "chartType": "نوع الرسم البياني باللغة العربية",
+      "dataPoints": "نقاط البيانات باللغة العربية",
+      "purpose": "الغرض باللغة العربية"
     }
   ]
 }`
           },
           {
             role: 'user',
-            content: `Please analyze this WhatsApp report and provide structured insights:\n\n${report.content}`
+            content: `يرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
           }
         ],
         temperature: 0.3,

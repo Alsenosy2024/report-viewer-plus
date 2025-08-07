@@ -331,14 +331,14 @@ const WhatsAppReports = () => {
                         </div>
                         
                         {isProcessed && processedContent?.analysis ? (
-                          <div className="space-y-3">
+                          <div className="space-y-3" dir="rtl">
                             <div className="p-3 bg-muted/50 rounded-lg">
                               <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-primary" />
-                                Executive Summary
+                                الملخص التنفيذي
                               </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {processedContent.analysis.executiveSummary || 'Analysis summary not available'}
+                              <p className="text-sm text-muted-foreground text-right">
+                                {processedContent.analysis.executiveSummary || 'ملخص التحليل غير متوفر'}
                               </p>
                             </div>
                             
@@ -517,26 +517,26 @@ const WhatsAppReports = () => {
                     
                     return (
                       <div className="space-y-6">
-                        {/* Executive Summary */}
-                        <Card className="border-primary/20">
+                         {/* Executive Summary */}
+                        <Card className="border-primary/20" dir="rtl">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-primary">
                               <TrendingUp className="w-5 h-5" />
-                              Executive Summary
+                              الملخص التنفيذي
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-foreground leading-relaxed">{analysis.executiveSummary}</p>
+                            <p className="text-foreground leading-relaxed text-right">{analysis.executiveSummary}</p>
                           </CardContent>
                         </Card>
 
-                        {/* Performance Metrics */}
+                         {/* Performance Metrics */}
                         {analysis.performanceMetrics?.length > 0 && (
-                          <Card>
+                          <Card dir="rtl">
                             <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-blue-500" />
-                                Performance Metrics
+                                مقاييس الأداء
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -544,12 +544,12 @@ const WhatsAppReports = () => {
                                 {analysis.performanceMetrics.map((metric: any, idx: number) => (
                                   <div key={idx} className="p-4 border rounded-lg bg-muted/30">
                                     <div className="flex items-center justify-between mb-2">
-                                      <h4 className="font-semibold text-sm">{metric.metric}</h4>
+                                      <h4 className="font-semibold text-sm text-right">{metric.metric}</h4>
                                       <Badge variant={metric.trend === 'positive' ? 'default' : metric.trend === 'negative' ? 'destructive' : 'secondary'}>
                                         {metric.value}
                                       </Badge>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                                    <p className="text-xs text-muted-foreground text-right">{metric.description}</p>
                                   </div>
                                 ))}
                               </div>
@@ -557,13 +557,13 @@ const WhatsAppReports = () => {
                           </Card>
                         )}
 
-                        {/* Trends & Patterns */}
+                         {/* Trends & Patterns */}
                         {analysis.trendsAndPatterns?.length > 0 && (
-                          <Card>
+                          <Card dir="rtl">
                             <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-green-500" />
-                                Trends & Patterns
+                                الاتجاهات والأنماط
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -571,12 +571,12 @@ const WhatsAppReports = () => {
                                 {analysis.trendsAndPatterns.map((trend: any, idx: number) => (
                                   <div key={idx} className="p-4 border rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
-                                      <h4 className="font-semibold">{trend.title}</h4>
+                                      <h4 className="font-semibold text-right">{trend.title}</h4>
                                       <Badge variant={trend.impact === 'high' ? 'destructive' : trend.impact === 'medium' ? 'default' : 'secondary'}>
-                                        {trend.impact} impact
+                                        {trend.impact === 'high' ? 'تأثير عالي' : trend.impact === 'medium' ? 'تأثير متوسط' : 'تأثير منخفض'}
                                       </Badge>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{trend.description}</p>
+                                    <p className="text-sm text-muted-foreground text-right">{trend.description}</p>
                                   </div>
                                 ))}
                               </div>
@@ -584,13 +584,13 @@ const WhatsAppReports = () => {
                           </Card>
                         )}
 
-                        {/* Recommendations */}
+                         {/* Recommendations */}
                         {analysis.recommendations?.length > 0 && (
-                          <Card>
+                          <Card dir="rtl">
                             <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                 <Target className="w-5 h-5 text-purple-500" />
-                                Actionable Recommendations
+                                التوصيات القابلة للتنفيذ
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -599,12 +599,12 @@ const WhatsAppReports = () => {
                                   <div key={idx} className="p-4 border rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
                                       <Badge variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}>
-                                        {rec.priority} priority
+                                        {rec.priority === 'high' ? 'أولوية عالية' : rec.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة'}
                                       </Badge>
                                       <span className="text-xs text-muted-foreground">{rec.timeframe}</span>
                                     </div>
-                                    <h4 className="font-semibold mb-1">{rec.action}</h4>
-                                    <p className="text-sm text-muted-foreground">{rec.expectedImpact}</p>
+                                    <h4 className="font-semibold mb-1 text-right">{rec.action}</h4>
+                                    <p className="text-sm text-muted-foreground text-right">{rec.expectedImpact}</p>
                                   </div>
                                 ))}
                               </div>
@@ -612,32 +612,34 @@ const WhatsAppReports = () => {
                           </Card>
                         )}
 
-                        {/* Risk Assessment */}
+                         {/* Risk Assessment */}
                         {analysis.riskAssessment && (
-                          <Card className="border-yellow-200">
+                          <Card className="border-yellow-200" dir="rtl">
                             <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                                Risk Assessment
+                                تقييم المخاطر
                                 <Badge variant={analysis.riskAssessment.overallRisk === 'high' ? 'destructive' : 'secondary'}>
-                                  {analysis.riskAssessment.overallRisk} risk
+                                  {analysis.riskAssessment.level === 'high' ? 'مخاطر عالية' : analysis.riskAssessment.level === 'medium' ? 'مخاطر متوسطة' : 'مخاطر منخفضة'}
                                 </Badge>
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
-                              {analysis.riskAssessment.risks?.length > 0 && (
+                              {analysis.riskAssessment.factors?.length > 0 && (
                                 <div className="space-y-3">
-                                  {analysis.riskAssessment.risks.map((risk: any, idx: number) => (
+                                  {analysis.riskAssessment.factors.map((factor: string, idx: number) => (
                                     <div key={idx} className="p-3 border rounded-lg bg-yellow-50/50">
                                       <div className="flex items-center justify-between mb-1">
-                                        <span className="font-medium">{risk.risk}</span>
-                                        <Badge variant={risk.severity === 'high' ? 'destructive' : 'secondary'} className="text-xs">
-                                          {risk.severity}
-                                        </Badge>
+                                        <span className="font-medium text-right">{factor}</span>
                                       </div>
-                                      <p className="text-sm text-muted-foreground">{risk.mitigation}</p>
                                     </div>
                                   ))}
+                                  {analysis.riskAssessment.mitigation && (
+                                    <div className="mt-4 p-3 border rounded-lg bg-blue-50/50">
+                                      <h5 className="font-medium mb-2 text-right">استراتيجية التخفيف:</h5>
+                                      <p className="text-sm text-muted-foreground text-right">{analysis.riskAssessment.mitigation}</p>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </CardContent>

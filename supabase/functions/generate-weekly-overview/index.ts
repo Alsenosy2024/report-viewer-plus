@@ -89,14 +89,119 @@ serve(async (req) => {
     // Get the last generated report date
     const lastReportDate = reports[0]?.created_at;
 
-    // Prepare data for Deepseek analysis
+    // Prepare data for Deepseek analysis + compute structured metrics from input data
     const reportsData = reports.map(report => ({
       date: report.report_date,
       section: report.section,
       content_type: report.content_type,
-      content_preview: report.content.substring(0, 500) + '...'
+      content_preview: (typeof report.content === 'string' ? report.content : String(report.content)).substring(0, 500) + '...'
     }));
 
+    // Compute insights from raw input data
+    const sections = ['whatsapp_reports', 'productivity_reports', 'ads_reports', 'mail_reports'] as const;
+    const sectionPretty: Record<string, string> = {
+      whatsapp_reports: 'الواتساب',
+      productivity_reports: 'الإنتاجية',
+      ads_reports: 'الإعلانات',
+      mail_reports: 'البريد الإلكتروني',
+    };
+
+    const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+    const countsBySection: Record<string, number> = { whatsapp_reports: 0, productivity_reports: 0, ads_reports: 0, mail_reports: 0 };
+    const processedBySection: Record<string, number> = { whatsapp_reports: 0, productivity_reports: 0, ads_reports: 0, mail_reports: 0 };
+    const dailyTotals = new Array(7).fill(0) as number[];
+    const dailyBySection: Record<string, number[]> = {
+      whatsapp_reports: new Array(7).fill(0),
+      productivity_reports: new Array(7).fill(0),
+      ads_reports: new Array(7).fill(0),
+      mail_reports: new Array(7).fill(0),
+    };
+
+    for (const r of reports) {
+      const sec = r.section as string;
+      if (!(sec in countsBySection)) continue;
+      countsBySection[sec] += 1;
+      if (r.content_type === 'processed_analysis') processedBySection[sec] += 1;
+      const d = new Date(r.created_at).getDay(); // 0=Sunday
+      dailyTotals[d] += 1;
+      dailyBySection[sec][d] += 1;
+    }
+
+    const totalReports = reports.length;
+    const processedTotal = Object.values(processedBySection).reduce((a, b) => a + b, 0);
+    const processingRate = totalReports === 0 ? 0 : Math.round((processedTotal / totalReports) * 100);
+
+    const busiestDayIndex = dailyTotals.reduce((maxIdx, cur, idx, arr) => (cur > arr[maxIdx] ? idx : maxIdx), 0);
+    const busiestSection = sections.reduce((maxSec, cur) => countsBySection[cur] > countsBySection[maxSec] ? cur : maxSec, sections[0]);
+
+    // Build interactive charts based on computed data
+    const pieColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+    const sectionDistributionChart = {
+      type: 'pie',
+      title: 'توزيع التقارير حسب القسم',
+      data: {
+        labels: sections.map((s) => sectionPretty[s]),
+        datasets: [
+          {
+            label: 'عدد التقارير',
+            data: sections.map((s) => countsBySection[s]),
+            backgroundColor: pieColors,
+          },
+        ],
+      },
+    };
+
+    const dailyTotalsChart = {
+      type: 'line',
+      title: 'إجمالي التقارير لكل يوم',
+      data: {
+        labels: dayNames,
+        datasets: [
+          {
+            label: 'إجمالي التقارير',
+            data: [0,1,2,3,4,5,6].map((i) => dailyTotals[i])
+          },
+        ],
+      },
+    };
+
+    const perSectionDailyCharts = sections.map((s, idx) => ({
+      type: 'bar' as const,
+      title: `عدد تقارير ${sectionPretty[s]} لكل يوم`,
+      data: {
+        labels: dayNames,
+        datasets: [
+          {
+            label: sectionPretty[s],
+            data: [0,1,2,3,4,5,6].map((i) => dailyBySection[s][i]),
+            backgroundColor: pieColors[idx % pieColors.length],
+          },
+        ],
+      },
+    }));
+
+    const maxDaily = Math.max(...dailyTotals, 0);
+    const heatmapData = {
+      title: 'خريطة النشاط خلال الأسبوع',
+      data: dayNames.map((day, i) => {
+        const valuePct = maxDaily === 0 ? 0 : Math.round((dailyTotals[i] / maxDaily) * 100);
+        // simple green->orange scale
+        const color = valuePct > 66 ? '#10b981' : valuePct > 33 ? '#f59e0b' : '#93c5fd';
+        return { day, value: valuePct, color };
+      })
+    };
+
+    const computedKeyMetrics = [
+      { title: 'إجمالي التقارير', value: String(totalReports), change: undefined, trend: 'stable' },
+      { title: 'نسبة المعالجة بالذكاء الاصطناعي', value: `${processingRate}%`, change: undefined, trend: processingRate >= 50 ? 'up' : 'down' },
+      { title: 'أكثر يوم نشاطاً', value: dayNames[busiestDayIndex] || 'غير محدد', change: undefined, trend: 'stable' },
+      { title: 'أكثر قسم نشاطاً', value: sectionPretty[busiestSection], change: undefined, trend: 'up' },
+    ];
+
+    const computedCharts = [sectionDistributionChart, dailyTotalsChart, ...perSectionDailyCharts];
+
+    const fallbackOverview = `تم تحليل ${totalReports} تقرير هذا الأسبوع مع توزيع واضح بين الأقسام الأربعة، وبلغت نسبة التقارير المعالجة بالذكاء الاصطناعي ${processingRate}%. كان يوم ${dayNames[busiestDayIndex]} الأكثر نشاطاً.`;
     const systemPrompt = `أنت محلل بيانات خبير متخصص في تحليل التقارير متعددة الأقسام وإنشاء رؤى تنفيذية مدعومة بمرئيات.
 
 التقارير تشمل أربعة أقسام رئيسية:
@@ -180,27 +285,27 @@ serve(async (req) => {
     const deepseekData = await deepseekResponse.json();
     console.log('Deepseek API response received');
 
-    let analysisResult;
+    // Merge LLM insights with computed charts/metrics to guarantee interactive, data-driven visuals
+    let llm: any = null;
     try {
       const content = deepseekData.choices[0].message.content;
-      // Try to extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        analysisResult = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No valid JSON found in response');
+        llm = JSON.parse(jsonMatch[0]);
       }
     } catch (parseError) {
       console.error('Error parsing Deepseek response:', parseError);
-      // Fallback response
-      analysisResult = {
-        overview: 'تم تحليل التقارير بنجاح',
-        keyMetrics: [],
-        charts: [],
-        heatmapData: { title: 'خريطة النشاط', data: [] },
-        recommendations: ['يوصى بمراجعة التقارير بانتظام']
-      };
     }
+
+    const analysisResult = {
+      overview: (llm?.overview) ?? fallbackOverview,
+      keyMetrics: [...computedKeyMetrics, ...(llm?.keyMetrics ?? [])],
+      charts: [...computedCharts, ...(llm?.charts ?? [])],
+      heatmapData: (llm?.heatmapData && llm.heatmapData.data?.length ? llm.heatmapData : heatmapData),
+      recommendations: llm?.recommendations ?? [],
+      sections: llm?.sections,
+      crossSectionInsights: llm?.crossSectionInsights,
+    };
 
     // Store the analysis in the database
     let dbError: any = null;

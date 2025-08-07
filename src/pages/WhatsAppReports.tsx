@@ -1,7 +1,10 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Users, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { MessageSquare, Users, Send, CheckCircle, XCircle, Clock, Eye, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 const WhatsAppReports = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -221,9 +226,22 @@ const WhatsAppReports = () => {
                         <p className="text-sm font-medium text-foreground">
                           Report #{report.id.slice(0, 8)}
                         </p>
-                        <Badge variant="outline" className="text-xs">
-                          {new Date(report.created_at).toLocaleDateString()}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {new Date(report.created_at).toLocaleDateString()}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReport(report);
+                              setDialogOpen(true);
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {report.content}
@@ -337,6 +355,48 @@ const WhatsAppReports = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Report Viewer Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>WhatsApp Report - {selectedReport?.report_date ? new Date(selectedReport.report_date).toLocaleDateString() : ''}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDialogOpen(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] w-full">
+              <div className="p-4">
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Report ID:</span>
+                    <Badge variant="outline">{selectedReport?.id}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Created:</span>
+                    <span>{selectedReport?.created_at ? new Date(selectedReport.created_at).toLocaleString() : ''}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Type:</span>
+                    <Badge variant="secondary">{selectedReport?.content_type}</Badge>
+                  </div>
+                </div>
+                <div className="prose prose-sm max-w-none">
+                  <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
+                    {selectedReport?.content}
+                  </pre>
+                </div>
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

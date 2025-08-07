@@ -26,6 +26,16 @@ serve(async (req) => {
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     weekStart.setHours(0, 0, 0, 0);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
+    // Parse optional body for force regeneration flag
+    let force = false;
+    try {
+      const payload = await req.json();
+      force = Boolean(payload?.force);
+    } catch (_) {
+      // No JSON body provided
+    }
 
     // Check if analysis already exists for this week
     const { data: existingAnalysis, error: analysisError } = await supabase
@@ -38,7 +48,7 @@ serve(async (req) => {
       console.error('Error checking existing analysis:', analysisError);
     }
 
-    if (existingAnalysis) {
+    if (existingAnalysis && !force) {
       console.log('Found existing weekly analysis, returning cached data');
       return new Response(
         JSON.stringify({
@@ -197,16 +207,30 @@ serve(async (req) => {
     }
 
     // Store the analysis in the database
-    const { error: insertError } = await supabase
-      .from('weekly_analyses')
-      .insert({
-        week_start: weekStart.toISOString().split('T')[0],
-        analysis_data: analysisResult,
-        reports_count: reports.length
-      });
+    let dbError: any = null;
+    if (existingAnalysis) {
+      const { error } = await supabase
+        .from('weekly_analyses')
+        .update({
+          analysis_data: analysisResult,
+          reports_count: reports.length,
+          week_start: weekStartStr,
+        })
+        .eq('id', existingAnalysis.id);
+      dbError = error;
+    } else {
+      const { error } = await supabase
+        .from('weekly_analyses')
+        .insert({
+          week_start: weekStartStr,
+          analysis_data: analysisResult,
+          reports_count: reports.length
+        });
+      dbError = error;
+    }
 
-    if (insertError) {
-      console.error('Error storing analysis:', insertError);
+    if (dbError) {
+      console.error('Error storing analysis:', dbError);
       // Continue anyway, return the analysis even if storage fails
     }
 

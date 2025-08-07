@@ -18,7 +18,7 @@ export const DashboardOverview = () => {
   const generateWeeklyOverview = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-weekly-overview');
+      const { data, error } = await supabase.functions.invoke('generate-weekly-overview', { body: { force: true } });
       
       if (error) {
         throw error;

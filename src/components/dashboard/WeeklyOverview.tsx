@@ -118,6 +118,38 @@ const WeeklyOverview: React.FC = () => {
     loadOverview();
   }, []);
 
+  // Realtime subscription: auto-refresh when this week's analysis is inserted/updated
+  useEffect(() => {
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'weekly_analyses',
+          filter: `week_start=eq.${weekStartStr}`,
+        },
+        async () => {
+          await fetchStoredOverview();
+          toast({
+            title: 'تم التحديث تلقائياً',
+            description: 'تم إنشاء النظرة العامة الأسبوعية وعرضها مباشرة.',
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const getTrendIcon = (trend?: string) => {
     switch (trend) {
       case 'up':

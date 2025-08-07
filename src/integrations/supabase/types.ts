@@ -21,6 +21,7 @@ export type Database = {
           is_active: boolean
           last_updated: string
           updated_by: string | null
+          webhook_url: string | null
         }
         Insert: {
           bot_name: string
@@ -28,6 +29,7 @@ export type Database = {
           is_active?: boolean
           last_updated?: string
           updated_by?: string | null
+          webhook_url?: string | null
         }
         Update: {
           bot_name?: string
@@ -35,6 +37,7 @@ export type Database = {
           is_active?: boolean
           last_updated?: string
           updated_by?: string | null
+          webhook_url?: string | null
         }
         Relationships: [
           {

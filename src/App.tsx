@@ -15,6 +15,7 @@ import MailReports from "./pages/MailReports";
 import NotFound from "./pages/NotFound";
 import AdminSettings from "./pages/AdminSettings";
 import AwaitingApproval from "./pages/AwaitingApproval";
+import BotControls from "./pages/BotControls";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,11 @@ const App = () => (
             <Route path="/admin/settings" element={
               <ProtectedRoute>
                 <AdminSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/bots" element={
+              <ProtectedRoute>
+                <BotControls />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

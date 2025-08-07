@@ -31,6 +31,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: TrendingUp, label: 'Productivity Reports', path: '/productivity-reports', section: 'productivity_reports' },
     { icon: BarChart3, label: 'Ads Analysis', path: '/ads-reports', section: 'ads_reports' },
     { icon: Mail, label: 'Mail Reports', path: '/mail-reports', section: 'mail_reports' },
+    { icon: Bot, label: 'Bot Controls', path: '/bots', section: 'bot_controls' },
     ...(profile?.role === 'admin' ? [{ icon: Settings, label: 'Settings', path: '/admin/settings' }] : []),
   ];
 

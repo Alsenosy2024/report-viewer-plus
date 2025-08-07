@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import WhatsAppReports from "./pages/WhatsAppReports";
 import ProductivityReports from "./pages/ProductivityReports";
 import AdsReports from "./pages/AdsReports";
+import MailReports from "./pages/MailReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,11 @@ const App = () => (
             <Route path="/ads-reports" element={
               <ProtectedRoute>
                 <AdsReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/mail-reports" element={
+              <ProtectedRoute>
+                <MailReports />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

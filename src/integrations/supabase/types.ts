@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_status: {
+        Row: {
+          bot_name: string
+          id: string
+          is_active: boolean
+          last_updated: string
+          updated_by: string | null
+        }
+        Insert: {
+          bot_name: string
+          id?: string
+          is_active?: boolean
+          last_updated?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bot_name?: string
+          id?: string
+          is_active?: boolean
+          last_updated?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_status_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           content: string | null
@@ -143,6 +175,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rag: {
         Row: {
           content: string | null
@@ -164,6 +223,68 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          content: string
+          content_type: string
+          created_at: string
+          id: string
+          report_date: string
+          section: Database["public"]["Enums"]["dashboard_section"]
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          report_date: string
+          section: Database["public"]["Enums"]["dashboard_section"]
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          report_date?: string
+          section?: Database["public"]["Enums"]["dashboard_section"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      section_permissions: {
+        Row: {
+          can_access: boolean
+          created_at: string
+          id: string
+          section: Database["public"]["Enums"]["dashboard_section"]
+          user_id: string
+        }
+        Insert: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          section: Database["public"]["Enums"]["dashboard_section"]
+          user_id: string
+        }
+        Update: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          section?: Database["public"]["Enums"]["dashboard_section"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "section_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -172,6 +293,17 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      can_access_section: {
+        Args: {
+          user_id: string
+          section_name: Database["public"]["Enums"]["dashboard_section"]
+        }
+        Returns: boolean
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
       }
       halfvec_avg: {
         Args: { "": number[] }
@@ -283,7 +415,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      dashboard_section:
+        | "whatsapp_reports"
+        | "productivity_reports"
+        | "ads_reports"
+        | "mail_reports"
+        | "bot_controls"
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -410,6 +548,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      dashboard_section: [
+        "whatsapp_reports",
+        "productivity_reports",
+        "ads_reports",
+        "mail_reports",
+        "bot_controls",
+      ],
+      user_role: ["admin", "user"],
+    },
   },
 } as const

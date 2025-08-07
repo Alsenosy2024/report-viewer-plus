@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { LogOut, User, Settings, BarChart3, MessageSquare, Bot, Mail, TrendingUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
+import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,6 +16,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   const handleSignOut = async () => {
     await signOut();
@@ -42,28 +45,38 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-sidebar bg-sidebar border-r border-sidebar-border min-h-[calc(100vh-4rem)] p-4">
-          <nav className="space-y-2">
-            {navigationItems.map((item, index) => {
-              const isActive = item.path ? location.pathname === item.path : false;
-              return (
-                <Button
-                  key={index}
-                  variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start transition-smooth ${
-                    isActive 
-                      ? 'bg-gradient-primary text-dashboard-primary-foreground shadow-md' 
-                      : 'hover:bg-sidebar-accent text-sidebar-foreground'
-                  }`}
-                  onClick={() => item.path && navigate(item.path)}
-                >
-                  <item.icon className="mr-3 h-4 w-4" />
-                  {item.label}
-                </Button>
-              );
-            })}
-          </nav>
-        </aside>
+        <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="icon">
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navigationItems.map((item, index) => (
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.path || "#"}
+                          end
+                          className={({ isActive }) =>
+                            isActive
+                              ? "bg-muted text-primary font-medium"
+                              : "hover:bg-muted/50"
+                          }
+                          onClick={(e) => {
+                            if (!item.path) e.preventDefault();
+                          }}
+                        >
+                          <item.icon className="mr-3 h-4 w-4" />
+                          {!isCollapsed && <span>{item.label}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
 
         {/* Main Content */}
         <main className="flex-1 p-6">

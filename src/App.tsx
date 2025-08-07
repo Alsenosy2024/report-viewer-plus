@@ -17,6 +17,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AwaitingApproval from "./pages/AwaitingApproval";
 import BotControls from "./pages/BotControls";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const queryClient = new QueryClient();
 
@@ -27,53 +28,55 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <SiteHeader />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/awaiting-approval" element={
-              <ProtectedRoute>
-                <AwaitingApproval />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/whatsapp-reports" element={
-              <ProtectedRoute>
-                <WhatsAppReports />
-              </ProtectedRoute>
-            } />
-            <Route path="/productivity-reports" element={
-              <ProtectedRoute>
-                <ProductivityReports />
-              </ProtectedRoute>
-            } />
-            <Route path="/ads-reports" element={
-              <ProtectedRoute>
-                <AdsReports />
-              </ProtectedRoute>
-            } />
-            <Route path="/mail-reports" element={
-              <ProtectedRoute>
-                <MailReports />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/settings" element={
-              <ProtectedRoute>
-                <AdminSettings />
-              </ProtectedRoute>
-            } />
-            <Route path="/bots" element={
-              <ProtectedRoute>
-                <BotControls />
-              </ProtectedRoute>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <SidebarProvider>
+            <SiteHeader />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/awaiting-approval" element={
+                <ProtectedRoute>
+                  <AwaitingApproval />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/whatsapp-reports" element={
+                <ProtectedRoute>
+                  <WhatsAppReports />
+                </ProtectedRoute>
+              } />
+              <Route path="/productivity-reports" element={
+                <ProtectedRoute>
+                  <ProductivityReports />
+                </ProtectedRoute>
+              } />
+              <Route path="/ads-reports" element={
+                <ProtectedRoute>
+                  <AdsReports />
+                </ProtectedRoute>
+              } />
+              <Route path="/mail-reports" element={
+                <ProtectedRoute>
+                  <MailReports />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <ProtectedRoute>
+                  <AdminSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/bots" element={
+                <ProtectedRoute>
+                  <BotControls />
+                </ProtectedRoute>
+              } />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </SidebarProvider>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

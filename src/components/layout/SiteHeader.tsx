@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogOut, Settings } from 'lucide-react';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function SiteHeader() {
   const { user, profile, signOut } = useAuth();
@@ -26,18 +27,23 @@ export function SiteHeader() {
   return (
     <header className="bg-card border-b border-card-border h-header sticky top-0 z-50 backdrop-blur-sm bg-card/80">
       <div className="container h-full flex items-center justify-between">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-3 group" aria-label="Professional Engineers home">
-          <img
-            src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
-            alt="Professional Engineers logo"
-            className="h-8 w-auto"
-            loading="lazy"
-          />
-          <span className="text-base md:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors">
-            Professional Engineers
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {isDashboard && (
+            <SidebarTrigger className="mr-1" aria-label="Open menu" />
+          )}
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-3 group" aria-label="Professional Engineers home">
+            <img
+              src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
+              alt="Professional Engineers logo"
+              className="h-8 w-auto"
+              loading="lazy"
+            />
+            <span className="text-base md:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors">
+              Professional Engineers
+            </span>
+          </Link>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">

@@ -96,6 +96,8 @@ const BotControls = () => {
       toast({ title: 'Save failed', description: error.message, variant: 'destructive' });
       return;
     }
+    // Ensure local state reflects the saved webhook so toggling works immediately
+    setBots((prev) => prev.map((b) => (b.id === id ? { ...b, webhook_url } : b)));
     toast({ title: 'Webhook saved' });
   };
 

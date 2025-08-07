@@ -28,7 +28,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <SidebarProvider>
+          <SidebarProvider className="flex-col">
             <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />

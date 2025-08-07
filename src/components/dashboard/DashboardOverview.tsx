@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import WeeklyOverview from './WeeklyOverview';
+import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users, Calendar } from 'lucide-react';
 
 export const DashboardOverview = () => {
   const stats = [
@@ -74,75 +76,95 @@ export const DashboardOverview = () => {
         <p className="opacity-90">Monitor your reports, control your bots, and track performance metrics all in one place.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="border-card-border hover:shadow-md transition-smooth">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-5 w-5 text-dashboard-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stat.change}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <Card className="border-card-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-dashboard-primary" />
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-dashboard-secondary/50">
-                <div className="flex items-center gap-3">
-                  <Badge className={`w-2 h-2 rounded-full p-0 ${getStatusColor(activity.status)}`} />
-                  <div>
-                    <p className="font-medium text-sm text-foreground">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-              </div>
+      {/* Tabs for different views */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Dashboard Overview
+          </TabsTrigger>
+          <TabsTrigger value="weekly" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Weekly Analysis
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <Card key={index} className="border-card-border hover:shadow-md transition-smooth">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <stat.icon className="h-5 w-5 text-dashboard-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stat.change}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Quick Actions */}
-        <Card className="border-card-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-dashboard-primary" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
-              <h4 className="font-medium text-foreground">Generate New Report</h4>
-              <p className="text-sm text-muted-foreground">Create a custom report for today</p>
-            </div>
-            <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
-              <h4 className="font-medium text-foreground">Manage Bot Settings</h4>
-              <p className="text-sm text-muted-foreground">Configure bot behavior and schedules</p>
-            </div>
-            <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
-              <h4 className="font-medium text-foreground">View Analytics</h4>
-              <p className="text-sm text-muted-foreground">Deep dive into performance metrics</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Activity */}
+            <Card className="border-card-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-dashboard-primary" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-dashboard-secondary/50">
+                    <div className="flex items-center gap-3">
+                      <Badge className={`w-2 h-2 rounded-full p-0 ${getStatusColor(activity.status)}`} />
+                      <div>
+                        <p className="font-medium text-sm text-foreground">{activity.title}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border-card-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-dashboard-primary" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
+                  <h4 className="font-medium text-foreground">Generate New Report</h4>
+                  <p className="text-sm text-muted-foreground">Create a custom report for today</p>
+                </div>
+                <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
+                  <h4 className="font-medium text-foreground">Manage Bot Settings</h4>
+                  <p className="text-sm text-muted-foreground">Configure bot behavior and schedules</p>
+                </div>
+                <div className="p-4 rounded-lg border border-card-border hover:bg-dashboard-secondary/50 transition-smooth cursor-pointer">
+                  <h4 className="font-medium text-foreground">View Analytics</h4>
+                  <p className="text-sm text-muted-foreground">Deep dive into performance metrics</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="weekly">
+          <WeeklyOverview />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

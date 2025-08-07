@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,58 +41,105 @@ export const DashboardOverview = () => {
       setLoading(false);
     }
   };
-  const stats = [
-    {
-      title: "WhatsApp Reports",
-      value: "12",
-      change: "+2 from yesterday",
-      icon: MessageSquare,
-      color: "success"
-    },
-    {
-      title: "Productivity Score",
-      value: "87%",
-      change: "+5% from last week",
-      icon: TrendingUp,
-      color: "info"
-    },
-    {
-      title: "Active Bots",
-      value: "3/3",
-      change: "All systems operational",
-      icon: Bot,
-      color: "success"
-    },
-    {
-      title: "Mail Reports",
-      value: "156",
-      change: "+12 today",
-      icon: Mail,
-      color: "warning"
-    }
-  ];
+  const [counts, setCounts] = useState({ whatsapp: 0, productivity: 0, ads: 0, mail: 0 });
+  type Activity = { title: string; time: string; status: 'success' | 'info' | 'warning' };
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
 
-  const recentActivity = [
-    {
-      title: "WhatsApp Daily Report Generated",
-      time: "2 minutes ago",
-      status: "success"
-    },
-    {
-      title: "Productivity Report Updated",
-      time: "15 minutes ago", 
-      status: "info"
-    },
-    {
-      title: "Instagram Bot Status Changed",
-      time: "1 hour ago",
-      status: "warning"
-    },
-    {
-      title: "Mail Report Processed",
-      time: "2 hours ago",
-      status: "success"
+  const sectionLabel = (section: string) => {
+    switch (section) {
+      case 'whatsapp_reports': return 'WhatsApp Report';
+      case 'productivity_reports': return 'Productivity Report';
+      case 'ads_reports': return 'Ads Report';
+      case 'mail_reports': return 'Mail Report';
+      default: return 'Report';
     }
+  };
+
+  const relativeTime = (dateStr: string) => {
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins} minutes ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} days ago`;
+  };
+
+  const countFor = async (
+    section: 'whatsapp_reports' | 'productivity_reports' | 'ads_reports' | 'mail_reports'
+  ) => {
+    const { count, error } = await supabase
+      .from('reports')
+      .select('*', { count: 'exact', head: true })
+      .eq('section', section);
+    if (error) console.error('Count error for', section, error);
+    return count || 0;
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      const [whatsapp, productivity, ads, mail] = await Promise.all([
+        countFor('whatsapp_reports'),
+        countFor('productivity_reports'),
+        countFor('ads_reports'),
+        countFor('mail_reports'),
+      ]);
+      setCounts({ whatsapp, productivity, ads, mail });
+
+      const { data } = await supabase
+        .from('reports')
+        .select('id, section, created_at, content_type')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      const items: Activity[] = (data || []).map((r: any) => ({
+        title: `${sectionLabel(r.section)} ${r.content_type === 'processed_analysis' ? 'Processed' : 'Added'}`,
+        time: relativeTime(r.created_at),
+        status: (r.content_type === 'processed_analysis' ? 'success' : 'info') as Activity['status'],
+      }));
+      setRecentActivity(items);
+    } catch (e) {
+      console.error('Failed loading dashboard data', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('reports-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reports' }, (payload: any) => {
+        const r: any = (payload as any).new;
+        setCounts(prev => ({
+          whatsapp: prev.whatsapp + (r.section === 'whatsapp_reports' ? 1 : 0),
+          productivity: prev.productivity + (r.section === 'productivity_reports' ? 1 : 0),
+          ads: prev.ads + (r.section === 'ads_reports' ? 1 : 0),
+          mail: prev.mail + (r.section === 'mail_reports' ? 1 : 0),
+        }));
+        setRecentActivity(prev => ([
+          {
+            title: `${sectionLabel(r.section)} ${r.content_type === 'processed_analysis' ? 'Processed' : 'Added'}`,
+            time: relativeTime(r.created_at),
+            status: (r.content_type === 'processed_analysis' ? 'success' : 'info') as Activity['status'],
+          },
+          ...prev,
+        ]).slice(0, 6));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const stats = [
+    { title: 'WhatsApp Reports', value: String(counts.whatsapp), change: '', icon: MessageSquare, color: 'success' },
+    { title: 'Productivity Reports', value: String(counts.productivity), change: '', icon: TrendingUp, color: 'info' },
+    { title: 'Ads Analysis', value: String(counts.ads), change: '', icon: BarChart3, color: 'success' },
+    { title: 'Mail Reports', value: String(counts.mail), change: '', icon: Mail, color: 'warning' },
   ];
 
   const getStatusColor = (status: string) => {

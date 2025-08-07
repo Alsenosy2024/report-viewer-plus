@@ -230,28 +230,39 @@ const ProductivityReports = () => {
               {selectedReport && (
                 <Tabs defaultValue="overview" className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <TabsList className="grid w-full max-w-md grid-cols-3">
-                      <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                      <TabsTrigger value="raw">Raw Data</TabsTrigger>
-                    </TabsList>
-                    <Button 
-                      onClick={() => processReport(selectedReport)} 
-                      disabled={processing}
-                      size="sm"
-                    >
-                      {processing ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4 mr-2" />
-                          Process with AI
-                        </>
-                      )}
-                    </Button>
+                   <TabsList className="grid w-full max-w-md grid-cols-3">
+                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                     <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                     <TabsTrigger value="report">Report</TabsTrigger>
+                   </TabsList>
+                   <div className="flex items-center gap-2">
+                     <Button 
+                       onClick={() => processReport(selectedReport)} 
+                       disabled={processing}
+                       size="sm"
+                     >
+                       {processing ? (
+                         <>
+                           <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                           Processing...
+                         </>
+                       ) : (
+                         <>
+                           <Zap className="w-4 h-4 mr-2" />
+                           Process with AI
+                         </>
+                       )}
+                     </Button>
+                     {selectedReport?.content_type === "html" && (
+                       <Button 
+                         onClick={() => window.open(`data:text/html;charset=utf-8,${encodeURIComponent(selectedReport.content)}`, "_blank")}
+                         size="sm"
+                         variant="outline"
+                       >
+                         Open Full Report
+                       </Button>
+                     )}
+                   </div>
                   </div>
 
                   <TabsContent value="overview" className="space-y-6">
@@ -455,48 +466,40 @@ const ProductivityReports = () => {
                     )}
                   </TabsContent>
 
-                   <TabsContent value="raw" className="space-y-6">
-                     {/* Full Report View */}
-                     {selectedReport?.content_type === 'html' ? (
-                       <Card>
-                         <CardHeader>
-                           <CardTitle className="flex items-center justify-between">
-                             <span>Productivity Report - {formatDate(selectedReport.report_date)}</span>
-                             <Button 
-                               onClick={() => window.open(`data:text/html;charset=utf-8,${encodeURIComponent(selectedReport.content)}`, '_blank')}
-                               size="sm"
-                               variant="outline"
-                             >
-                               Open Full View
-                             </Button>
-                           </CardTitle>
-                         </CardHeader>
-                         <CardContent>
-                           <div className="border rounded-lg overflow-hidden">
-                             <iframe
-                               srcDoc={selectedReport.content}
-                               className="w-full h-96"
-                               style={{ border: 'none' }}
-                               title={`Productivity Report - ${formatDate(selectedReport.report_date)}`}
-                             />
+                 <TabsContent value="report" className="space-y-6">
+                   {selectedReport?.content_type === "html" ? (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle className="flex items-center justify-between">
+                           <span>Productivity Report - {formatDate(selectedReport.report_date)}</span>
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="border rounded-lg overflow-hidden bg-white">
+                           <iframe
+                             srcDoc={selectedReport.content}
+                             className="w-full"
+                             style={{ height: "600px", border: "none" }}
+                             title={`Productivity Report - ${formatDate(selectedReport.report_date)}`}
+                           />
+                         </div>
+                       </CardContent>
+                     </Card>
+                   ) : (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle>Report Content</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="max-h-96 overflow-y-auto">
+                           <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="auto" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+                             {selectedReport?.content || "No content available"}
                            </div>
-                         </CardContent>
-                       </Card>
-                     ) : (
-                       <Card>
-                         <CardHeader>
-                           <CardTitle className="text-sm">Raw Report Content</CardTitle>
-                         </CardHeader>
-                         <CardContent>
-                           <div className="max-h-60 overflow-y-auto">
-                             <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="auto" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                               {selectedReport?.content || 'No content available'}
-                             </div>
-                           </div>
-                         </CardContent>
-                       </Card>
-                     )}
-                   </TabsContent>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   )}
+                 </TabsContent>
                 </Tabs>
               )}
             </div>

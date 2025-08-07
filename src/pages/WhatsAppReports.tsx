@@ -479,25 +479,9 @@ const WhatsAppReports = () => {
                           </CardHeader>
                           <CardContent>
                             <div className="max-h-60 overflow-y-auto">
-                              <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg break-words">
-                                {(() => {
-                                  try {
-                                    const originalContent = processedContent?.original || selectedReport?.content;
-                                    if (typeof originalContent === 'string') {
-                                      // Try to parse and format as JSON if possible
-                                      try {
-                                        const parsed = JSON.parse(originalContent);
-                                        return JSON.stringify(parsed, null, 2);
-                                      } catch {
-                                        return originalContent;
-                                      }
-                                    }
-                                    return JSON.stringify(originalContent, null, 2);
-                                  } catch {
-                                    return 'Original content not available';
-                                  }
-                                })()}
-                              </pre>
+                              <div className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg break-words leading-relaxed" dir="rtl" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                {processedContent?.original || selectedReport?.content || 'Original content not available'}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>

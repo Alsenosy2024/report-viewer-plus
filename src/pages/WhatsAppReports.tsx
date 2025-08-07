@@ -1,6 +1,6 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Users, Send, CheckCircle, XCircle, Clock, Eye, X } from 'lucide-react';
+import { MessageSquare, Users, Send, CheckCircle, XCircle, Clock, Eye, X, Brain, TrendingUp, AlertTriangle, Target, BarChart3, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -8,12 +8,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 const WhatsAppReports = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [processing, setProcessing] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,6 +51,53 @@ const WhatsAppReports = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const processWithDeepseek = async (reportId: string) => {
+    try {
+      setProcessing(reportId);
+      
+      const { data, error } = await supabase.functions.invoke('process-whatsapp-reports', {
+        body: { reportId }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        toast({
+          title: "Report Processed",
+          description: "WhatsApp report has been analyzed with Deepseek R1",
+        });
+        
+        // Refresh reports to show updated content
+        await fetchWhatsAppReports();
+      } else {
+        throw new Error(data.error || 'Failed to process report');
+      }
+    } catch (error) {
+      console.error('Error processing report:', error);
+      toast({
+        title: "Processing Error",
+        description: "Failed to process report with Deepseek R1",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const isProcessedReport = (report: any) => {
+    return report.content_type === 'processed_analysis';
+  };
+
+  const getProcessedContent = (report: any) => {
+    try {
+      return JSON.parse(report.content);
+    } catch {
+      return null;
     }
   };
 
@@ -220,42 +269,111 @@ const WhatsAppReports = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {reports.map((report) => (
-                    <div key={report.id} className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-foreground">
-                          Report #{report.id.slice(0, 8)}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {new Date(report.created_at).toLocaleDateString()}
+                  {reports.map((report) => {
+                    const processedContent = getProcessedContent(report);
+                    const isProcessed = isProcessedReport(report);
+                    
+                    return (
+                      <div key={report.id} className={`p-4 rounded-lg border transition-all duration-300 ${
+                        isProcessed 
+                          ? 'border-primary/20 bg-gradient-to-r from-primary/5 to-transparent hover:from-primary/10' 
+                          : 'border-border hover:bg-muted/50'
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground">
+                              Report #{report.id.slice(0, 8)}
+                            </p>
+                            {isProcessed && (
+                              <Badge variant="default" className="text-xs bg-primary/10 text-primary border-primary/20">
+                                <Brain className="w-3 h-3 mr-1" />
+                                AI Analyzed
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {new Date(report.created_at).toLocaleDateString()}
+                            </Badge>
+                            {!isProcessed && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => processWithDeepseek(report.id)}
+                                disabled={processing === report.id}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {processing === report.id ? (
+                                  <>
+                                    <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Brain className="w-3 h-3 mr-1" />
+                                    Analyze
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedReport(report);
+                                setDialogOpen(true);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {isProcessed && processedContent?.analysis ? (
+                          <div className="space-y-3">
+                            <div className="p-3 bg-muted/50 rounded-lg">
+                              <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-primary" />
+                                Executive Summary
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {processedContent.analysis.executiveSummary || 'Analysis summary not available'}
+                              </p>
+                            </div>
+                            
+                            {processedContent.analysis.performanceMetrics?.length > 0 && (
+                              <div className="grid grid-cols-2 gap-2">
+                                {processedContent.analysis.performanceMetrics.slice(0, 4).map((metric: any, idx: number) => (
+                                  <div key={idx} className="p-2 bg-background/50 rounded border">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-medium">{metric.metric}</span>
+                                      <Badge variant={metric.trend === 'positive' ? 'default' : metric.trend === 'negative' ? 'destructive' : 'secondary'} className="text-xs">
+                                        {metric.value}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {typeof report.content === 'string' ? report.content : JSON.stringify(report.content).substring(0, 100) + '...'}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center justify-between mt-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {isProcessed ? 'AI Processed' : report.content_type}
                           </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedReport(report);
-                              setDialogOpen(true);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(report.report_date).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {report.content}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {report.content_type}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(report.report_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -358,10 +476,18 @@ const WhatsAppReports = () => {
 
         {/* Report Viewer Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                <span>WhatsApp Report - {selectedReport?.report_date ? new Date(selectedReport.report_date).toLocaleDateString() : ''}</span>
+                <div className="flex items-center gap-2">
+                  <span>WhatsApp Report Analysis</span>
+                  {selectedReport && isProcessedReport(selectedReport) && (
+                    <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
+                      <Brain className="w-3 h-3 mr-1" />
+                      AI Processed
+                    </Badge>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -372,27 +498,223 @@ const WhatsAppReports = () => {
                 </Button>
               </DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[60vh] w-full">
-              <div className="p-4">
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Report ID:</span>
-                    <Badge variant="outline">{selectedReport?.id}</Badge>
+            <ScrollArea className="max-h-[75vh] w-full">
+              <div className="p-6 space-y-6">
+                {selectedReport && isProcessedReport(selectedReport) ? (
+                  // Processed Report View
+                  (() => {
+                    const processedContent = getProcessedContent(selectedReport);
+                    const analysis = processedContent?.analysis;
+                    
+                    if (!analysis) {
+                      return (
+                        <div className="text-center py-8">
+                          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                          <p className="text-muted-foreground">Analysis data could not be loaded</p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="space-y-6">
+                        {/* Executive Summary */}
+                        <Card className="border-primary/20">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                              <TrendingUp className="w-5 h-5" />
+                              Executive Summary
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-foreground leading-relaxed">{analysis.executiveSummary}</p>
+                          </CardContent>
+                        </Card>
+
+                        {/* Performance Metrics */}
+                        {analysis.performanceMetrics?.length > 0 && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-blue-500" />
+                                Performance Metrics
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid gap-4 md:grid-cols-2">
+                                {analysis.performanceMetrics.map((metric: any, idx: number) => (
+                                  <div key={idx} className="p-4 border rounded-lg bg-muted/30">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h4 className="font-semibold text-sm">{metric.metric}</h4>
+                                      <Badge variant={metric.trend === 'positive' ? 'default' : metric.trend === 'negative' ? 'destructive' : 'secondary'}>
+                                        {metric.value}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Trends & Patterns */}
+                        {analysis.trendsAndPatterns?.length > 0 && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 text-green-500" />
+                                Trends & Patterns
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {analysis.trendsAndPatterns.map((trend: any, idx: number) => (
+                                  <div key={idx} className="p-4 border rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h4 className="font-semibold">{trend.title}</h4>
+                                      <Badge variant={trend.impact === 'high' ? 'destructive' : trend.impact === 'medium' ? 'default' : 'secondary'}>
+                                        {trend.impact} impact
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{trend.description}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Recommendations */}
+                        {analysis.recommendations?.length > 0 && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <Target className="w-5 h-5 text-purple-500" />
+                                Actionable Recommendations
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {analysis.recommendations.map((rec: any, idx: number) => (
+                                  <div key={idx} className="p-4 border rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <Badge variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}>
+                                        {rec.priority} priority
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">{rec.timeframe}</span>
+                                    </div>
+                                    <h4 className="font-semibold mb-1">{rec.action}</h4>
+                                    <p className="text-sm text-muted-foreground">{rec.expectedImpact}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Risk Assessment */}
+                        {analysis.riskAssessment && (
+                          <Card className="border-yellow-200">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                                Risk Assessment
+                                <Badge variant={analysis.riskAssessment.overallRisk === 'high' ? 'destructive' : 'secondary'}>
+                                  {analysis.riskAssessment.overallRisk} risk
+                                </Badge>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {analysis.riskAssessment.risks?.length > 0 && (
+                                <div className="space-y-3">
+                                  {analysis.riskAssessment.risks.map((risk: any, idx: number) => (
+                                    <div key={idx} className="p-3 border rounded-lg bg-yellow-50/50">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium">{risk.risk}</span>
+                                        <Badge variant={risk.severity === 'high' ? 'destructive' : 'secondary'} className="text-xs">
+                                          {risk.severity}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{risk.mitigation}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Original Report */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">Original Report Data</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <pre className="whitespace-pre-wrap text-xs font-mono bg-muted p-4 rounded-lg overflow-x-auto max-h-40">
+                              {processedContent?.original || 'Original content not available'}
+                            </pre>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  // Original Report View
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Report ID:</span>
+                        <Badge variant="outline">{selectedReport?.id}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Created:</span>
+                        <span>{selectedReport?.created_at ? new Date(selectedReport.created_at).toLocaleString() : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Type:</span>
+                        <Badge variant="secondary">{selectedReport?.content_type}</Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-center p-6 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                      <div className="text-center">
+                        <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground mb-4">This report hasn't been processed with AI yet</p>
+                        <Button
+                          onClick={() => {
+                            setDialogOpen(false);
+                            processWithDeepseek(selectedReport.id);
+                          }}
+                          disabled={processing === selectedReport?.id}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          {processing === selectedReport?.id ? (
+                            <>
+                              <div className="animate-spin w-4 h-4 border border-current border-t-transparent rounded-full mr-2" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Brain className="w-4 h-4 mr-2" />
+                              Analyze with Deepseek R1
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Raw Report Content</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
+                          {selectedReport?.content}
+                        </pre>
+                      </CardContent>
+                    </Card>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Created:</span>
-                    <span>{selectedReport?.created_at ? new Date(selectedReport.created_at).toLocaleString() : ''}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Type:</span>
-                    <Badge variant="secondary">{selectedReport?.content_type}</Badge>
-                  </div>
-                </div>
-                <div className="prose prose-sm max-w-none">
-                  <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
-                    {selectedReport?.content}
-                  </pre>
-                </div>
+                )}
               </div>
             </ScrollArea>
           </DialogContent>

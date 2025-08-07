@@ -177,26 +177,35 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
+          is_approved: boolean
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
+          is_approved?: boolean
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          is_approved?: boolean
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }

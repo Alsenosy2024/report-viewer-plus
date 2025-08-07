@@ -1,8 +1,10 @@
+import React, { lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import WeeklyOverview from './WeeklyOverview';
-import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users, Calendar } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users, Calendar, RefreshCw } from 'lucide-react';
+
+const WeeklyOverview = lazy(() => import('./WeeklyOverview'));
 
 export const DashboardOverview = () => {
   const stats = [
@@ -162,7 +164,18 @@ export const DashboardOverview = () => {
         </TabsContent>
         
         <TabsContent value="weekly">
-          <WeeklyOverview />
+          <Suspense fallback={
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center">
+                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                  Loading weekly analysis...
+                </div>
+              </CardContent>
+            </Card>
+          }>
+            <WeeklyOverview />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

@@ -25,8 +25,10 @@ export const DashboardOverview = () => {
       }
 
       toast({
-        title: "تم إنشاء النظرة العامة بنجاح",
-        description: "تم تحليل جميع تقارير الأسبوع",
+        title: data?.fromCache ? "تم تحميل النظرة العامة" : "تم إنشاء النظرة العامة بنجاح",
+        description: data?.fromCache
+          ? "تم استرجاع التحليل المحفوظ مسبقاً"
+          : "تم تحليل جميع تقارير الأسبوع باستخدام الذكاء الاصطناعي",
       });
     } catch (error) {
       console.error('Error generating overview:', error);

@@ -22,11 +22,36 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get all reports from this week
+    // Get the current week start date
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     weekStart.setHours(0, 0, 0, 0);
 
+    // Check if analysis already exists for this week
+    const { data: existingAnalysis, error: analysisError } = await supabase
+      .from('weekly_analyses')
+      .select('*')
+      .eq('week_start', weekStart.toISOString().split('T')[0])
+      .single();
+
+    if (analysisError && analysisError.code !== 'PGRST116') {
+      console.error('Error checking existing analysis:', analysisError);
+    }
+
+    if (existingAnalysis) {
+      console.log('Found existing weekly analysis, returning cached data');
+      return new Response(
+        JSON.stringify({
+          ...existingAnalysis.analysis_data,
+          lastReportDate: existingAnalysis.created_at,
+          reportsCount: existingAnalysis.reports_count,
+          fromCache: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get all reports from this week
     const { data: reports, error: reportsError } = await supabase
       .from('reports')
       .select('*')
@@ -167,14 +192,29 @@ serve(async (req) => {
       };
     }
 
+    // Store the analysis in the database
+    const { error: insertError } = await supabase
+      .from('weekly_analyses')
+      .insert({
+        week_start: weekStart.toISOString().split('T')[0],
+        analysis_data: analysisResult,
+        reports_count: reports.length
+      });
+
+    if (insertError) {
+      console.error('Error storing analysis:', insertError);
+      // Continue anyway, return the analysis even if storage fails
+    }
+
     // Add last report date to the response
     const response = {
       ...analysisResult,
       lastReportDate,
-      reportsCount: reports.length
+      reportsCount: reports.length,
+      fromCache: false
     };
 
-    console.log('Weekly overview generated successfully');
+    console.log('Weekly overview generated and stored successfully');
 
     return new Response(
       JSON.stringify(response),

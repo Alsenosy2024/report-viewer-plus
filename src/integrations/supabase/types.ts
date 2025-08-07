@@ -285,6 +285,33 @@ export type Database = {
           },
         ]
       }
+      weekly_analyses: {
+        Row: {
+          analysis_data: Json
+          created_at: string
+          id: string
+          reports_count: number
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          analysis_data: Json
+          created_at?: string
+          id?: string
+          reports_count?: number
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          analysis_data?: Json
+          created_at?: string
+          id?: string
+          reports_count?: number
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

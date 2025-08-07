@@ -46,12 +46,41 @@ interface OverviewData {
   recommendations?: string[];
   lastReportDate?: string;
   reportsCount?: number;
+  fromCache?: boolean;
 }
 
 const WeeklyOverview: React.FC = () => {
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const fetchStoredOverview = async () => {
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from('weekly_analyses')
+      .select('*')
+      .eq('week_start', weekStart.toISOString().split('T')[0])
+      .single();
+
+    if (data && !error) {
+      const analysisData = data.analysis_data as any;
+      setOverviewData({
+        overview: analysisData.overview || 'لا توجد بيانات متاحة',
+        keyMetrics: analysisData.keyMetrics || [],
+        charts: analysisData.charts || [],
+        heatmapData: analysisData.heatmapData,
+        recommendations: analysisData.recommendations || [],
+        lastReportDate: data.created_at,
+        reportsCount: data.reports_count,
+        fromCache: true
+      });
+      return true;
+    }
+    return false;
+  };
 
   const generateOverview = async () => {
     setLoading(true);
@@ -64,8 +93,8 @@ const WeeklyOverview: React.FC = () => {
 
       setOverviewData(data);
       toast({
-        title: "تم إنشاء النظرة العامة بنجاح",
-        description: "تم تحليل جميع تقارير الأسبوع",
+        title: data.fromCache ? "تم تحميل النظرة العامة" : "تم إنشاء النظرة العامة بنجاح",
+        description: data.fromCache ? "تم استرجاع التحليل المحفوظ" : "تم تحليل جميع تقارير الأسبوع",
       });
     } catch (error) {
       console.error('Error generating overview:', error);
@@ -80,7 +109,13 @@ const WeeklyOverview: React.FC = () => {
   };
 
   useEffect(() => {
-    generateOverview();
+    const loadOverview = async () => {
+      const hasStoredData = await fetchStoredOverview();
+      if (!hasStoredData) {
+        generateOverview();
+      }
+    };
+    loadOverview();
   }, []);
 
   const getTrendIcon = (trend?: string) => {
@@ -207,11 +242,18 @@ const WeeklyOverview: React.FC = () => {
               <Calendar className="h-4 w-4" />
               آخر تقرير: {formatDate(overviewData?.lastReportDate)}
             </div>
-            {overviewData?.reportsCount && (
-              <Badge variant="secondary">
-                {overviewData.reportsCount} تقرير هذا الأسبوع
-              </Badge>
-            )}
+            <div className="flex gap-2">
+              {overviewData?.reportsCount && (
+                <Badge variant="secondary">
+                  {overviewData.reportsCount} تقرير هذا الأسبوع
+                </Badge>
+              )}
+              {overviewData?.fromCache && (
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  محفوظ مسبقاً
+                </Badge>
+              )}
+            </div>
             <p className="text-foreground">{overviewData?.overview}</p>
           </div>
         </CardContent>

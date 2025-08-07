@@ -1,12 +1,44 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users, Calendar, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { BarChart3, MessageSquare, TrendingUp, Mail, Bot, Users, Calendar, RefreshCw, Maximize2, TrendingUpIcon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const WeeklyOverview = lazy(() => import('./WeeklyOverview'));
 
 export const DashboardOverview = () => {
+  const [loading, setLoading] = useState(false);
+  const [fullScreenOpen, setFullScreenOpen] = useState(false);
+  const { toast } = useToast();
+
+  const generateWeeklyOverview = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-weekly-overview');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "تم إنشاء النظرة العامة بنجاح",
+        description: "تم تحليل جميع تقارير الأسبوع",
+      });
+    } catch (error) {
+      console.error('Error generating overview:', error);
+      toast({
+        title: "خطأ في إنشاء النظرة العامة",
+        description: "حدث خطأ أثناء تحليل التقارير",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   const stats = [
     {
       title: "WhatsApp Reports",
@@ -80,16 +112,62 @@ export const DashboardOverview = () => {
 
       {/* Tabs for different views */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Dashboard Overview
-          </TabsTrigger>
-          <TabsTrigger value="weekly" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Weekly Analysis
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <TabsList className="grid w-full sm:w-auto grid-cols-2">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard Overview
+            </TabsTrigger>
+            <TabsTrigger value="weekly" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Weekly Analysis
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={generateWeeklyOverview} 
+              disabled={loading} 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Generate Overview
+            </Button>
+            
+            <Dialog open={fullScreenOpen} onOpenChange={setFullScreenOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Maximize2 className="h-4 w-4" />
+                  Full Screen
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full overflow-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <TrendingUpIcon className="h-5 w-5" />
+                    Weekly Analysis - Full Screen
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="flex-1 overflow-auto">
+                  <Suspense fallback={
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-center">
+                          <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                          Loading weekly analysis...
+                        </div>
+                      </CardContent>
+                    </Card>
+                  }>
+                    <WeeklyOverview />
+                  </Suspense>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
         
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Grid */}

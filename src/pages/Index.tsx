@@ -15,6 +15,13 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
+  // SEO
+  useEffect(() => {
+    document.title = 'Professional Engineers Dashboard';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'Professional Engineers analytics dashboard for reports and bot management.');
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -52,21 +59,28 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-dashboard-secondary to-background">
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-16">
+      <main className="container mx-auto px-6 py-16" role="main">
         <div className="text-center mb-16">
-          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow">
+          <header className="mb-8 flex items-center justify-center">
+            <img
+              src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
+              alt="Professional Engineers logo"
+              className="h-14 w-auto drop-shadow-sm"
+              loading="lazy"
+            />
+          </header>
+          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow animate-scale-in">
             <BarChart3 className="w-8 h-8 text-dashboard-primary-foreground" />
           </div>
-          <h1 className="text-5xl font-bold text-foreground mb-6">
-            Interactive Business Dashboard
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+            Professional Engineers Dashboard
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Comprehensive analytics platform with role-based access control, daily reporting, 
-            and bot management for modern businesses.
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Unified analytics and reports with role-based access and bot management — designed for Professional Engineers.
           </p>
           <Button 
             onClick={() => navigate('/auth')}
-            className="bg-gradient-primary hover:opacity-90 transition-all duration-300 shadow-md hover:shadow-glow text-lg px-8 py-3"
+            className="bg-gradient-primary hover:opacity-90 transition-all duration-300 shadow-md hover:shadow-glow text-base md:text-lg px-6 md:px-8 py-3"
           >
             Access Dashboard
           </Button>
@@ -101,7 +115,7 @@ const Index = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 };

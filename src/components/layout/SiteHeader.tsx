@@ -27,28 +27,28 @@ export function SiteHeader() {
   return (
     <header className="bg-card border-b border-card-border h-header sticky top-0 z-50 backdrop-blur-sm bg-card/80">
       <div className="container h-full flex items-center justify-between">
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
           {isDashboard && (
             <SidebarTrigger className="mr-1" aria-label="Open menu" />
           )}
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-3 group" aria-label="Professional Engineers home">
+          <Link to="/" className="flex items-center gap-3 group min-w-0" aria-label="Professional Engineers home">
             <img
               src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
               alt="Professional Engineers logo"
               className="h-8 w-auto"
               loading="lazy"
             />
-            <span className="text-base md:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors">
+            <span className="hidden sm:inline text-sm md:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors max-w-[40vw] md:max-w-none truncate">
               Professional Engineers
             </span>
           </Link>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {!user && (
-            <Button variant="default" size="sm" onClick={() => navigate('/auth')}>
+            <Button variant="default" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/auth')}>
               Sign in
             </Button>
           )}
@@ -56,7 +56,7 @@ export function SiteHeader() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="Account menu">
+                <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full" aria-label="Account menu">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-dashboard-primary text-dashboard-primary-foreground">
                       {getInitials(profile?.full_name)}
@@ -85,7 +85,7 @@ export function SiteHeader() {
           )}
 
           {!isDashboard && (
-            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/dashboard')}>
               Dashboard
             </Button>
           )}

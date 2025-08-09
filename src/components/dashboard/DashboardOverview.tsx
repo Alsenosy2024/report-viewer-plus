@@ -175,6 +175,16 @@ export const DashboardOverview = () => {
           
           <div className="flex gap-2">
             <Button 
+              onClick={() => window.open('https://open-webui-production-7478.up.railway.app/', '_blank')}
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+            >
+              <Bot className="h-4 w-4" />
+              AGENTS
+            </Button>
+            
+            <Button 
               onClick={generateWeeklyOverview} 
               disabled={loading} 
               variant="outline" 

@@ -2,10 +2,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const AwaitingApproval = () => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect approved users away from this page
+  useEffect(() => {
+    if (profile?.is_approved === true) {
+      navigate('/dashboard');
+    }
+  }, [profile, navigate]);
+
+  // Don't render anything for approved users (they'll be redirected)
+  if (profile?.is_approved === true) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

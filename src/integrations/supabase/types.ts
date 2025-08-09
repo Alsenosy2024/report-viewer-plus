@@ -70,24 +70,6 @@ export type Database = {
         }
         Relationships: []
       }
-      email2: {
-        Row: {
-          email: string | null
-          id: number
-          name: string | null
-        }
-        Insert: {
-          email?: string | null
-          id?: number
-          name?: string | null
-        }
-        Update: {
-          email?: string | null
-          id?: number
-          name?: string | null
-        }
-        Relationships: []
-      }
       emails: {
         Row: {
           email: string | null

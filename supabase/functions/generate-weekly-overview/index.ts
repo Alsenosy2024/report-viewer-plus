@@ -249,52 +249,56 @@ serve(async (req) => {
   "crossSectionInsights": ["استنتاج مشترك بين الأقسام"]
 }`;
 
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepseekApiKey) {
-      throw new Error('DEEPSEEK_API_KEY is not configured');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    // Call Deepseek R1 API
-    console.log('Calling Deepseek R1 API...');
-    const deepseekResponse = await fetch('https://api.deepseek.com/chat/completions', {
+    // Call OpenAI GPT-5 Responses API
+    console.log('Calling OpenAI GPT-5 Responses API...');
+    const aiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-reasoner',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { 
-            role: 'user', 
-            content: `تحليل التقارير التالية من هذا الأسبوع:\n\n${JSON.stringify(reportsData, null, 2)}` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000
+        model: 'gpt-5',
+        input: `${systemPrompt}\n\nحلّل التقارير التالية من هذا الأسبوع (JSON):\n\n${JSON.stringify(reportsData)}`
       }),
     });
 
-    if (!deepseekResponse.ok) {
-      const errorText = await deepseekResponse.text();
-      console.error('Deepseek API error:', errorText);
-      throw new Error(`Deepseek API error: ${deepseekResponse.status}`);
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
-    const deepseekData = await deepseekResponse.json();
-    console.log('Deepseek API response received');
+    const aiData = await aiResponse.json();
+    console.log('OpenAI API response received');
 
-    // Merge LLM insights with computed charts/metrics to guarantee interactive, data-driven visuals
+    // Parse response content and extract JSON structure
     let llm: any = null;
     try {
-      const content = deepseekData.choices[0].message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let contentText = '';
+      if (aiData.output_text) {
+        contentText = aiData.output_text;
+      } else if (Array.isArray(aiData.output)) {
+        contentText = aiData.output.map((item: any) => {
+          if (Array.isArray(item?.content)) {
+            return item.content.map((c: any) => c?.text ?? '').join('');
+          }
+          return item?.content?.[0]?.text ?? '';
+        }).join('');
+      } else if (aiData.choices?.[0]?.message?.content) {
+        contentText = aiData.choices[0].message.content;
+      }
+      const jsonMatch = contentText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         llm = JSON.parse(jsonMatch[0]);
       }
     } catch (parseError) {
-      console.error('Error parsing Deepseek response:', parseError);
+      console.error('Error parsing OpenAI response:', parseError);
     }
 
     const analysisResult = {

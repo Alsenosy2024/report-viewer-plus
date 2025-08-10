@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!deepseekApiKey) {
-      throw new Error('DEEPSEEK_API_KEY not found in environment variables');
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY not found in environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -36,22 +36,17 @@ serve(async (req) => {
       throw new Error('Report not found');
     }
 
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-reasoner',
-        messages: [
-          {
-            role: 'system',
-            content: `أنت محلل بيانات خبير متخصص في رسائل البريد الإلكتروني والأداء التسويقي عبر الإيميل. مهمتك تحليل تقارير البريد الإلكتروني وإنشاء رؤى منظمة وقابلة للتنفيذ.
-
-مهم جداً: يجب أن تكون جميع الردود باللغة العربية فقط.
-
-قدّم النتيجة بصيغة JSON بهذا المخطط (القيم باللغة العربية):
+        model: 'gpt-5',
+        input: `أنت محلل بيانات خبير متخصص في رسائل البريد الإلكتروني والأداء التسويقي عبر الإيميل. مهمتك تحليل تقارير البريد الإلكتروني وإنشاء رؤى منظمة وقابلة للتنفيذ.
+\nمهم جداً: يجب أن تكون جميع الردود باللغة العربية فقط.
+\nقدّم النتيجة بصيغة JSON بهذا المخطط (القيم باللغة العربية):
 {
   "executiveSummary": "ملخص تنفيذي قصير باللغة العربية",
   "performanceMetrics": [
@@ -68,25 +63,30 @@ serve(async (req) => {
   "visualSuggestions": [
     {"chartType": "نوع الرسم", "dataPoints": "نقاط البيانات", "purpose": "الغرض"}
   ]
-}`
-          },
-          {
-            role: 'user',
-            content: `يرجى تحليل تقرير البريد الإلكتروني هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 4000
+}\n\nيرجى تحليل تقرير البريد الإلكتروني هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Deepseek API error: ${response.statusText}`);
+      throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const analysisContent = data.choices[0].message.content;
-
+    let analysisContent: string = '';
+    if (data.output_text) {
+      analysisContent = data.output_text;
+    } else if (Array.isArray(data.output)) {
+      analysisContent = data.output.map((item: any) => {
+        if (Array.isArray(item?.content)) {
+          return item.content.map((c: any) => c?.text ?? '').join('');
+        }
+        return item?.content?.[0]?.text ?? '';
+      }).join('');
+    } else if (data.choices?.[0]?.message?.content) {
+      analysisContent = data.choices[0].message.content;
+    } else {
+      analysisContent = typeof data === 'string' ? data : JSON.stringify(data);
+    }
     let parsedAnalysis;
     try {
       const jsonMatch = analysisContent.match(/\{[\s\S]*\}/);
@@ -103,7 +103,7 @@ serve(async (req) => {
         };
       }
     } catch (parseError) {
-      console.error('Failed to parse Deepseek response as JSON:', parseError);
+      console.error('Failed to parse OpenAI response as JSON:', parseError);
       parsedAnalysis = {
         executiveSummary: analysisContent.substring(0, 500),
         performanceMetrics: [],
@@ -121,7 +121,7 @@ serve(async (req) => {
           original: report.content,
           analysis: parsedAnalysis,
           processedAt: new Date().toISOString(),
-          processedBy: 'deepseek-r1'
+          processedBy: 'gpt-5'
         }),
         content_type: 'processed_analysis'
       })

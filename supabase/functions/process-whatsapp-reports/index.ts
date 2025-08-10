@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    if (!deepseekApiKey) {
-      throw new Error('DEEPSEEK_API_KEY not found in environment variables');
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY not found in environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -38,89 +38,39 @@ serve(async (req) => {
       throw new Error('Report not found');
     }
 
-    // Process with Deepseek R1
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    // Process with OpenAI GPT-5 (Responses API)
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-reasoner',
-        messages: [
-          {
-            role: 'system',
-            content: `أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ.
-
-**مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط. لا تستخدم أي لغة أخرى.**
-
-لكل تقرير، قدم التحليل باللغة العربية مع:
-1. **الملخص التنفيذي** - النقاط الرئيسية في 2-3 جمل باللغة العربية
-2. **مقاييس الأداء** - استخراج وإبراز الأرقام المهمة مع التفسير باللغة العربية
-3. **الاتجاهات والأنماط** - تحديد الاتجاهات المهمة باللغة العربية
-4. **التوصيات القابلة للتنفيذ** - 3-5 توصيات محددة باللغة العربية
-5. **تقييم المخاطر** - أي مشاكل أو مخاوف محتملة باللغة العربية
-6. **اقتراحات البيانات المرئية** - اقتراح أنواع الرسوم البيانية باللغة العربية
-
-تذكير: جميع النصوص يجب أن تكون باللغة العربية بما في ذلك العناوين والأوصاف والتوصيات.
-
-قم بتنسيق إجابتك كـ JSON منظم مع المخطط التالي (المحتوى باللغة العربية):
-{
-  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",
-  "performanceMetrics": [
-    {
-      "metric": "اسم المقياس باللغة العربية",
-      "value": "القيمة الرقمية",
-      "trend": "positive|negative|neutral",
-      "description": "وصف مفصل باللغة العربية"
-    }
-  ],
-  "trendsAndPatterns": [
-    {
-      "title": "عنوان الاتجاه باللغة العربية",
-      "description": "وصف مفصل للاتجاه باللغة العربية",
-      "impact": "high|medium|low"
-    }
-  ],
-  "recommendations": [
-    {
-      "priority": "high|medium|low",
-      "action": "إجراء محدد وواضح باللغة العربية",
-      "expectedImpact": "التأثير المتوقع باللغة العربية",
-      "timeframe": "الإطار الزمني باللغة العربية"
-    }
-  ],
-  "riskAssessment": {
-    "level": "high|medium|low",
-    "factors": ["عامل المخاطرة الأول باللغة العربية", "عامل المخاطرة الثاني باللغة العربية"],
-    "mitigation": "استراتيجية التخفيف المفصلة باللغة العربية"
-  },
-  "visualSuggestions": [
-    {
-      "chartType": "نوع الرسم البياني باللغة العربية",
-      "dataPoints": "نقاط البيانات باللغة العربية",
-      "purpose": "الغرض والهدف باللغة العربية"
-    }
-  ]
-}`
-          },
-          {
-            role: 'user',
-            content: `يرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 4000
+        model: 'gpt-5',
+        input: `أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ.\n\n**مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط. لا تستخدم أي لغة أخرى.**\n\nلكل تقرير، قدم التحليل باللغة العربية مع: \n1. الملخص التنفيذي \n2. مقاييس الأداء \n3. الاتجاهات والأنماط \n4. التوصيات القابلة للتنفيذ \n5. تقييم المخاطر \n6. اقتراحات البيانات المرئية \n\nقم بتنسيق إجابتك كـ JSON منظم وفق المخطط التالي (بالعربية):\n{\n  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",\n  "performanceMetrics": [{"metric":"اسم المقياس","value":"قيمة","trend":"positive|negative|neutral","description":"وصف"}],\n  "trendsAndPatterns": [{"title":"عنوان","description":"وصف","impact":"high|medium|low"}],\n  "recommendations": [{"priority":"high|medium|low","action":"إجراء","expectedImpact":"تأثير","timeframe":"إطار زمني"}],\n  "riskAssessment": {"level":"high|medium|low","factors":["عامل"],"mitigation":"خطة"},\n  "visualSuggestions": [{"chartType":"نوع الرسم","dataPoints":"نقاط البيانات","purpose":"الغرض"}]\n}\n\nيرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Deepseek API error: ${response.statusText}`);
+      throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const analysisContent = data.choices[0].message.content;
-    
+    let analysisContent: string = '';
+    if (data.output_text) {
+      analysisContent = data.output_text;
+    } else if (Array.isArray(data.output)) {
+      analysisContent = data.output.map((item: any) => {
+        if (Array.isArray(item?.content)) {
+          return item.content.map((c: any) => c?.text ?? '').join('');
+        }
+        return item?.content?.[0]?.text ?? '';
+      }).join('');
+    } else if (data.choices?.[0]?.message?.content) {
+      analysisContent = data.choices[0].message.content;
+    } else {
+      analysisContent = typeof data === 'string' ? data : JSON.stringify(data);
+    }
     let parsedAnalysis;
     try {
       // Try to extract JSON from the response
@@ -139,7 +89,7 @@ serve(async (req) => {
         };
       }
     } catch (parseError) {
-      console.error('Failed to parse Deepseek response as JSON:', parseError);
+      console.error('Failed to parse OpenAI response as JSON:', parseError);
       parsedAnalysis = {
         executiveSummary: analysisContent.substring(0, 500),
         performanceMetrics: [],
@@ -158,7 +108,7 @@ serve(async (req) => {
           original: report.content,
           analysis: parsedAnalysis,
           processedAt: new Date().toISOString(),
-          processedBy: 'deepseek-r1'
+          processedBy: 'gpt-5'
         }),
         content_type: 'processed_analysis'
       })

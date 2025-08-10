@@ -76,15 +76,10 @@ serve(async (req) => {
     console.log(`Found ${reports?.length || 0} reports from this week`);
 
     if (!reports || reports.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          overview: 'لم يتم العثور على تقارير هذا الأسبوع',
-          charts: [],
-          lastReportDate: null
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('No reports found for this week. Proceeding with empty baseline analysis.');
+      // Continue to build a baseline analysis with zero values and store it
     }
+
 
     // Get the last generated report date
     const lastReportDate = reports[0]?.created_at;

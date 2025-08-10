@@ -254,51 +254,50 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    // Call OpenAI GPT-5 Responses API
+    // Call OpenAI GPT-5 Responses API (continue gracefully on failure)
     console.log('Calling OpenAI GPT-5 Responses API...');
-    const aiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-5',
-        input: `${systemPrompt}\n\nحلّل التقارير التالية من هذا الأسبوع (JSON):\n\n${JSON.stringify(reportsData)}`
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    console.log('OpenAI API response received');
-
-    // Parse response content and extract JSON structure
     let llm: any = null;
     try {
-      let contentText = '';
-      if (aiData.output_text) {
-        contentText = aiData.output_text;
-      } else if (Array.isArray(aiData.output)) {
-        contentText = aiData.output.map((item: any) => {
-          if (Array.isArray(item?.content)) {
-            return item.content.map((c: any) => c?.text ?? '').join('');
-          }
-          return item?.content?.[0]?.text ?? '';
-        }).join('');
-      } else if (aiData.choices?.[0]?.message?.content) {
-        contentText = aiData.choices[0].message.content;
+      const aiResponse = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-5',
+          input: `${systemPrompt}\n\nحلّل التقارير التالية من هذا الأسبوع (JSON):\n\n${JSON.stringify(reportsData)}`
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('OpenAI API error:', errorText);
+      } else {
+        const aiData = await aiResponse.json();
+        console.log('OpenAI API response received');
+
+        // Parse response content and extract JSON structure
+        let contentText = '';
+        if (aiData.output_text) {
+          contentText = aiData.output_text;
+        } else if (Array.isArray(aiData.output)) {
+          contentText = aiData.output.map((item: any) => {
+            if (Array.isArray(item?.content)) {
+              return item.content.map((c: any) => c?.text ?? '').join('');
+            }
+            return item?.content?.[0]?.text ?? '';
+          }).join('');
+        } else if (aiData.choices?.[0]?.message?.content) {
+          contentText = aiData.choices[0].message.content;
+        }
+        const jsonMatch = contentText?.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { llm = JSON.parse(jsonMatch[0]); } catch (e) { console.error('Failed to parse JSON from OpenAI:', e); }
+        }
       }
-      const jsonMatch = contentText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        llm = JSON.parse(jsonMatch[0]);
-      }
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
+    } catch (err) {
+      console.error('OpenAI call failed:', err);
     }
 
     const analysisResult = {

@@ -31,6 +31,7 @@ const AdminSettings = () => {
 
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
   const [newApproved, setNewApproved] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -78,6 +79,7 @@ const AdminSettings = () => {
         body: {
           email: newEmail,
           full_name: newName,
+          password: newPassword,
           role: newRole,
           approved: newApproved,
         },
@@ -87,10 +89,11 @@ const AdminSettings = () => {
       }
       toast({
         title: 'User created',
-        description: data?.tempPassword ? `Temporary password: ${data.tempPassword}` : 'Profile created successfully.',
+        description: 'Profile created successfully.',
       });
       setNewEmail('');
       setNewName('');
+      setNewPassword('');
       setNewRole('user');
       setNewApproved(true);
       await load();
@@ -124,7 +127,7 @@ const AdminSettings = () => {
         </CardHeader>
         <CardContent>
           <section className="mb-6">
-            <form onSubmit={createUser} className="grid gap-4 md:grid-cols-5 items-end">
+            <form onSubmit={createUser} className="grid gap-4 md:grid-cols-6 items-end">
               <div className="md:col-span-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
@@ -132,6 +135,10 @@ const AdminSettings = () => {
               <div className="md:col-span-2">
                 <Label htmlFor="name">Full name</Label>
                 <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Optional" />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
               </div>
               <div>
                 <Label>Role</Label>
@@ -150,7 +157,7 @@ const AdminSettings = () => {
                 <Label htmlFor="approved">Approved</Label>
               </div>
               <div>
-                <Button type="submit" disabled={creating || !newEmail}>
+                <Button type="submit" disabled={creating || !newEmail || !newPassword}>
                   {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Add user
                 </Button>

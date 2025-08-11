@@ -14,16 +14,9 @@ function jsonResponse(body: any, status = 200) {
   });
 }
 
-function randomPassword(length = 14) {
-  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*";
-  const arr = new Uint32Array(length);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (n) => charset[n % charset.length]).join("");
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -35,7 +28,7 @@ serve(async (req) => {
       return jsonResponse({ error: "Missing Supabase environment variables" }, 500);
     }
 
-    // AuthN the caller to ensure only admins can use this function
+    // Authenticate caller and ensure admin role
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabaseUser = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -46,7 +39,6 @@ serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    // Check role via security definer function
     const { data: roleData, error: roleError } = await supabaseUser.rpc("get_user_role", {
       user_id: userData.user.id,
     });
@@ -59,19 +51,22 @@ serve(async (req) => {
     const full_name: string | undefined = body?.full_name;
     const role: "admin" | "user" | undefined = body?.role;
     const approved: boolean = Boolean(body?.approved);
+    const password: string | undefined = body?.password;
 
-    if (!email || !role) {
-      return jsonResponse({ error: "Missing required fields: email, role" }, 400);
+    if (!email || !role || !password) {
+      return jsonResponse({ error: "Missing required fields: email, role, password" }, 400);
+    }
+    if (password.length < 8) {
+      return jsonResponse({ error: "Password must be at least 8 characters" }, 400);
     }
 
     // Admin client for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Create auth user with a temporary password
-    const tempPassword = randomPassword();
+    // Create auth user with provided password
     const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password,
       email_confirm: true,
       user_metadata: { full_name: full_name ?? email },
     });
@@ -99,11 +94,7 @@ serve(async (req) => {
       return jsonResponse({ error: upsertErr.message }, 400);
     }
 
-    return jsonResponse({
-      ok: true,
-      userId: createdUser.user.id,
-      tempPassword, // Display to admin in UI to share securely
-    });
+    return jsonResponse({ ok: true, userId: createdUser.user.id });
   } catch (e) {
     console.error("admin-create-user error", e);
     return jsonResponse({ error: "Unexpected error" }, 500);

@@ -3,11 +3,14 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, ShieldX } from 'lucide-react';
-
 interface AdminProfileRow {
   id: string;
   email: string;
@@ -25,6 +28,12 @@ const AdminSettings = () => {
   const [rows, setRows] = useState<AdminProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+
+  const [newEmail, setNewEmail] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
+  const [newApproved, setNewApproved] = useState(true);
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -61,6 +70,37 @@ const AdminSettings = () => {
     }
   };
 
+  const createUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email: newEmail,
+          full_name: newName,
+          role: newRole,
+          approved: newApproved,
+        },
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+      toast({
+        title: 'User created',
+        description: data?.tempPassword ? `Temporary password: ${data.tempPassword}` : 'Profile created successfully.',
+      });
+      setNewEmail('');
+      setNewName('');
+      setNewRole('user');
+      setNewApproved(true);
+      await load();
+    } catch (err: any) {
+      toast({ title: 'Create user failed', description: err?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (profile?.role !== 'admin') {
     return (
       <DashboardLayout>
@@ -83,6 +123,40 @@ const AdminSettings = () => {
           <CardTitle>Admin Settings — User Approvals</CardTitle>
         </CardHeader>
         <CardContent>
+          <section className="mb-6">
+            <form onSubmit={createUser} className="grid gap-4 md:grid-cols-5 items-end">
+              <div className="md:col-span-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="name">Full name</Label>
+                <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Optional" />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={newRole} onValueChange={(v) => setNewRole(v as 'admin' | 'user')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch id="approved" checked={newApproved} onCheckedChange={setNewApproved} />
+                <Label htmlFor="approved">Approved</Label>
+              </div>
+              <div>
+                <Button type="submit" disabled={creating || !newEmail}>
+                  {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Add user
+                </Button>
+              </div>
+            </form>
+          </section>
           {loading ? (
             <div className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Loading users...</div>
           ) : (

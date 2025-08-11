@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,9 @@ const AdminSettings = () => {
   const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
   const [newApproved, setNewApproved] = useState(true);
   const [creating, setCreating] = useState(false);
+
+  const [roleUpdateId, setRoleUpdateId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -68,6 +72,32 @@ const AdminSettings = () => {
         title: approve ? 'User approved' : 'Access revoked',
         description: approve ? 'The user can now access the dashboard.' : 'The user access has been revoked.'
       });
+    }
+  };
+
+  const updateRole = async (id: string, role: 'admin' | 'user') => {
+    setRoleUpdateId(id);
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', id);
+    setRoleUpdateId(null);
+    if (error) {
+      toast({ title: 'Role update failed', description: error.message, variant: 'destructive' });
+    } else {
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, role } : r)));
+      toast({ title: 'Role updated', description: 'User role has been updated.' });
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase.functions.invoke('admin-delete-user', { body: { userId: id } });
+      if (error) throw new Error(error.message);
+      setRows((prev) => prev.filter((r) => r.id !== id));
+      toast({ title: 'User removed', description: 'The user has been deleted.' });
+    } catch (err: any) {
+      toast({ title: 'Delete failed', description: err?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -182,20 +212,54 @@ const AdminSettings = () => {
                   <TableRow key={r.id}>
                     <TableCell>{r.full_name || '—'}</TableCell>
                     <TableCell>{r.email}</TableCell>
-                    <TableCell className="capitalize">{r.role}</TableCell>
+                    <TableCell>
+                      <Select value={r.role} onValueChange={(v) => updateRole(r.id, v as 'admin' | 'user')}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>{r.is_approved ? 'Approved' : 'Pending'}</TableCell>
                     <TableCell className="text-right">
-                      {r.is_approved ? (
-                        <Button variant="outline" size="sm" onClick={() => approve(r.id, false)} disabled={actionId === r.id}>
-                          {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldX className="h-4 w-4 mr-2" />}
-                          Revoke
-                        </Button>
-                      ) : (
-                        <Button size="sm" onClick={() => approve(r.id, true)} disabled={actionId === r.id}>
-                          {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                          Approve
-                        </Button>
-                      )}
+                      <div className="flex justify-end gap-2">
+                        {r.is_approved ? (
+                          <Button variant="outline" size="sm" onClick={() => approve(r.id, false)} disabled={actionId === r.id}>
+                            {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldX className="h-4 w-4 mr-2" />}
+                            Revoke
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => approve(r.id, true)} disabled={actionId === r.id}>
+                            {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                            Approve
+                          </Button>
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={deletingId === r.id}>
+                              {deletingId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                              Remove
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove user?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the user account and profile.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteUser(r.id)}>
+                                Confirm
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

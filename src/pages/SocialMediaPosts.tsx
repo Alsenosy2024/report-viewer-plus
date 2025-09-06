@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Post {
   id: string;
@@ -71,7 +72,7 @@ const SocialMediaPosts = () => {
         content: content.trim(),
         platform,
         created_by: user.id,
-        status: 'pending'
+        status: 'approved' // Default to approved
       };
 
       if (scheduledFor) {
@@ -127,6 +128,36 @@ const SocialMediaPosts = () => {
       toast({
         title: "Success",
         description: `Post ${newStatus} successfully!`,
+      });
+
+      fetchPosts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!user) return;
+
+    if (!confirm('Are you sure you want to delete this post?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully!",
       });
 
       fetchPosts();
@@ -248,7 +279,29 @@ const SocialMediaPosts = () => {
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    {getStatusBadge(post.status)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          {getStatusBadge(post.status)}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background border shadow-lg z-50">
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'approved')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          Approved
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <XCircle className="w-3 h-3 text-red-600" />
+                          Rejected
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Badge variant="outline" className="capitalize">{post.platform}</Badge>
                     {post.scheduled_for && (
                       <Badge variant="outline" className="gap-1">
@@ -258,27 +311,15 @@ const SocialMediaPosts = () => {
                     )}
                   </div>
                   
-                  {post.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleUpdatePostStatus(post.id, 'approved')}
-                        className="gap-1"
-                      >
-                        <CheckCircle className="w-3 h-3" />
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
-                        className="gap-1"
-                      >
-                        <XCircle className="w-3 h-3" />
-                        Reject
-                      </Button>
-                    </div>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeletePost(post.id)}
+                    className="gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete
+                  </Button>
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-3">{post.content}</p>

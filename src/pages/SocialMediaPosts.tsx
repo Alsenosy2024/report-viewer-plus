@@ -259,7 +259,7 @@ const SocialMediaPosts = () => {
     if (!user || isGeneratingAI) return;
 
     setIsGeneratingAI(true);
-    setAiTimer(120); // 2 minutes in seconds
+    setAiTimer(300); // 5 minutes in seconds
 
     try {
       const response = await fetch("https://primary-production-0039c.up.railway.app/webhook/posts", {
@@ -277,7 +277,7 @@ const SocialMediaPosts = () => {
 
       toast({
         title: "AI Generation Started",
-        description: "N8N workflow triggered! AI is generating posts. This will take about 2 minutes.",
+        description: "N8N workflow triggered! AI is generating posts. This will take about 5 minutes.",
       });
     } catch (error) {
       console.error("Error triggering N8N workflow:", error);

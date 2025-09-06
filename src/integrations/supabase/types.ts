@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -48,6 +48,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "courses prices": {
+        Row: {
+          "course details": string | null
+          "course name": string | null
+          "course price": number | null
+          currency: string | null
+          id: number
+        }
+        Insert: {
+          "course details"?: string | null
+          "course name"?: string | null
+          "course price"?: number | null
+          currency?: string | null
+          id?: number
+        }
+        Update: {
+          "course details"?: string | null
+          "course name"?: string | null
+          "course price"?: number | null
+          currency?: string | null
+          id?: number
+        }
+        Relationships: []
       }
       documents: {
         Row: {
@@ -157,6 +181,66 @@ export type Database = {
           id?: number
           message?: Json
           session_id?: string
+        }
+        Relationships: []
+      }
+      pmp: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          metadata: Json | null
+          platform: string
+          scheduled_for: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          metadata?: Json | null
+          platform?: string
+          scheduled_for?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          metadata?: Json | null
+          platform?: string
+          scheduled_for?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -317,8 +401,8 @@ export type Database = {
       }
       can_access_section: {
         Args: {
-          user_id: string
           section_name: Database["public"]["Enums"]["dashboard_section"]
+          user_id: string
         }
         Returns: boolean
       }
@@ -379,10 +463,10 @@ export type Database = {
         Returns: string
       }
       match_documents: {
-        Args: { query_embedding: string; match_count?: number; filter?: Json }
+        Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
-          id: number
           content: string
+          id: number
           metadata: Json
           similarity: number
         }[]
@@ -390,10 +474,10 @@ export type Database = {
       match_testrag: {
         Args:
           | { filter: Json; match_count: number; query_embedding: string }
-          | { query_embedding: string; match_count?: number; filter?: Json }
+          | { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
-          id: number
           content: string
+          id: number
           metadata: Json
           similarity: number
         }[]

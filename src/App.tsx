@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import AdminSettings from "./pages/AdminSettings";
 import AwaitingApproval from "./pages/AwaitingApproval";
 import BotControls from "./pages/BotControls";
+import SocialMediaPosts from "./pages/SocialMediaPosts";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -71,6 +72,11 @@ const App = () => (
               <Route path="/bots" element={
                 <ProtectedRoute>
                   <BotControls />
+                </ProtectedRoute>
+              } />
+              <Route path="/social-posts" element={
+                <ProtectedRoute>
+                  <SocialMediaPosts />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

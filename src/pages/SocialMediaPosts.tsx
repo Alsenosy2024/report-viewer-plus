@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Post {
@@ -32,6 +33,7 @@ const SocialMediaPosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   
   // Form state
   const [content, setContent] = useState("");
@@ -168,6 +170,66 @@ const SocialMediaPosts = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditPost = (post: Post) => {
+    setEditingPost(post);
+    setContent(post.content);
+    setPlatform(post.platform);
+    setScheduledFor(post.scheduled_for ? new Date(post.scheduled_for).toISOString().slice(0, 16) : "");
+  };
+
+  const handleUpdatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !content.trim() || !editingPost) return;
+
+    setIsLoading(true);
+    try {
+      const updateData: any = {
+        content: content.trim(),
+        platform,
+        updated_at: new Date().toISOString()
+      };
+
+      if (scheduledFor) {
+        updateData.scheduled_for = scheduledFor;
+      } else {
+        updateData.scheduled_for = null;
+      }
+
+      const { error } = await supabase
+        .from('posts')
+        .update(updateData)
+        .eq('id', editingPost.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post updated successfully!",
+      });
+
+      setEditingPost(null);
+      setContent("");
+      setPlatform("general");
+      setScheduledFor("");
+      fetchPosts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPost(null);
+    setContent("");
+    setPlatform("general");
+    setScheduledFor("");
   };
 
   const getStatusBadge = (status: string) => {
@@ -311,15 +373,26 @@ const SocialMediaPosts = () => {
                     )}
                   </div>
                   
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeletePost(post.id)}
-                    className="gap-1"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Delete
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditPost(post)}
+                      className="gap-1"
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeletePost(post.id)}
+                      className="gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-3">{post.content}</p>
@@ -337,6 +410,68 @@ const SocialMediaPosts = () => {
           ))
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingPost} onOpenChange={() => handleCancelEdit()}>
+        <DialogContent className="max-w-2xl bg-background border shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+            <DialogDescription>
+              Update your social media post content and settings.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdatePost} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-content">Content</Label>
+              <Textarea
+                id="edit-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write your social media post content..."
+                required
+                rows={4}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-platform">Platform</Label>
+                <Select value={platform} onValueChange={setPlatform}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="twitter">Twitter</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-scheduled">Scheduled For (Optional)</Label>
+                <Input
+                  id="edit-scheduled"
+                  type="datetime-local"
+                  value={scheduledFor}
+                  onChange={(e) => setScheduledFor(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading || !content.trim()}>
+                {isLoading ? "Updating..." : "Update Post"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

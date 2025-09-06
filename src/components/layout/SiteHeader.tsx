@@ -22,7 +22,8 @@ export function SiteHeader() {
     location.pathname.startsWith('/ads-reports') ||
     location.pathname.startsWith('/mail-reports') ||
     location.pathname.startsWith('/admin') ||
-    location.pathname.startsWith('/bots');
+    location.pathname.startsWith('/bots') ||
+    location.pathname.startsWith('/social-posts');
 
   return (
     <header className="bg-card border-b border-card-border h-header sticky top-0 z-50 backdrop-blur-sm bg-card/80">
@@ -71,6 +72,7 @@ export function SiteHeader() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => navigate('/dashboard')}>Go to Dashboard</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => navigate('/social-posts')}>Social Media Posts</DropdownMenuItem>
                 {profile?.role === 'admin' && (
                   <DropdownMenuItem onSelect={() => navigate('/admin/settings')}>
                     <Settings className="mr-2 h-4 w-4" /> Settings

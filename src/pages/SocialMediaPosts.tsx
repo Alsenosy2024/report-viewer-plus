@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Post {
@@ -35,6 +35,10 @@ const SocialMediaPosts = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   
+  // AI Generation state
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiTimer, setAiTimer] = useState(0);
+  
   // Form state
   const [content, setContent] = useState("");
   const [platform, setPlatform] = useState("general");
@@ -45,6 +49,25 @@ const SocialMediaPosts = () => {
       fetchPosts();
     }
   }, [user]);
+
+  // AI Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (aiTimer > 0) {
+      interval = setInterval(() => {
+        setAiTimer((prev) => {
+          if (prev <= 1) {
+            setIsGeneratingAI(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [aiTimer]);
 
   const fetchPosts = async () => {
     try {
@@ -232,6 +255,42 @@ const SocialMediaPosts = () => {
     setScheduledFor("");
   };
 
+  const handleGenerateWithAI = async () => {
+    if (!user || isGeneratingAI) return;
+
+    setIsGeneratingAI(true);
+    setAiTimer(120); // 2 minutes in seconds
+
+    try {
+      const response = await fetch("https://primary-production-0039c.up.railway.app/webhook/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "no-cors",
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          user_id: user.id,
+          triggered_from: window.location.origin,
+        }),
+      });
+
+      toast({
+        title: "AI Generation Started",
+        description: "AI is generating posts. This will take about 2 minutes.",
+      });
+    } catch (error) {
+      console.error("Error triggering AI generation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to trigger AI post generation. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingAI(false);
+      setAiTimer(0);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -261,10 +320,21 @@ const SocialMediaPosts = () => {
           <h1 className="text-3xl font-bold">Social Media Posts</h1>
           <p className="text-muted-foreground">Manage your social media content and approvals</p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add New Post
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleGenerateWithAI} 
+            disabled={isGeneratingAI}
+            className="gap-2"
+            variant="secondary"
+          >
+            <Sparkles className="w-4 h-4" />
+            {isGeneratingAI ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "Generate Posts with AI"}
+          </Button>
+          <Button onClick={() => setShowAddForm(!showAddForm)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add New Post
+          </Button>
+        </div>
       </div>
 
       {showAddForm && (

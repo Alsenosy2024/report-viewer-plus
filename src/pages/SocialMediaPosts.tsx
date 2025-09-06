@@ -262,7 +262,7 @@ const SocialMediaPosts = () => {
     setAiTimer(120); // 2 minutes in seconds
 
     try {
-      const response = await fetch("https://primary-production-0039c.up.railway.app/webhook-test/posts", {
+      const response = await fetch("https://primary-production-0039c.up.railway.app/webhook/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -277,13 +277,13 @@ const SocialMediaPosts = () => {
 
       toast({
         title: "AI Generation Started",
-        description: "AI is generating posts. This will take about 2 minutes.",
+        description: "N8N workflow triggered! AI is generating posts. This will take about 2 minutes.",
       });
     } catch (error) {
-      console.error("Error triggering AI generation:", error);
+      console.error("Error triggering N8N workflow:", error);
       toast({
         title: "Error",
-        description: "Failed to trigger AI post generation. Please try again.",
+        description: "Failed to trigger N8N workflow. Please try again.",
         variant: "destructive",
       });
       setIsGeneratingAI(false);

@@ -57,6 +57,9 @@ const SocialMediaPosts = () => {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
+  
+  // Filter state
+  const [filterByAccount, setFilterByAccount] = useState<string>("all");
 
   useEffect(() => {
     if (user) {
@@ -484,6 +487,37 @@ const SocialMediaPosts = () => {
         </div>
       </div>
 
+      {/* Filter Section */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <Label htmlFor="account-filter">Filter by Account:</Label>
+            <Select value={filterByAccount} onValueChange={setFilterByAccount}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Accounts</SelectItem>
+                {socialUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filterByAccount !== "all" && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setFilterByAccount("all")}
+              >
+                Clear Filter
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {showAddUserForm && (
         <Card className="mb-6">
           <CardHeader>
@@ -592,14 +626,21 @@ const SocialMediaPosts = () => {
       )}
 
       <div className="space-y-4">
-        {posts.length === 0 ? (
+        {posts.filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount).length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">No posts found. Create your first post to get started!</p>
+              <p className="text-muted-foreground">
+                {filterByAccount === "all" 
+                  ? "No posts found. Create your first post to get started!"
+                  : "No posts found for this account. Try selecting a different account or clear the filter."
+                }
+              </p>
             </CardContent>
           </Card>
         ) : (
-          posts.map((post) => (
+          posts
+            .filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount)
+            .map((post) => (
             <Card key={post.id}>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">

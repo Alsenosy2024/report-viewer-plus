@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Post {
@@ -25,6 +25,11 @@ interface Post {
   approved_at: string | null;
   scheduled_for: string | null;
   metadata: any;
+}
+
+interface SocialUser {
+  id: string;
+  name: string;
 }
 
 const SocialMediaPosts = () => {
@@ -43,6 +48,16 @@ const SocialMediaPosts = () => {
   const [content, setContent] = useState("");
   const [platform, setPlatform] = useState("general");
   const [scheduledFor, setScheduledFor] = useState("");
+  
+  // User selection state
+  const [socialUsers, setSocialUsers] = useState<SocialUser[]>([
+    { id: "1", name: "د.احمد السنوسى" },
+    { id: "2", name: "فهد العتيبى" },
+    { id: "3", name: "محمد عبد الستار" }
+  ]);
+  const [selectedUser, setSelectedUser] = useState<string>(socialUsers[0]?.id || "");
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -89,15 +104,20 @@ const SocialMediaPosts = () => {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !content.trim()) return;
+    if (!user || !content.trim() || !selectedUser) return;
 
     setIsLoading(true);
     try {
+      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
       const postData: any = {
         content: content.trim(),
         platform,
         created_by: user.id,
-        status: 'approved' // Default to approved
+        status: 'approved', // Default to approved
+        metadata: {
+          social_user_id: selectedUser,
+          social_user_name: selectedUserData?.name
+        }
       };
 
       if (scheduledFor) {
@@ -120,6 +140,7 @@ const SocialMediaPosts = () => {
       setContent("");
       setPlatform("general");
       setScheduledFor("");
+      setSelectedUser(socialUsers[0]?.id || "");
       setShowAddForm(false);
       fetchPosts();
     } catch (error: any) {
@@ -200,18 +221,24 @@ const SocialMediaPosts = () => {
     setContent(post.content);
     setPlatform(post.platform);
     setScheduledFor(post.scheduled_for ? new Date(post.scheduled_for).toISOString().slice(0, 16) : "");
+    setSelectedUser(post.metadata?.social_user_id || socialUsers[0]?.id || "");
   };
 
   const handleUpdatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !content.trim() || !editingPost) return;
+    if (!user || !content.trim() || !editingPost || !selectedUser) return;
 
     setIsLoading(true);
     try {
+      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
       const updateData: any = {
         content: content.trim(),
         platform,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        metadata: {
+          social_user_id: selectedUser,
+          social_user_name: selectedUserData?.name
+        }
       };
 
       if (scheduledFor) {
@@ -236,6 +263,7 @@ const SocialMediaPosts = () => {
       setContent("");
       setPlatform("general");
       setScheduledFor("");
+      setSelectedUser(socialUsers[0]?.id || "");
       fetchPosts();
     } catch (error: any) {
       toast({
@@ -253,6 +281,25 @@ const SocialMediaPosts = () => {
     setContent("");
     setPlatform("general");
     setScheduledFor("");
+    setSelectedUser(socialUsers[0]?.id || "");
+  };
+
+  const handleAddUser = () => {
+    if (!newUserName.trim()) return;
+    
+    const newUser: SocialUser = {
+      id: Date.now().toString(),
+      name: newUserName.trim()
+    };
+    
+    setSocialUsers([...socialUsers, newUser]);
+    setNewUserName("");
+    setShowAddUserForm(false);
+    
+    toast({
+      title: "Success",
+      description: "User added successfully!",
+    });
   };
 
   const handleGenerateWithAI = async () => {
@@ -322,6 +369,14 @@ const SocialMediaPosts = () => {
         </div>
         <div className="flex gap-2">
           <Button 
+            onClick={() => setShowAddUserForm(!showAddUserForm)} 
+            variant="outline"
+            className="gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add User
+          </Button>
+          <Button 
             onClick={handleGenerateWithAI} 
             disabled={isGeneratingAI}
             className="gap-2"
@@ -336,6 +391,36 @@ const SocialMediaPosts = () => {
           </Button>
         </div>
       </div>
+
+      {showAddUserForm && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Add New User</CardTitle>
+            <CardDescription>Add a new social media account to post from</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="username">User Name</Label>
+                <Input
+                  id="username"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="Enter user name..."
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <Button onClick={handleAddUser} disabled={!newUserName.trim()}>
+                  Add User
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddUserForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showAddForm && (
         <Card className="mb-6">
@@ -357,7 +442,23 @@ const SocialMediaPosts = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="user">User Account</Label>
+                  <Select value={selectedUser} onValueChange={setSelectedUser}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {socialUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div>
                   <Label htmlFor="platform">Platform</Label>
                   <Select value={platform} onValueChange={setPlatform}>
@@ -386,7 +487,7 @@ const SocialMediaPosts = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading || !content.trim()}>
+                <Button type="submit" disabled={isLoading || !content.trim() || !selectedUser}>
                   {isLoading ? "Creating..." : "Create Post"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
@@ -434,6 +535,12 @@ const SocialMediaPosts = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    {post.metadata?.social_user_name && (
+                      <Badge variant="outline" className="gap-1">
+                        <Users className="w-3 h-3" />
+                        {post.metadata.social_user_name}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="capitalize">{post.platform}</Badge>
                     {post.scheduled_for && (
                       <Badge variant="outline" className="gap-1">
@@ -503,7 +610,23 @@ const SocialMediaPosts = () => {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit-user">User Account</Label>
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {socialUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div>
                 <Label htmlFor="edit-platform">Platform</Label>
                 <Select value={platform} onValueChange={setPlatform}>
@@ -535,7 +658,7 @@ const SocialMediaPosts = () => {
               <Button type="button" variant="outline" onClick={handleCancelEdit}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading || !content.trim()}>
+              <Button type="submit" disabled={isLoading || !content.trim() || !selectedUser}>
                 {isLoading ? "Updating..." : "Update Post"}
               </Button>
             </div>

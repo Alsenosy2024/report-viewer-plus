@@ -30,6 +30,8 @@ interface Post {
 interface SocialUser {
   id: string;
   name: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const SocialMediaPosts = () => {
@@ -50,18 +52,15 @@ const SocialMediaPosts = () => {
   const [scheduledFor, setScheduledFor] = useState("");
   
   // User selection state
-  const [socialUsers, setSocialUsers] = useState<SocialUser[]>([
-    { id: "1", name: "د.احمد السنوسى" },
-    { id: "2", name: "فهد العتيبى" },
-    { id: "3", name: "محمد عبد الستار" }
-  ]);
-  const [selectedUser, setSelectedUser] = useState<string>(socialUsers[0]?.id || "");
+  const [socialUsers, setSocialUsers] = useState<SocialUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>("");
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
 
   useEffect(() => {
     if (user) {
       fetchPosts();
+      fetchSocialUsers();
     }
   }, [user]);
 
@@ -93,6 +92,85 @@ const SocialMediaPosts = () => {
 
       if (error) throw error;
       setPosts((data || []) as Post[]);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchSocialUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('social_users')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      const users = (data || []) as SocialUser[];
+      setSocialUsers(users);
+      if (users.length > 0 && !selectedUser) {
+        setSelectedUser(users[0].id);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddUser = async () => {
+    if (!newUserName.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('social_users')
+        .insert([{ name: newUserName.trim() }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User added successfully!",
+      });
+
+      setNewUserName("");
+      setShowAddUserForm(false);
+      fetchSocialUsers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('social_users')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User deleted successfully!",
+      });
+
+      fetchSocialUsers();
+      // Reset selected user if deleted user was selected
+      if (selectedUser === userId) {
+        setSelectedUser("");
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -284,24 +362,6 @@ const SocialMediaPosts = () => {
     setSelectedUser(socialUsers[0]?.id || "");
   };
 
-  const handleAddUser = () => {
-    if (!newUserName.trim()) return;
-    
-    const newUser: SocialUser = {
-      id: Date.now().toString(),
-      name: newUserName.trim()
-    };
-    
-    setSocialUsers([...socialUsers, newUser]);
-    setNewUserName("");
-    setShowAddUserForm(false);
-    
-    toast({
-      title: "Success",
-      description: "User added successfully!",
-    });
-  };
-
   const handleGenerateWithAI = async () => {
     if (!user || isGeneratingAI) return;
 
@@ -376,6 +436,35 @@ const SocialMediaPosts = () => {
             <UserPlus className="w-4 h-4" />
             Add User
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Users className="w-4 h-4" />
+                Manage Users
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {socialUsers.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No users found
+                </div>
+              ) : (
+                socialUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between px-2 py-1.5">
+                    <span className="text-sm truncate flex-1">{user.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button 
             onClick={handleGenerateWithAI} 
             disabled={isGeneratingAI}

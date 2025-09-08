@@ -363,6 +363,27 @@ export type Database = {
           },
         ]
       }
+      social_users: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       weekly_analyses: {
         Row: {
           analysis_data: Json

@@ -25,6 +25,7 @@ interface Post {
   approved_at: string | null;
   scheduled_for: string | null;
   metadata: any;
+  user_name: string | null;
 }
 
 interface SocialUser {
@@ -192,6 +193,7 @@ const SocialMediaPosts = () => {
         platform,
         created_by: user.id,
         status: 'approved', // Default to approved
+        user_name: selectedUserData?.name,
         metadata: {
           social_user_id: selectedUser,
           social_user_name: selectedUserData?.name
@@ -313,6 +315,7 @@ const SocialMediaPosts = () => {
         content: content.trim(),
         platform,
         updated_at: new Date().toISOString(),
+        user_name: selectedUserData?.name,
         metadata: {
           social_user_id: selectedUser,
           social_user_name: selectedUserData?.name
@@ -624,10 +627,10 @@ const SocialMediaPosts = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    {post.metadata?.social_user_name && (
+                    {post.user_name && (
                       <Badge variant="outline" className="gap-1">
                         <Users className="w-3 h-3" />
-                        {post.metadata.social_user_name}
+                        {post.user_name}
                       </Badge>
                     )}
                     <Badge variant="outline" className="capitalize">{post.platform}</Badge>

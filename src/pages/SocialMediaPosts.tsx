@@ -375,7 +375,7 @@ const SocialMediaPosts = () => {
     setAiTimer(300); // 5 minutes in seconds
 
     try {
-      const response = await fetch("https://primary-production-0039c.up.railway.app/webhook/posts", {
+      const response = await fetch("https://primary-production-245af.up.railway.app/webhook/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

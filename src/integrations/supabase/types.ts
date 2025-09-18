@@ -283,27 +283,6 @@ export type Database = {
         }
         Relationships: []
       }
-      rag: {
-        Row: {
-          content: string | null
-          embedding: string | null
-          id: number
-          metadata: Json | null
-        }
-        Insert: {
-          content?: string | null
-          embedding?: string | null
-          id?: number
-          metadata?: Json | null
-        }
-        Update: {
-          content?: string | null
-          embedding?: string | null
-          id?: number
-          metadata?: Json | null
-        }
-        Relationships: []
-      }
       reports: {
         Row: {
           content: string
@@ -411,6 +390,36 @@ export type Database = {
           reports_count?: number
           updated_at?: string
           week_start?: string
+        }
+        Relationships: []
+      }
+      whatsapp_contacts: {
+        Row: {
+          chat_summary: string | null
+          created_at: string
+          id: number
+          name: string
+          phone_e164: string
+          reply: Database["public"]["Enums"]["reply_enum"]
+          status: Database["public"]["Enums"]["status_enum"]
+        }
+        Insert: {
+          chat_summary?: string | null
+          created_at?: string
+          id?: never
+          name: string
+          phone_e164: string
+          reply?: Database["public"]["Enums"]["reply_enum"]
+          status?: Database["public"]["Enums"]["status_enum"]
+        }
+        Update: {
+          chat_summary?: string | null
+          created_at?: string
+          id?: never
+          name?: string
+          phone_e164?: string
+          reply?: Database["public"]["Enums"]["reply_enum"]
+          status?: Database["public"]["Enums"]["status_enum"]
         }
         Relationships: []
       }
@@ -550,6 +559,8 @@ export type Database = {
         | "ads_reports"
         | "mail_reports"
         | "bot_controls"
+      reply_enum: "Bot" | "moderator"
+      status_enum: "Todo" | "In progress" | "Done" | "new"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -685,6 +696,8 @@ export const Constants = {
         "mail_reports",
         "bot_controls",
       ],
+      reply_enum: ["Bot", "moderator"],
+      status_enum: ["Todo", "In progress", "Done", "new"],
       user_role: ["admin", "user"],
     },
   },

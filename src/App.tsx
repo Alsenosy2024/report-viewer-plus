@@ -17,6 +17,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AwaitingApproval from "./pages/AwaitingApproval";
 import BotControls from "./pages/BotControls";
 import SocialMediaPosts from "./pages/SocialMediaPosts";
+import CoursesPrices from "./pages/CoursesPrices";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -77,6 +78,11 @@ const App = () => (
               <Route path="/social-posts" element={
                 <ProtectedRoute>
                   <SocialMediaPosts />
+                </ProtectedRoute>
+              } />
+              <Route path="/courses-prices" element={
+                <ProtectedRoute>
+                  <CoursesPrices />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

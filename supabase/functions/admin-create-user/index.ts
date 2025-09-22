@@ -72,7 +72,15 @@ serve(async (req) => {
     });
 
     if (createErr || !createdUser?.user) {
-      return jsonResponse({ error: createErr?.message ?? "Failed to create user" }, 400);
+      console.error("User creation error:", createErr);
+      let errorMessage = createErr?.message ?? "Failed to create user";
+      
+      // Handle specific error cases
+      if (createErr?.message?.includes("already been registered")) {
+        errorMessage = `A user with email ${email} already exists`;
+      }
+      
+      return jsonResponse({ error: errorMessage }, 400);
     }
 
     // Upsert profile with chosen role and approval

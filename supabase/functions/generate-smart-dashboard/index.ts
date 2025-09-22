@@ -38,54 +38,108 @@ serve(async (req) => {
 
     console.log(`Found ${reports?.length || 0} reports from last 7 days`);
 
-    // Prepare detailed data analysis
-    const reportsAnalysis = {
-      total: reports?.length || 0,
-      by_section: {},
-      by_day: {},
-      by_content_type: {},
+    // Smart Content Analysis - Focus on actual content insights
+    console.log('Starting intelligent content analysis...');
+    
+    const contentAnalysis = {
+      total_reports: reports?.length || 0,
+      content_insights: {},
+      performance_metrics: {},
       trends: {},
-      performance_indicators: {}
+      key_findings: [],
+      recommendations: []
     };
 
     const sections = ['whatsapp_reports', 'productivity_reports', 'ads_reports', 'mail_reports'];
     const sectionLabels: Record<string, string> = {
       whatsapp_reports: 'تقارير الواتساب',
-      productivity_reports: 'تقارير الإنتاجية',
+      productivity_reports: 'تقارير الإنتاجية', 
       ads_reports: 'تحليلات الإعلانات',
       mail_reports: 'تقارير البريد الإلكتروني'
     };
 
-    // Analyze data
+    // Smart content extraction and analysis
     if (reports && reports.length > 0) {
-      // By section analysis
+      console.log('Analyzing report content for insights...');
+      
       sections.forEach(section => {
         const sectionReports = reports.filter(r => r.section === section);
-        reportsAnalysis.by_section[section] = {
-          count: sectionReports.length,
-          processed: sectionReports.filter(r => r.content_type === 'processed_analysis').length,
-          recent: sectionReports.slice(0, 3).map(r => ({
-            date: r.created_at,
-            content_preview: (typeof r.content === 'string' ? r.content : String(r.content)).substring(0, 200)
-          }))
-        };
+        
+        if (sectionReports.length > 0) {
+          // Extract content insights
+          const contentTexts = sectionReports.map(r => {
+            let content = typeof r.content === 'string' ? r.content : String(r.content || '');
+            
+            // Clean HTML content for analysis
+            content = content.replace(/<[^>]*>/g, ' ')
+                           .replace(/\s+/g, ' ')
+                           .trim();
+            
+            return {
+              date: r.created_at,
+              content: content.substring(0, 2000), // Take first 2000 chars for analysis
+              section: section
+            };
+          });
+
+          // Analyze content for key metrics and insights
+          const metrics = extractContentMetrics(contentTexts, section);
+          
+          contentAnalysis.content_insights[section] = {
+            total_reports: sectionReports.length,
+            latest_content: contentTexts.slice(0, 3),
+            extracted_metrics: metrics,
+            content_summary: generateContentSummary(contentTexts)
+          };
+        }
+      });
+    }
+
+    // Helper function to extract metrics from content
+    function extractContentMetrics(contentTexts: any[], section: string) {
+      const metrics = {
+        keywords: {},
+        numbers_found: [],
+        sentiment_indicators: [],
+        performance_data: {}
+      };
+
+      contentTexts.forEach(item => {
+        // Extract numbers (potential KPIs)
+        const numbers = item.content.match(/\d+/g) || [];
+        metrics.numbers_found.push(...numbers.map(n => parseInt(n)).filter(n => n > 0 && n < 1000000));
+
+        // Extract performance keywords based on section
+        if (section === 'whatsapp_reports') {
+          const keywords = ['رد', 'عميل', 'استفسار', 'مكالمة', 'رسالة', 'وقت', 'دقيقة', 'ساعة'];
+          keywords.forEach(keyword => {
+            const count = (item.content.match(new RegExp(keyword, 'g')) || []).length;
+            if (count > 0) {
+              metrics.keywords[keyword] = (metrics.keywords[keyword] || 0) + count;
+            }
+          });
+        } else if (section === 'productivity_reports') {
+          const keywords = ['مهمة', 'إنجاز', 'تأخير', 'موعد', 'اكتمل', 'منجز', 'متأخر'];
+          keywords.forEach(keyword => {
+            const count = (item.content.match(new RegExp(keyword, 'g')) || []).length;
+            if (count > 0) {
+              metrics.keywords[keyword] = (metrics.keywords[keyword] || 0) + count;
+            }
+          });
+        }
       });
 
-      // Daily analysis
-      for (let i = 0; i < 7; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        const dayReports = reports.filter(r => r.created_at.startsWith(dateStr));
-        
-        reportsAnalysis.by_day[dateStr] = {
-          count: dayReports.length,
-          sections: sections.reduce((acc, section) => {
-            acc[section] = dayReports.filter(r => r.section === section).length;
-            return acc;
-          }, {} as Record<string, number>)
-        };
-      }
+      return metrics;
+    }
+
+    // Helper function to generate content summary
+    function generateContentSummary(contentTexts: any[]) {
+      if (contentTexts.length === 0) return 'لا توجد تقارير للتحليل';
+      
+      const totalLength = contentTexts.reduce((sum, item) => sum + item.content.length, 0);
+      const avgLength = Math.round(totalLength / contentTexts.length);
+      
+      return `تم تحليل ${contentTexts.length} تقرير بمتوسط ${avgLength} حرف لكل تقرير`;
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -106,18 +160,22 @@ serve(async (req) => {
           controller.abort();
         }, 25000); // 25 second timeout
 
-        const systemPrompt = `أنت محلل بيانات ذكي متخصص في إنتاج لوحات معلومات تفاعلية متطورة باللغة العربية.
+        const systemPrompt = `أنت محلل محتوى ذكي متخصص في تحليل التقارير وإنتاج insights عملية باللغة العربية.
 
-المطلوب منك إنتاج كود HTML كامل متطور يحتوي على:
-- رسوم بيانية تفاعلية (Chart.js)
-- خرائط حرارية للأيام السبعة
-- مؤشرات أداء رئيسية (KPIs)
-- تحليلات مكتوبة ذكية
-- تصميم responsive حديث
-- ألوان وتدرجات جذابة
+مهمتك الأساسية:
+1. تحليل محتوى التقارير النصية واستخراج المعلومات المفيدة
+2. تحديد المؤشرات الرئيسية من النصوص (أرقام، أوقات، أداء)
+3. إنتاج تحليلات عملية وتوصيات قابلة للتنفيذ
+4. إنشاء HTML متطور يعرض هذه التحليلات بشكل جذاب
 
-يجب أن يكون الكود HTML مكتمل ومستقل، يعمل بشكل مستقل دون اعتماد على ملفات خارجية.
-قم بإنتاج HTML واحد فقط كامل ومتطور.`;
+تركز على:
+- استخراج البيانات الفعلية من النصوص
+- تحليل أداء خدمة العملاء (أوقات الرد، جودة الخدمة)
+- تحليل الإنتاجية (المهام المكتملة، التأخيرات)
+- تحليل المبيعات والتسويق (الطلبات، الاستفسارات)
+- إنتاج توصيات عملية للتحسين
+
+أنتج HTML كامل ومستقل مع تحليلات ذكية مبنية على المحتوى الفعلي.`;
 
         const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -132,12 +190,19 @@ serve(async (req) => {
               { role: 'system', content: systemPrompt },
               { 
                 role: 'user', 
-                content: `حلّل البيانات التالية وأنتج لوحة معلومات HTML متطورة:
+                content: `حلّل محتوى التقارير التالية واستخرج insights ذكية:
 
-البيانات المتاحة:
-${JSON.stringify(reportsAnalysis, null, 2)}
+تحليل المحتوى:
+${JSON.stringify(contentAnalysis, null, 2)}
 
-أنتج كود HTML كامل ومتطور للداشبورد الذكي.`
+المطلوب:
+1. تحليل عميق لمحتوى التقارير (ليس فقط العدد)
+2. استخراج مؤشرات أداء فعلية من النصوص
+3. تحديد اتجاهات وأنماط من البيانات النصية
+4. إنتاج توصيات عملية للتحسين
+5. إنشاء HTML متطور يعرض هذه التحليلات
+
+أنتج كود HTML كامل يركز على تحليل المحتوى الفعلي وليس مجرد إحصائيات.`
               }
             ],
             max_completion_tokens: 4000
@@ -309,20 +374,20 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">${reportsAnalysis.total}</div>
-                <div class="metric-label">📊 إجمالي التقارير</div>
+                <div class="metric-value">${contentAnalysis.total_reports}</div>
+                <div class="metric-label">📊 إجمالي التقارير المحللة</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${reportsAnalysis.by_section.whatsapp_reports?.count || 0}</div>
-                <div class="metric-label">💬 تقارير الواتساب</div>
+                <div class="metric-value">${contentAnalysis.content_insights.whatsapp_reports?.total_reports || 0}</div>
+                <div class="metric-label">💬 تحليلات الواتساب</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${reportsAnalysis.by_section.productivity_reports?.count || 0}</div>
-                <div class="metric-label">⚡ تقارير الإنتاجية</div>
+                <div class="metric-value">${contentAnalysis.content_insights.productivity_reports?.total_reports || 0}</div>
+                <div class="metric-label">⚡ تحليلات الإنتاجية</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${reportsAnalysis.by_section.ads_reports?.count || 0}</div>
-                <div class="metric-label">📢 تقارير الإعلانات</div>
+                <div class="metric-value">${Object.keys(contentAnalysis.content_insights).length}</div>
+                <div class="metric-label">📈 أقسام تم تحليلها</div>
             </div>
         </div>
 
@@ -338,24 +403,37 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
         </div>
 
         <div class="section-analysis">
-            <h3 class="analysis-title">📊 تحليل الأداء المتقدم</h3>
+            <h3 class="analysis-title">🧠 تحليل المحتوى الذكي</h3>
             <div class="analysis-content">
-                <p><strong>📋 إجمالي التقارير:</strong> تم تحليل ${reportsAnalysis.total} تقرير خلال الأسبوع الماضي 
-                   ${reportsAnalysis.total > 10 ? '<span class="trend-indicator trend-up">نشاط عالي</span>' : 
-                     reportsAnalysis.total > 5 ? '<span class="trend-indicator trend-stable">نشاط متوسط</span>' : 
-                     '<span class="trend-indicator trend-down">نشاط منخفض</span>'}
+                <p><strong>📋 التحليل الشامل:</strong> تم تحليل محتوى ${contentAnalysis.total_reports} تقرير واستخراج insights عملية 
+                   ${contentAnalysis.total_reports > 15 ? '<span class="trend-indicator trend-up">بيانات غنية</span>' : 
+                     contentAnalysis.total_reports > 5 ? '<span class="trend-indicator trend-stable">بيانات متوسطة</span>' : 
+                     '<span class="trend-indicator trend-down">بيانات محدودة</span>'}
                 </p>
-                <p><strong>🏆 أكثر الأقسام نشاطاً:</strong> ${Object.entries(reportsAnalysis.by_section).length > 0 
-                  ? Object.entries(reportsAnalysis.by_section).reduce((a, b) => 
-                      (reportsAnalysis.by_section[a[0]]?.count || 0) > (reportsAnalysis.by_section[b[0]]?.count || 0) ? a : b)[0] 
-                  : 'غير محدد'}
-                </p>
-                <p><strong>💡 التوصيات الذكية:</strong></p>
+                
+                ${Object.keys(contentAnalysis.content_insights).map(section => {
+                  const insight = contentAnalysis.content_insights[section];
+                  const sectionName = sectionLabels[section] || section;
+                  return `
+                  <div style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%); border-radius: 10px; border-right: 4px solid #667eea;">
+                    <p><strong>🔍 ${sectionName}:</strong></p>
+                    <ul style="margin-top: 10px;">
+                      <li>📊 عدد التقارير المحللة: ${insight.total_reports}</li>
+                      <li>📝 ${insight.content_summary}</li>
+                      ${insight.extracted_metrics && Object.keys(insight.extracted_metrics.keywords || {}).length > 0 
+                        ? `<li>🔑 الكلمات المفتاحية الأكثر تكراراً: ${Object.entries(insight.extracted_metrics.keywords).slice(0, 3).map(([key, value]) => `${key} (${value})`).join(', ')}</li>` 
+                        : ''}
+                    </ul>
+                  </div>`;
+                }).join('')}
+
+                <p><strong>💡 التوصيات المبنية على المحتوى:</strong></p>
                 <ul>
-                    <li>🔄 متابعة تحسين أداء الأقسام النشطة للحفاظ على الزخم</li>
-                    <li>📈 تطوير استراتيجيات لزيادة التفاعل في الأقسام ذات النشاط المنخفض</li>
-                    <li>⚡ إجراء مراجعة دورية لضمان جودة البيانات ودقة التقارير</li>
-                    <li>🎯 تحديد الأنماط الزمنية لتحسين توزيع الموارد</li>
+                    <li>🔍 تحليل عميق للكلمات المفتاحية لفهم احتياجات العملاء</li>
+                    <li>📊 تطوير مؤشرات أداء مبنية على المحتوى الفعلي</li>
+                    <li>⚡ تحسين أوقات الاستجابة بناءً على أنماط الاستفسارات</li>
+                    <li>🎯 تخصيص الخدمات حسب المواضيع الأكثر تكراراً</li>
+                    <li>📈 تطوير تدريب الفريق بناءً على التحديات المحددة في التقارير</li>
                 </ul>
             </div>
         </div>
@@ -375,10 +453,10 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
                 labels: ['الواتساب', 'الإنتاجية', 'الإعلانات', 'البريد الإلكتروني'],
                 datasets: [{
                     data: [
-                        ${reportsAnalysis.by_section.whatsapp_reports?.count || 0},
-                        ${reportsAnalysis.by_section.productivity_reports?.count || 0},
-                        ${reportsAnalysis.by_section.ads_reports?.count || 0},
-                        ${reportsAnalysis.by_section.mail_reports?.count || 0}
+                        ${contentAnalysis.content_insights.whatsapp_reports?.total_reports || 0},
+                        ${contentAnalysis.content_insights.productivity_reports?.total_reports || 0},
+                        ${contentAnalysis.content_insights.ads_reports?.total_reports || 0},
+                        ${contentAnalysis.content_insights.mail_reports?.total_reports || 0}
                     ],
                     backgroundColor: [
                         'rgba(52, 152, 219, 0.8)',
@@ -423,33 +501,43 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
             }
         });
 
-        // Daily Reports Chart with enhanced styling
+        // Content Analysis Insights Chart
         const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-        const dailyData = [
-            ${Object.entries(reportsAnalysis.by_day || {}).sort().map(([date, data]) => data.count || 0).join(', ') || '0,0,0,0,0,0,0'}
-        ];
-        const dailyLabels = [
-            ${Object.keys(reportsAnalysis.by_day || {}).sort().map(date => 
-              `'${new Date(date).toLocaleDateString('ar-EG', {weekday: 'short', month: 'short', day: 'numeric'})}'`
-            ).join(', ') || "'الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'"}
-        ];
+        
+        // Generate insights data based on content analysis
+        const insightData = Object.values(contentAnalysis.content_insights).map(insight => 
+          insight ? insight.total_reports : 0
+        );
+        
+        const insightLabels = Object.keys(contentAnalysis.content_insights).map(section => 
+          sectionLabels[section] || section
+        );
+        
+        if (insightData.length === 0) {
+          insightData.push(0, 0, 0, 0);
+          insightLabels.push('البيانات', 'التحليلات', 'المؤشرات', 'التوصيات');
+        }
         
         new Chart(dailyCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: dailyLabels,
+                labels: insightLabels,
                 datasets: [{
-                    label: 'عدد التقارير',
-                    data: dailyData,
-                    borderColor: 'rgba(102, 126, 234, 1)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: 'rgba(102, 126, 234, 1)',
-                    pointBorderColor: 'white',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
+                    label: 'تحليل المحتوى بالأقسام',
+                    data: insightData,
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(46, 204, 113, 0.8)',
+                        'rgba(243, 156, 18, 0.8)',
+                        'rgba(231, 76, 60, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(243, 156, 18, 1)',
+                        'rgba(231, 76, 60, 1)'
+                    ],
+                    borderWidth: 2
                 }]
             },
             options: {
@@ -495,7 +583,7 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
     // Store the analysis with generated timestamp
     const dashboardData = {
       html_content: generatedHTML,
-      analysis_data: reportsAnalysis,
+      analysis_data: contentAnalysis,
       generated_at: new Date().toISOString(),
       reports_analyzed: reports?.length || 0,
       last_update: new Date().toISOString()
@@ -531,7 +619,7 @@ ${JSON.stringify(reportsAnalysis, null, 2)}
       JSON.stringify({
         success: true,
         html_content: generatedHTML,
-        analysis_summary: reportsAnalysis,
+        analysis_summary: contentAnalysis,
         generated_at: dashboardData.generated_at,
         reports_count: reports?.length || 0
       }),

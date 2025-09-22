@@ -9,7 +9,6 @@ const SmartDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [lastGenerated, setLastGenerated] = useState<string>('');
-  const [reportsCount, setReportsCount] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState<string>('');
   const { toast } = useToast();
@@ -34,11 +33,10 @@ const SmartDashboard = () => {
         if (data.html_content && data.html_content.trim() !== '') {
           setHtmlContent(data.html_content);
           setLastGenerated(data.generated_at);
-          setReportsCount(data.reports_count || 0);
           
           toast({
             title: "🧠 تم إنشاء الداشبورد الذكي",
-            description: `تم تحليل ${data.reports_count || 0} تقرير من آخر 7 أيام باستخدام GPT-5`,
+            description: "تم تحليل المحتوى والبيانات من آخر 7 أيام باستخدام GPT-5",
           });
         } else {
           throw new Error('تم إنتاج الداشبورد بدون محتوى HTML');
@@ -82,7 +80,6 @@ const SmartDashboard = () => {
       if (data && data.html_content && data.html_content.trim() !== '') {
         setHtmlContent(data.html_content);
         setLastGenerated(data.generated_at);
-        setReportsCount(data.reports_analyzed);
         
         console.log('Loaded existing dashboard for today');
       } else {
@@ -173,9 +170,8 @@ const SmartDashboard = () => {
             الداشبورد الذكي المُحدث يومياً
           </h2>
           <p className="text-sm opacity-90">
-            تحليل متطور لآخر 7 أيام باستخدام GPT-5 • 
-            {lastGenerated && ` آخر تحديث: ${formatDate(lastGenerated)}`} • 
-            تم تحليل {reportsCount} تقرير
+            تحليل محتوى متطور لآخر 7 أيام باستخدام GPT-5 • 
+            {lastGenerated && ` آخر تحديث: ${formatDate(lastGenerated)}`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -219,7 +215,7 @@ const SmartDashboard = () => {
                   جاري إنشاء الداشبورد الذكي...
                 </h3>
                 <p className="text-muted-foreground">
-                  GPT-5 يقوم بتحليل بيانات آخر 7 أيام وإنتاج تقرير متطور
+                  GPT-5 يقوم بتحليل محتوى البيانات من آخر 7 أيام وإنتاج رؤى ذكية
                 </p>
                 <div className="flex items-center justify-center gap-1 mt-4">
                   <div className="w-2 h-2 bg-gradient-ai rounded-full animate-bounce"></div>
@@ -260,7 +256,7 @@ const SmartDashboard = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-2">مرحباً بك في الداشبورد الذكي</h3>
                 <p className="text-muted-foreground mb-4">
-                  انقر على "إنشاء الداشبورد" للحصول على تحليل متطور لآخر 7 أيام من تقاريرك
+                  انقر على "إنشاء الداشبورد" للحصول على تحليل محتوى ذكي لآخر 7 أيام من بياناتك
                 </p>
                 <Button 
                   onClick={() => generateSmartDashboard()}

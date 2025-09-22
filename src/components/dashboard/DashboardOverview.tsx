@@ -234,25 +234,34 @@ export const DashboardOverview = () => {
         </div>
         
         <TabsContent value="overview" className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <Card key={index} className="border-card-border hover:shadow-md transition-smooth">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-5 w-5 text-dashboard-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stat.change}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Smart Insights Card */}
+          <Card className="border-card-border hover:shadow-md transition-smooth">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-dashboard-primary" />
+                Smart Content Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  View intelligent content analysis and insights in the Smart Dashboard tab
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    // Switch to smart tab - this would need proper tab switching logic
+                    const smartTab = document.querySelector('[value="smart"]') as HTMLElement;
+                    if (smartTab) smartTab.click();
+                  }}
+                >
+                  <Bot className="h-4 w-4" />
+                  View Smart Analysis
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

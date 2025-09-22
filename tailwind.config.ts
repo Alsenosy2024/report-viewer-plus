@@ -93,16 +93,21 @@ export default {
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)',
-				'gradient-success': 'var(--gradient-success)'
+				'gradient-smart': 'var(--gradient-smart)',
+				'gradient-ai': 'var(--gradient-ai)',
+				'gradient-dashboard': 'var(--gradient-dashboard)'
 			},
 			boxShadow: {
 				'sm': 'var(--shadow-sm)',
 				'md': 'var(--shadow-md)',
 				'lg': 'var(--shadow-lg)',
-				'glow': 'var(--shadow-glow)'
+				'glow': 'var(--shadow-glow)',
+				'smart': 'var(--shadow-smart)',
+				'ai': 'var(--shadow-ai)'
 			},
 			transitionProperty: {
-				'smooth': 'var(--transition-smooth)'
+				'smooth': 'var(--transition-smooth)',
+				'bounce': 'var(--transition-bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

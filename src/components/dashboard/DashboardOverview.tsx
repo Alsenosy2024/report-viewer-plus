@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const WeeklyOverview = lazy(() => import('./WeeklyOverview'));
+const SmartDashboard = lazy(() => import('./SmartDashboard'));
 
 export const DashboardOverview = () => {
   const [loading, setLoading] = useState(false);
@@ -162,10 +163,14 @@ export const DashboardOverview = () => {
       {/* Tabs for different views */}
       <Tabs defaultValue="overview" className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-          <TabsList className="grid w-full sm:w-auto grid-cols-2">
+          <TabsList className="grid w-full sm:w-auto grid-cols-3">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard Overview
+            </TabsTrigger>
+            <TabsTrigger value="smart" className="flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              الداشبورد الذكي
             </TabsTrigger>
             <TabsTrigger value="weekly" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -298,6 +303,21 @@ export const DashboardOverview = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="smart">
+          <Suspense fallback={
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center">
+                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                  جاري تحميل الداشبورد الذكي...
+                </div>
+              </CardContent>
+            </Card>
+          }>
+            <SmartDashboard />
+          </Suspense>
         </TabsContent>
         
         <TabsContent value="weekly">

@@ -184,6 +184,36 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_history_daily: {
+        Row: {
+          created_at: string
+          created_at_ms: number
+          employee_name: string | null
+          id: number
+          late_tasks: string | null
+          number_of_late_tasks: number | null
+          number_of_tasks: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_at_ms?: number
+          employee_name?: string | null
+          id?: number
+          late_tasks?: string | null
+          number_of_late_tasks?: number | null
+          number_of_tasks?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_at_ms?: number
+          employee_name?: string | null
+          id?: number
+          late_tasks?: string | null
+          number_of_late_tasks?: number | null
+          number_of_tasks?: number | null
+        }
+        Relationships: []
+      }
       pmp: {
         Row: {
           id: number
@@ -345,6 +375,36 @@ export type Database = {
           },
         ]
       }
+      smart_dashboards: {
+        Row: {
+          analysis_data: Json
+          date_generated: string
+          generated_at: string
+          html_content: string
+          id: string
+          last_update: string
+          reports_analyzed: number
+        }
+        Insert: {
+          analysis_data?: Json
+          date_generated: string
+          generated_at?: string
+          html_content: string
+          id?: string
+          last_update?: string
+          reports_analyzed?: number
+        }
+        Update: {
+          analysis_data?: Json
+          date_generated?: string
+          generated_at?: string
+          html_content?: string
+          id?: string
+          last_update?: string
+          reports_analyzed?: number
+        }
+        Relationships: []
+      }
       social_users: {
         Row: {
           created_at: string
@@ -493,7 +553,7 @@ export type Database = {
       }
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
+        Returns: unknown
       }
       match_documents: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }

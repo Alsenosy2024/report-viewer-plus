@@ -184,6 +184,45 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_dashboards: {
+        Row: {
+          created_at: string
+          created_by_workflow: string | null
+          dashboard_name: string
+          html_content: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          updated_at: string
+          version: number
+          workflow_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_workflow?: string | null
+          dashboard_name?: string
+          html_content: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          updated_at?: string
+          version?: number
+          workflow_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_workflow?: string | null
+          dashboard_name?: string
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          updated_at?: string
+          version?: number
+          workflow_id?: string | null
+        }
+        Relationships: []
+      }
       performance_history_daily: {
         Row: {
           created_at: string

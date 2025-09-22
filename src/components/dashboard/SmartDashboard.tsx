@@ -1,113 +1,101 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { RefreshCw, Maximize2, Minimize2, Workflow, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, Brain, Maximize2, Minimize2, AlertCircle } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface N8nDashboard {
+  id: string;
+  dashboard_name: string;
+  html_content: string;
+  workflow_id: string | null;
+  version: number;
+  is_active: boolean;
+  metadata: any;
+  created_by_workflow: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const SmartDashboard = () => {
-  const [loading, setLoading] = useState(false);
-  const [htmlContent, setHtmlContent] = useState<string>('');
-  const [lastGenerated, setLastGenerated] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [dashboard, setDashboard] = useState<N8nDashboard | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState<string>('');
   const { toast } = useToast();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const generateSmartDashboard = async (force = false) => {
-    setLoading(true);
+  const loadLatestDashboard = async () => {
+    setIsLoading(true);
     setError('');
-    
-    try {
-      console.log('Generating smart dashboard with GPT-5...');
-      
-      const { data, error } = await supabase.functions.invoke('generate-smart-dashboard', {
-        body: { force }
-      });
-      
-      if (error) {
-        throw error;
-      }
+    console.log('Loading latest n8n dashboard...');
 
-      if (data?.success) {
-        if (data.html_content && data.html_content.trim() !== '') {
-          setHtmlContent(data.html_content);
-          setLastGenerated(data.generated_at);
-          
-          toast({
-            title: "🧠 تم إنشاء الداشبورد الذكي",
-            description: "تم تحليل المحتوى والبيانات من آخر 7 أيام باستخدام GPT-5",
-          });
-        } else {
-          throw new Error('تم إنتاج الداشبورد بدون محتوى HTML');
-        }
-      } else {
-        throw new Error(data?.details || 'Failed to generate dashboard');
-      }
-    } catch (error) {
-      console.error('Error generating smart dashboard:', error);
-      setError(error instanceof Error ? error.message : 'حدث خطأ في إنشاء الداشبورد');
-      
-      toast({
-        title: "❌ فشل في إنشاء الداشبورد",
-        description: "حدث خطأ أثناء تحليل البيانات. يرجى المحاولة مرة أخرى.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadExistingDashboard = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      
       const { data, error } = await supabase
-        .from('smart_dashboards')
+        .from('n8n_dashboards')
         .select('*')
-        .eq('date_generated', today)
-        .order('generated_at', { ascending: false })
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle(); // Use maybeSingle instead of single
+        .maybeSingle();
 
       if (error) {
-        console.error('Error loading existing dashboard:', error);
-        // Generate new dashboard on error
-        await generateSmartDashboard();
+        console.error('Error loading n8n dashboard:', error);
+        setError('خطأ في تحميل الداشبورد');
+        toast({
+          title: "خطأ في التحميل",
+          description: "فشل في تحميل الداشبورد من n8n",
+          variant: "destructive",
+        });
         return;
       }
 
-      if (data && data.html_content && data.html_content.trim() !== '') {
-        setHtmlContent(data.html_content);
-        setLastGenerated(data.generated_at);
-        
-        console.log('Loaded existing dashboard for today');
+      if (data) {
+        setDashboard(data);
+        console.log(`Loaded dashboard: ${data.dashboard_name} v${data.version}`);
+        toast({
+          title: "تم التحميل بنجاح",
+          description: `تم تحميل الداشبورد: ${data.dashboard_name} v${data.version}`,
+        });
       } else {
-        console.log('No valid dashboard found for today, generating new one...');
-        // No dashboard for today or empty content, generate new one
-        await generateSmartDashboard();
+        setError('لم يتم العثور على أي داشبورد نشط');
+        toast({
+          title: "لا يوجد داشبورد",
+          description: "لم يتم العثور على أي داشبورد نشط من n8n",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error('Error in loadExistingDashboard:', error);
-      setError('حدث خطأ في تحميل الداشبورد. جاري إنشاء واحد جديد...');
-      // If loading fails, generate new dashboard
-      await generateSmartDashboard();
+    } catch (error: any) {
+      console.error('Error loading n8n dashboard:', error);
+      setError(error.message);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل الداشبورد",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Auto-refresh when new reports are added
+  // Subscribe to real-time updates for new n8n dashboards
   useEffect(() => {
     const channel = supabase
-      .channel('smart-dashboard-updates')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'reports' 
-      }, (payload) => {
-        console.log('New report detected, updating dashboard...');
-        // Regenerate dashboard when new report is added
-        generateSmartDashboard(true);
-      })
+      .channel('n8n-dashboards-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'n8n_dashboards'
+        },
+        async (payload) => {
+          console.log('New n8n dashboard detected:', payload);
+          // Reload the latest dashboard
+          await loadLatestDashboard();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -115,9 +103,9 @@ const SmartDashboard = () => {
     };
   }, []);
 
-  // Load dashboard on component mount
+  // Load latest dashboard on component mount
   useEffect(() => {
-    loadExistingDashboard();
+    loadLatestDashboard();
   }, []);
 
   const toggleFullscreen = () => {
@@ -125,35 +113,148 @@ const SmartDashboard = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ar-EG', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
   };
 
-  if (error && !htmlContent) {
+  if (error) {
     return (
       <Card className="border-destructive">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            خطأ في الداشبورد الذكي
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <Workflow className="h-5 w-5" />
+            خطأ في داشبورد n8n
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center space-y-4">
-            <p className="text-muted-foreground">{error}</p>
-            <Button 
-              onClick={() => generateSmartDashboard(true)}
-              disabled={loading}
-              variant="outline"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              إعادة المحاولة
-            </Button>
+          <p className="text-muted-foreground">{error}</p>
+          <Button 
+            onClick={() => loadLatestDashboard()} 
+            className="mt-4"
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            إعادة المحاولة
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading && !dashboard) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Workflow className="h-5 w-5" />
+            داشبورد n8n الذكي
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center p-8">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-3 text-lg">جاري تحميل الداشبورد...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (dashboard) {
+    if (isFullscreen) {
+      return (
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              <span className="font-semibold">{dashboard.dashboard_name} - وضع ملء الشاشة</span>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                v{dashboard.version}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadLatestDashboard()}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                تحديث
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFullscreen}
+              >
+                <Minimize2 className="h-4 w-4 mr-2" />
+                إغلاق ملء الشاشة
+              </Button>
+            </div>
+          </div>
+          <div className="h-[calc(100vh-80px)]">
+            <iframe
+              srcDoc={dashboard.html_content}
+              className="w-full h-full border-0"
+              title="n8n Dashboard Fullscreen"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              {dashboard.dashboard_name}
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                v{dashboard.version}
+              </span>
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadLatestDashboard()}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                تحديث
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFullscreen}
+              >
+                <Maximize2 className="h-4 w-4 mr-2" />
+                ملء الشاشة
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-96 mb-4">
+            <iframe
+              srcDoc={dashboard.html_content}
+              className="w-full h-full border border-border rounded-md"
+              title="n8n Dashboard"
+            />
+          </div>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>آخر تحديث: {formatDate(dashboard.updated_at)}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
+              {dashboard.workflow_id && (
+                <span>Workflow: {dashboard.workflow_id}</span>
+              )}
+              {dashboard.created_by_workflow && (
+                <span>مُولد بواسطة: {dashboard.created_by_workflow}</span>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -161,128 +262,31 @@ const SmartDashboard = () => {
   }
 
   return (
-    <div className={`space-y-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
-      {/* Header */}
-      <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-smart rounded-lg p-4 text-white shadow-smart ${isFullscreen ? 'mb-4' : ''}`}>
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Brain className="h-6 w-6" />
-            الداشبورد الذكي المُحدث يومياً
-          </h2>
-          <p className="text-sm opacity-90">
-            تحليل محتوى متطور لآخر 7 أيام باستخدام GPT-5 • 
-            {lastGenerated && ` آخر تحديث: ${formatDate(lastGenerated)}`}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Workflow className="h-5 w-5" />
+          داشبورد n8n الذكي
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center py-12">
+          <Workflow className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">لم يتم العثور على داشبورد نشط</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            قم بتشغيل سير عمل n8n الخاص بك لإنشاء وتحميل داشبورد جديد
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => generateSmartDashboard(true)}
-            disabled={loading}
-            variant="secondary"
-            size="sm"
-            className="bg-white/20 hover:bg-white/30 text-white border-white/30 transition-bounce"
+          <Button 
+            onClick={() => loadLatestDashboard()} 
+            disabled={isLoading}
+            size="lg"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            تجديد التحليل
-          </Button>
-          <Button
-            onClick={toggleFullscreen}
-            variant="secondary"
-            size="sm"
-            className="bg-white/20 hover:bg-white/30 text-white border-white/30 transition-bounce"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4 mr-2" />
-            ) : (
-              <Maximize2 className="h-4 w-4 mr-2" />
-            )}
-            {isFullscreen ? 'تصغير' : 'ملء الشاشة'}
+            <RefreshCw className="h-4 w-4 mr-2" />
+            البحث عن داشبورد
           </Button>
         </div>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <Card className="shadow-ai">
-          <CardContent className="p-8">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="relative">
-                <RefreshCw className="h-12 w-12 animate-spin text-primary" />
-                <Brain className="h-6 w-6 text-primary absolute top-3 left-3" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold bg-gradient-ai bg-clip-text text-transparent">
-                  جاري إنشاء الداشبورد الذكي...
-                </h3>
-                <p className="text-muted-foreground">
-                  GPT-5 يقوم بتحليل محتوى البيانات من آخر 7 أيام وإنتاج رؤى ذكية
-                </p>
-                <div className="flex items-center justify-center gap-1 mt-4">
-                  <div className="w-2 h-2 bg-gradient-ai rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gradient-ai rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gradient-ai rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Dashboard Content */}
-      {htmlContent && !loading && (
-        <Card className={`${isFullscreen ? 'h-full' : 'min-h-[600px]'}`}>
-          <CardContent className="p-0 h-full">
-            <iframe
-              ref={iframeRef}
-              srcDoc={htmlContent}
-              className="w-full h-full rounded-lg border-0"
-              style={{ 
-                minHeight: isFullscreen ? '100%' : '600px',
-                height: isFullscreen ? '100%' : 'auto'
-              }}
-              title="Smart Dashboard"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Empty State */}
-      {!htmlContent && !loading && !error && (
-        <Card>
-          <CardContent className="p-8">
-            <div className="text-center space-y-4">
-              <Brain className="h-16 w-16 mx-auto text-muted-foreground" />
-              <div>
-                <h3 className="text-lg font-semibold mb-2">مرحباً بك في الداشبورد الذكي</h3>
-                <p className="text-muted-foreground mb-4">
-                  انقر على "إنشاء الداشبورد" للحصول على تحليل محتوى ذكي لآخر 7 أيام من بياناتك
-                </p>
-                <Button 
-                  onClick={() => generateSmartDashboard()}
-                  disabled={loading}
-                  className="bg-gradient-smart text-white shadow-smart hover:shadow-ai transition-bounce"
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  إنشاء الداشبورد الذكي
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Footer Info */}
-      {htmlContent && !loading && (
-        <div className="text-center text-xs text-muted-foreground bg-gradient-to-r from-muted/30 to-muted/60 rounded-lg p-3 border border-muted/20">
-          <span className="inline-flex items-center gap-1">
-            <Brain className="h-3 w-3" />
-            يتم تحديث هذا الداشبورد تلقائياً عند إضافة تقارير جديدة • 
-            مدعوم بتقنية GPT-5 للتحليل الذكي والمتطور
-          </span>
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

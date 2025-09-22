@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 
 interface Post {
   id: string;
@@ -417,17 +418,18 @@ const SocialMediaPosts = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto p-6">
+      <DashboardLayout>
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p>Please log in to access social media posts management.</p>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Social Media Posts</h1>
@@ -798,7 +800,8 @@ const SocialMediaPosts = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

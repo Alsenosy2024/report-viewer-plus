@@ -31,14 +31,18 @@ const SmartDashboard = () => {
       }
 
       if (data?.success) {
-        setHtmlContent(data.html_content);
-        setLastGenerated(data.generated_at);
-        setReportsCount(data.reports_count || 0);
-        
-        toast({
-          title: "🧠 تم إنشاء الداشبورد الذكي",
-          description: `تم تحليل ${data.reports_count || 0} تقرير من آخر 7 أيام باستخدام GPT-5`,
-        });
+        if (data.html_content && data.html_content.trim() !== '') {
+          setHtmlContent(data.html_content);
+          setLastGenerated(data.generated_at);
+          setReportsCount(data.reports_count || 0);
+          
+          toast({
+            title: "🧠 تم إنشاء الداشبورد الذكي",
+            description: `تم تحليل ${data.reports_count || 0} تقرير من آخر 7 أيام باستخدام GPT-5`,
+          });
+        } else {
+          throw new Error('تم إنتاج الداشبورد بدون محتوى HTML');
+        }
       } else {
         throw new Error(data?.details || 'Failed to generate dashboard');
       }
@@ -66,25 +70,29 @@ const SmartDashboard = () => {
         .eq('date_generated', today)
         .order('generated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading existing dashboard:', error);
+        // Generate new dashboard on error
+        await generateSmartDashboard();
         return;
       }
 
-      if (data) {
+      if (data && data.html_content && data.html_content.trim() !== '') {
         setHtmlContent(data.html_content);
         setLastGenerated(data.generated_at);
         setReportsCount(data.reports_analyzed);
         
         console.log('Loaded existing dashboard for today');
       } else {
-        // No dashboard for today, generate new one
+        console.log('No valid dashboard found for today, generating new one...');
+        // No dashboard for today or empty content, generate new one
         await generateSmartDashboard();
       }
     } catch (error) {
       console.error('Error in loadExistingDashboard:', error);
+      setError('حدث خطأ في تحميل الداشبورد. جاري إنشاء واحد جديد...');
       // If loading fails, generate new dashboard
       await generateSmartDashboard();
     }

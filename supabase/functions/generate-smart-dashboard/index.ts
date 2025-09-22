@@ -13,23 +13,22 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting smart dashboard generation...');
+    console.log('Starting advanced smart dashboard generation...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get reports from last 7 days
+    // Get reports from last 7 days using report_date for accurate filtering
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const { data: reports, error: reportsError } = await supabase
       .from('reports')
       .select('*')
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .order('created_at', { ascending: false });
+      .gte('report_date', sevenDaysAgo.toISOString().split('T')[0])
+      .order('report_date', { ascending: false });
 
     if (reportsError) {
       console.error('Error fetching reports:', reportsError);
@@ -38,15 +37,16 @@ serve(async (req) => {
 
     console.log(`Found ${reports?.length || 0} reports from last 7 days`);
 
-    // Smart Content Analysis - Focus on actual content insights
-    console.log('Starting intelligent content analysis...');
+    // Advanced Content Analysis - Real data extraction
+    console.log('Starting advanced Arabic content analysis...');
     
     const contentAnalysis = {
       total_reports: reports?.length || 0,
-      content_insights: {},
+      sections_analyzed: {},
+      extracted_data: {},
+      key_insights: [],
       performance_metrics: {},
       trends: {},
-      key_findings: [],
       recommendations: []
     };
 
@@ -58,73 +58,131 @@ serve(async (req) => {
       mail_reports: 'تقارير البريد الإلكتروني'
     };
 
-    // Smart content extraction and analysis
+    // Real content extraction and analysis
     if (reports && reports.length > 0) {
-      console.log('Analyzing report content for insights...');
+      console.log('Extracting real data from Arabic content...');
       
       sections.forEach(section => {
         const sectionReports = reports.filter(r => r.section === section);
         
         if (sectionReports.length > 0) {
-          // Extract content insights
+          console.log(`Analyzing ${sectionReports.length} reports for section: ${section}`);
+          
+          // Extract and clean content
           const contentTexts = sectionReports.map(r => {
             let content = typeof r.content === 'string' ? r.content : String(r.content || '');
             
-            // Clean HTML content for analysis
-            content = content.replace(/<[^>]*>/g, ' ')
-                           .replace(/\s+/g, ' ')
-                           .trim();
+            // Advanced HTML cleaning and text normalization
+            content = content
+              .replace(/<script[^>]*>.*?<\/script>/gi, '')
+              .replace(/<style[^>]*>.*?<\/style>/gi, '')
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&[a-z]+;/gi, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
             
             return {
-              date: r.created_at,
-              content: content.substring(0, 2000), // Take first 2000 chars for analysis
+              date: r.report_date || r.created_at,
+              content: content,
+              full_content: content, // Keep full content for analysis
               section: section
             };
           });
 
-          // Analyze content for key metrics and insights
-          const metrics = extractContentMetrics(contentTexts, section);
+          // Advanced metrics extraction
+          const metrics = extractAdvancedMetrics(contentTexts, section);
+          const trends = analyzeTrends(contentTexts);
+          const insights = generateInsights(contentTexts, metrics, section);
           
-          contentAnalysis.content_insights[section] = {
+          contentAnalysis.sections_analyzed[section] = {
             total_reports: sectionReports.length,
-            latest_content: contentTexts.slice(0, 3),
-            extracted_metrics: metrics,
-            content_summary: generateContentSummary(contentTexts)
+            date_range: {
+              start: contentTexts[contentTexts.length - 1]?.date,
+              end: contentTexts[0]?.date
+            },
+            metrics: metrics,
+            trends: trends,
+            insights: insights,
+            summary: generateAdvancedSummary(contentTexts, metrics)
           };
+
+          // Add to global insights
+          contentAnalysis.key_insights.push(...insights.slice(0, 2));
         }
       });
+
+      // Generate global recommendations
+      contentAnalysis.recommendations = generateRecommendations(contentAnalysis.sections_analyzed);
     }
 
-    // Helper function to extract metrics from content
-    function extractContentMetrics(contentTexts: any[], section: string) {
+    // Advanced metrics extraction with real Arabic content analysis
+    function extractAdvancedMetrics(contentTexts: any[], section: string) {
       const metrics = {
         keywords: {},
-        numbers_found: [],
-        sentiment_indicators: [],
-        performance_data: {}
+        numbers_extracted: [],
+        customer_metrics: {},
+        performance_indicators: {},
+        time_analysis: {},
+        quality_indicators: {}
       };
 
       contentTexts.forEach(item => {
-        // Extract numbers (potential KPIs)
-        const numbers = item.content.match(/\d+/g) || [];
-        metrics.numbers_found.push(...numbers.map(n => parseInt(n)).filter(n => n > 0 && n < 1000000));
+        const content = item.content;
+        
+        // Extract all numbers with context
+        const numberMatches = content.match(/\d+(\.\d+)?/g) || [];
+        const numbers = numberMatches.map(n => parseFloat(n)).filter(n => n > 0 && n < 10000);
+        metrics.numbers_extracted.push(...numbers);
 
-        // Extract performance keywords based on section
         if (section === 'whatsapp_reports') {
-          const keywords = ['رد', 'عميل', 'استفسار', 'مكالمة', 'رسالة', 'وقت', 'دقيقة', 'ساعة'];
-          keywords.forEach(keyword => {
-            const count = (item.content.match(new RegExp(keyword, 'g')) || []).length;
-            if (count > 0) {
-              metrics.keywords[keyword] = (metrics.keywords[keyword] || 0) + count;
-            }
+          // Advanced WhatsApp analysis
+          
+          // Extract customer counts
+          const customerMatches = content.match(/(\d+)\s*عميل|(\d+)\s*زبون|(\d+)\s*شخص/g) || [];
+          customerMatches.forEach(match => {
+            const num = parseInt(match.match(/\d+/)[0]);
+            if (num > 0) metrics.customer_metrics.daily_customers = (metrics.customer_metrics.daily_customers || 0) + num;
           });
+
+          // Extract response times
+          const timeMatches = content.match(/(\d+)\s*(دقيقة|ساعة|ثانية)/g) || [];
+          timeMatches.forEach(match => {
+            const [, num, unit] = match.match(/(\d+)\s*(دقيقة|ساعة|ثانية)/);
+            const minutes = unit === 'ساعة' ? parseInt(num) * 60 : unit === 'ثانية' ? parseInt(num) / 60 : parseInt(num);
+            metrics.time_analysis.response_times = metrics.time_analysis.response_times || [];
+            metrics.time_analysis.response_times.push(minutes);
+          });
+
+          // Extract service quality indicators
+          const qualityWords = ['ممتاز', 'جيد', 'متوسط', 'ضعيف', 'سريع', 'بطيء', 'راضي', 'غير راضي'];
+          qualityWords.forEach(word => {
+            const count = (content.match(new RegExp(word, 'g')) || []).length;
+            if (count > 0) metrics.quality_indicators[word] = (metrics.quality_indicators[word] || 0) + count;
+          });
+
+          // Extract Arabic keywords with better context
+          const whatsappKeywords = ['رد', 'استفسار', 'شكوى', 'طلب', 'استعلام', 'حجز', 'إلغاء', 'تأكيد', 'موافقة'];
+          whatsappKeywords.forEach(keyword => {
+            const count = (content.match(new RegExp(keyword, 'g')) || []).length;
+            if (count > 0) metrics.keywords[keyword] = (metrics.keywords[keyword] || 0) + count;
+          });
+
         } else if (section === 'productivity_reports') {
-          const keywords = ['مهمة', 'إنجاز', 'تأخير', 'موعد', 'اكتمل', 'منجز', 'متأخر'];
-          keywords.forEach(keyword => {
-            const count = (item.content.match(new RegExp(keyword, 'g')) || []).length;
-            if (count > 0) {
-              metrics.keywords[keyword] = (metrics.keywords[keyword] || 0) + count;
-            }
+          // Advanced Productivity analysis
+          
+          // Extract task completion data
+          const taskMatches = content.match(/(\d+)\s*(مهمة|مهام)/g) || [];
+          taskMatches.forEach(match => {
+            const num = parseInt(match.match(/\d+/)[0]);
+            metrics.performance_indicators.total_tasks = (metrics.performance_indicators.total_tasks || 0) + num;
+          });
+
+          // Extract completion status
+          const completionWords = ['مكتمل', 'منجز', 'تم', 'انتهى', 'متأخر', 'معلق', 'قيد التنفيذ'];
+          completionWords.forEach(word => {
+            const count = (content.match(new RegExp(word, 'g')) || []).length;
+            if (count > 0) metrics.keywords[word] = (metrics.keywords[word] || 0) + count;
           });
         }
       });
@@ -140,6 +198,108 @@ serve(async (req) => {
       const avgLength = Math.round(totalLength / contentTexts.length);
       
       return `تم تحليل ${contentTexts.length} تقرير بمتوسط ${avgLength} حرف لكل تقرير`;
+    }
+
+    // Advanced trend analysis
+    function analyzeTrends(contentTexts: any[]) {
+      const trends = {
+        volume_trend: 'stable',
+        content_quality_trend: 'improving',
+        response_pattern: 'consistent'
+      };
+
+      if (contentTexts.length > 1) {
+        // Analyze volume changes over time
+        const recent = contentTexts.slice(0, Math.ceil(contentTexts.length / 2));
+        const older = contentTexts.slice(Math.ceil(contentTexts.length / 2));
+        
+        if (recent.length > older.length) {
+          trends.volume_trend = 'increasing';
+        } else if (recent.length < older.length) {
+          trends.volume_trend = 'decreasing';
+        }
+      }
+
+      return trends;
+    }
+
+    // Generate actionable insights
+    function generateInsights(contentTexts: any[], metrics: any, section: string) {
+      const insights = [];
+      
+      if (section === 'whatsapp_reports') {
+        if (metrics.customer_metrics.daily_customers) {
+          insights.push(`تم التعامل مع ${metrics.customer_metrics.daily_customers} عميل في المتوسط يومياً`);
+        }
+        
+        if (metrics.time_analysis.response_times && metrics.time_analysis.response_times.length > 0) {
+          const avgResponseTime = Math.round(
+            metrics.time_analysis.response_times.reduce((a, b) => a + b, 0) / metrics.time_analysis.response_times.length
+          );
+          insights.push(`متوسط وقت الاستجابة: ${avgResponseTime} دقيقة`);
+        }
+
+        if (metrics.keywords['استفسار'] > 5) {
+          insights.push('معدل الاستفسارات مرتفع - يحتاج تحسين في الإجابات السريعة');
+        }
+      }
+
+      if (section === 'productivity_reports') {
+        if (metrics.performance_indicators.total_tasks) {
+          insights.push(`إجمالي المهام المتابعة: ${metrics.performance_indicators.total_tasks}`);
+        }
+        
+        if (metrics.keywords['متأخر'] > metrics.keywords['منجز']) {
+          insights.push('هناك تأخير في إنجاز المهام - يحتاج مراجعة الأولويات');
+        }
+      }
+
+      return insights.length > 0 ? insights : ['تم تحليل المحتوى بنجاح - المزيد من البيانات مطلوب لاستخراج insights أعمق'];
+    }
+
+    // Generate advanced summary with real data
+    function generateAdvancedSummary(contentTexts: any[], metrics: any) {
+      const summary = [];
+      
+      if (contentTexts.length === 0) return 'لا توجد تقارير للتحليل';
+      
+      summary.push(`تحليل ${contentTexts.length} تقرير`);
+      
+      if (metrics.customer_metrics?.daily_customers) {
+        summary.push(`${metrics.customer_metrics.daily_customers} عميل تمت خدمتهم`);
+      }
+      
+      if (Object.keys(metrics.keywords).length > 0) {
+        const topKeyword = Object.entries(metrics.keywords).sort((a, b) => b[1] - a[1])[0];
+        summary.push(`أكثر كلمة مفتاحية: "${topKeyword[0]}" (${topKeyword[1]} مرة)`);
+      }
+
+      return summary.join(' • ');
+    }
+
+    // Generate actionable recommendations
+    function generateRecommendations(sectionsAnalyzed: any) {
+      const recommendations = [];
+      
+      Object.entries(sectionsAnalyzed).forEach(([section, data]: [string, any]) => {
+        if (section === 'whatsapp_reports' && data.metrics?.keywords?.['استفسار'] > 5) {
+          recommendations.push('إنشاء قائمة أسئلة شائعة لتقليل وقت الاستجابة للاستفسارات المتكررة');
+        }
+        
+        if (section === 'productivity_reports' && data.metrics?.keywords?.['متأخر'] > 0) {
+          recommendations.push('مراجعة جدولة المهام وتحسين إدارة الوقت لتقليل التأخيرات');
+        }
+        
+        if (data.total_reports < 3) {
+          recommendations.push(`زيادة تكرار التقارير في قسم ${sectionLabels[section]} لتحليل أفضل`);
+        }
+      });
+
+      return recommendations.length > 0 ? recommendations : [
+        'الاستمرار في جمع البيانات لتحليل أكثر دقة',
+        'تطوير مؤشرات أداء إضافية لقياس التحسن',
+        'إضافة المزيد من التفاصيل في التقارير المستقبلية'
+      ];
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -160,22 +320,21 @@ serve(async (req) => {
           controller.abort();
         }, 25000); // 25 second timeout
 
-        const systemPrompt = `أنت محلل محتوى ذكي متخصص في تحليل التقارير وإنتاج insights عملية باللغة العربية.
+        const systemPrompt = `أنت محلل بيانات ذكي متخصص في تحليل التقارير العربية واستخراج insights عملية.
 
-مهمتك الأساسية:
-1. تحليل محتوى التقارير النصية واستخراج المعلومات المفيدة
-2. تحديد المؤشرات الرئيسية من النصوص (أرقام، أوقات، أداء)
-3. إنتاج تحليلات عملية وتوصيات قابلة للتنفيذ
-4. إنشاء HTML متطور يعرض هذه التحليلات بشكل جذاب
+المهام الأساسية:
+1. تحليل البيانات المستخرجة من التقارير (أرقام العملاء، أوقات الاستجابة، الكلمات المفتاحية)
+2. تحويل البيانات الرقمية إلى insights قابلة للفهم والتنفيذ
+3. إنشاء توصيات عملية مبنية على تحليل البيانات الفعلية
+4. إنتاج HTML تفاعلي وجذاب يعرض التحليلات بوضوح
 
-تركز على:
-- استخراج البيانات الفعلية من النصوص
-- تحليل أداء خدمة العملاء (أوقات الرد، جودة الخدمة)
-- تحليل الإنتاجية (المهام المكتملة، التأخيرات)
-- تحليل المبيعات والتسويق (الطلبات، الاستفسارات)
-- إنتاج توصيات عملية للتحسين
+التركيز على:
+- استخدام البيانات المستخرجة فعلياً (أرقام العملاء، الكلمات المفتاحية، المؤشرات)
+- تحليل اتجاهات الأداء من البيانات الحقيقية
+- إنتاج مؤشرات KPI مبنية على المحتوى المحلل
+- توصيات عملية للتحسين مبنية على البيانات المتاحة
 
-أنتج HTML كامل ومستقل مع تحليلات ذكية مبنية على المحتوى الفعلي.`;
+أنتج HTML كامل ومستقل باللغة العربية مع رسوم بيانية تعكس البيانات الحقيقية المستخرجة.`;
 
         const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -190,19 +349,20 @@ serve(async (req) => {
               { role: 'system', content: systemPrompt },
               { 
                 role: 'user', 
-                content: `حلّل محتوى التقارير التالية واستخرج insights ذكية:
+                content: `قم بتحليل البيانات المستخرجة من التقارير وإنتاج تحليل ذكي:
 
-تحليل المحتوى:
+البيانات المستخرجة:
 ${JSON.stringify(contentAnalysis, null, 2)}
 
-المطلوب:
-1. تحليل عميق لمحتوى التقارير (ليس فقط العدد)
-2. استخراج مؤشرات أداء فعلية من النصوص
-3. تحديد اتجاهات وأنماط من البيانات النصية
-4. إنتاج توصيات عملية للتحسين
-5. إنشاء HTML متطور يعرض هذه التحليلات
+المطلوب إنتاجه:
+1. تحليل الأرقام المستخرجة (عدد العملاء، أوقات الاستجابة، إلخ)
+2. تفسير الكلمات المفتاحية ومدلولاتها
+3. تحليل الاتجاهات من البيانات المتاحة
+4. مؤشرات أداء KPI مبنية على البيانات الحقيقية
+5. توصيات عملية للتحسين
 
-أنتج كود HTML كامل يركز على تحليل المحتوى الفعلي وليس مجرد إحصائيات.`
+أنتج HTML كامل يعرض هذه التحليلات مع charts تفاعلية باستخدام البيانات الحقيقية المستخرجة.
+تأكد من استخدام الأرقام الفعلية الموجودة في البيانات وليس أرقام وهمية.`
               }
             ],
             max_completion_tokens: 4000
@@ -374,20 +534,23 @@ ${JSON.stringify(contentAnalysis, null, 2)}
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">${Object.keys(contentAnalysis.content_insights).length}</div>
+                <div class="metric-value">${Object.keys(contentAnalysis.sections_analyzed).length}</div>
                 <div class="metric-label">📊 أقسام محتوى تم تحليلها</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${contentAnalysis.key_findings?.length || 0}</div>
-                <div class="metric-label">🔍 نتائج رئيسية مستخرجة</div>
+                <div class="metric-value">${contentAnalysis.key_insights?.length || 0}</div>
+                <div class="metric-label">🔍 insights مستخرجة</div>
             </div>
             <div class="metric-card">
                 <div class="metric-value">${contentAnalysis.recommendations?.length || 0}</div>
                 <div class="metric-label">💡 توصيات عملية</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">${contentAnalysis.content_insights.whatsapp_reports ? '✅' : '❌'}</div>
-                <div class="metric-label">💬 تحليل محتوى الواتساب</div>
+                <div class="metric-value">${
+                  contentAnalysis.sections_analyzed.whatsapp_reports?.metrics?.customer_metrics?.daily_customers || 
+                  (contentAnalysis.sections_analyzed.whatsapp_reports ? 'متاح' : 'غير متاح')
+                }</div>
+                <div class="metric-label">👥 عملاء الواتساب</div>
             </div>
         </div>
 
@@ -403,38 +566,57 @@ ${JSON.stringify(contentAnalysis, null, 2)}
         </div>
 
         <div class="section-analysis">
-            <h3 class="analysis-title">🧠 تحليل المحتوى الذكي</h3>
+            <h3 class="analysis-title">🧠 تحليل المحتوى المتقدم</h3>
             <div class="analysis-content">
-                <p><strong>📋 التحليل الشامل:</strong> تم تحليل محتوى البيانات واستخراج رؤى عملية قابلة للتنفيذ 
-                   ${Object.keys(contentAnalysis.content_insights).length > 2 ? '<span class="trend-indicator trend-up">تحليل عميق</span>' : 
-                     Object.keys(contentAnalysis.content_insights).length > 1 ? '<span class="trend-indicator trend-stable">تحليل متوسط</span>' : 
-                     '<span class="trend-indicator trend-down">تحليل أساسي</span>'}
+                <p><strong>📋 التحليل الشامل:</strong> تم تحليل ${contentAnalysis.total_reports} تقرير واستخراج بيانات حقيقية 
+                   ${Object.keys(contentAnalysis.sections_analyzed).length > 2 ? '<span class="trend-indicator trend-up">تحليل شامل</span>' : 
+                     Object.keys(contentAnalysis.sections_analyzed).length > 1 ? '<span class="trend-indicator trend-stable">تحليل جيد</span>' : 
+                     '<span class="trend-indicator trend-down">بيانات محدودة</span>'}
                 </p>
                 
-                ${Object.keys(contentAnalysis.content_insights).map(section => {
-                  const insight = contentAnalysis.content_insights[section];
+                ${Object.entries(contentAnalysis.sections_analyzed).map(([section, data]: [string, any]) => {
                   const sectionName = sectionLabels[section] || section;
                   return `
-                  <div style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%); border-radius: 10px; border-right: 4px solid #667eea;">
-                    <p><strong>🔍 ${sectionName}:</strong></p>
-                    <ul style="margin-top: 10px;">
-                      <li>📝 ${insight.content_summary}</li>
-                      <li>📊 جودة المحتوى: ${insight.extracted_metrics ? 'عالية' : 'متوسطة'}</li>
-                      ${insight.extracted_metrics && Object.keys(insight.extracted_metrics.keywords || {}).length > 0 
-                        ? `<li>🔑 الكلمات المفتاحية: ${Object.entries(insight.extracted_metrics.keywords).slice(0, 3).map(([key, value]) => `${key} (${value})`).join(', ')}</li>` 
-                        : '<li>🔑 يتم استخراج الكلمات المفتاحية من المحتوى</li>'}
-                    </ul>
+                  <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%); border-radius: 15px; border-right: 5px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 15px;">🔍 ${sectionName}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                      <div>
+                        <strong>📊 إحصائيات:</strong>
+                        <ul style="margin-top: 8px; margin-right: 20px;">
+                          <li>عدد التقارير: ${data.total_reports}</li>
+                          ${data.metrics?.customer_metrics?.daily_customers ? 
+                            `<li>إجمالي العملاء: ${data.metrics.customer_metrics.daily_customers}</li>` : ''}
+                          ${data.metrics?.performance_indicators?.total_tasks ? 
+                            `<li>إجمالي المهام: ${data.metrics.performance_indicators.total_tasks}</li>` : ''}
+                        </ul>
+                      </div>
+                      <div>
+                        <strong>🔑 الكلمات المفتاحية:</strong>
+                        <ul style="margin-top: 8px; margin-right: 20px;">
+                          ${Object.entries(data.metrics?.keywords || {}).slice(0, 4).map(([keyword, count]) => 
+                            `<li>${keyword}: ${count} مرة</li>`
+                          ).join('')}
+                          ${Object.keys(data.metrics?.keywords || {}).length === 0 ? 
+                            '<li>لم يتم العثور على كلمات مفتاحية</li>' : ''}
+                        </ul>
+                      </div>
+                    </div>
+                    <div>
+                      <strong>💡 النتائج:</strong>
+                      <ul style="margin-top: 8px; margin-right: 20px;">
+                        ${data.insights?.map((insight: string) => `<li>${insight}</li>`).join('') || '<li>يتم استخراج المزيد من البيانات للتحليل</li>'}
+                      </ul>
+                    </div>
                   </div>`;
                 }).join('')}
 
-                <p><strong>💡 التوصيات المبنية على المحتوى:</strong></p>
-                <ul>
-                    <li>🔍 تحليل عميق للكلمات المفتاحية لفهم احتياجات العملاء</li>
-                    <li>📊 تطوير مؤشرات أداء مبنية على المحتوى الفعلي</li>
-                    <li>⚡ تحسين أوقات الاستجابة بناءً على أنماط الاستفسارات</li>
-                    <li>🎯 تخصيص الخدمات حسب المواضيع الأكثر تكراراً</li>
-                    <li>📈 تطوير تدريب الفريق بناءً على التحديات المحددة في التقارير</li>
-                </ul>
+                <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%); border-radius: 15px; border-right: 5px solid #4caf50;">
+                  <h4 style="color: #388e3c; margin-bottom: 15px;">💡 التوصيات المبنية على البيانات الحقيقية</h4>
+                  <ul style="margin-right: 20px;">
+                    ${contentAnalysis.recommendations?.map((rec: string) => `<li>${rec}</li>`).join('') || 
+                      '<li>جمع المزيد من البيانات لاستخراج توصيات دقيقة</li>'}
+                  </ul>
+                </div>
             </div>
         </div>
     </div>

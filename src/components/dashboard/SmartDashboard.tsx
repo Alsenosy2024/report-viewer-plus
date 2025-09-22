@@ -79,6 +79,38 @@ const SmartDashboard = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      // Trigger the webhook first
+      console.log('Triggering dashboard refresh webhook...');
+      await fetch('https://primary-production-245af.up.railway.app/webhook/dashboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'refresh_dashboard',
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      toast({
+        title: "تم تفعيل التحديث",
+        description: "تم إرسال طلب تحديث الداشبورد بنجاح",
+      });
+      
+      // Then load the latest dashboard
+      await loadLatestDashboard();
+    } catch (error) {
+      console.error('Error triggering webhook:', error);
+      toast({
+        title: "خطأ في التحديث",
+        description: "فشل في تفعيل تحديث الداشبورد",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Subscribe to real-time updates for new n8n dashboards
   useEffect(() => {
     const channel = supabase
@@ -128,7 +160,7 @@ const SmartDashboard = () => {
         <CardContent>
           <p className="text-muted-foreground">{error}</p>
           <Button 
-            onClick={() => loadLatestDashboard()} 
+            onClick={() => handleRefresh()} 
             className="mt-4"
             disabled={isLoading}
           >
@@ -175,7 +207,7 @@ const SmartDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => loadLatestDashboard()}
+                onClick={() => handleRefresh()}
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
@@ -217,7 +249,7 @@ const SmartDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => loadLatestDashboard()}
+                onClick={() => handleRefresh()}
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
@@ -277,7 +309,7 @@ const SmartDashboard = () => {
             قم بتشغيل سير عمل n8n الخاص بك لإنشاء وتحميل داشبورد جديد
           </p>
           <Button 
-            onClick={() => loadLatestDashboard()} 
+            onClick={() => handleRefresh()} 
             disabled={isLoading}
             size="lg"
           >

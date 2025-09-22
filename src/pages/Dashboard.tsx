@@ -3,11 +3,16 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import SmartDashboard from '@/components/dashboard/SmartDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, BarChart3, ArrowLeft } from 'lucide-react';
+import { Bot, BarChart3, ArrowLeft, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'agentMood'>('dashboard');
   const [iframeError, setIframeError] = useState(false);
+  const [isAgentMoodFullscreen, setIsAgentMoodFullscreen] = useState(false);
+
+  const toggleAgentMoodFullscreen = () => {
+    setIsAgentMoodFullscreen(!isAgentMoodFullscreen);
+  };
 
   const renderAgentMood = () => {
     const handleIframeError = () => {
@@ -19,6 +24,46 @@ const Dashboard = () => {
       console.log('Agent Mood interface loaded successfully');
       setIframeError(false);
     };
+
+    if (isAgentMoodFullscreen) {
+      return (
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              <span className="font-semibold">Agent Mood - وضع ملء الشاشة</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://open-webui-production-7478.up.railway.app/', '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                فتح في نافذة جديدة
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleAgentMoodFullscreen}
+              >
+                <Minimize2 className="h-4 w-4 mr-2" />
+                إغلاق ملء الشاشة
+              </Button>
+            </div>
+          </div>
+          <div className="h-[calc(100vh-80px)]">
+            <iframe
+              src="https://open-webui-production-7478.up.railway.app/"
+              className="w-full h-full border-0"
+              title="Agent Mood Fullscreen"
+              onError={handleIframeError}
+              onLoad={handleIframeLoad}
+            />
+          </div>
+        </div>
+      );
+    }
 
     if (iframeError) {
       return (
@@ -72,7 +117,16 @@ const Dashboard = () => {
                 size="sm"
                 onClick={() => window.open('https://open-webui-production-7478.up.railway.app/', '_blank')}
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 فتح في نافذة جديدة
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleAgentMoodFullscreen}
+              >
+                <Maximize2 className="h-4 w-4 mr-2" />
+                ملء الشاشة
               </Button>
               <Button
                 variant="outline"

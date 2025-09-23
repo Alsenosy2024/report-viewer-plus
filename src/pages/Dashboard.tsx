@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import SmartDashboard from '@/components/dashboard/SmartDashboard';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,19 @@ const Dashboard = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'agentMood'>('dashboard');
   const [iframeError, setIframeError] = useState(false);
   const [isAgentMoodFullscreen, setIsAgentMoodFullscreen] = useState(false);
+  const [isPreloaded, setIsPreloaded] = useState(false);
 
   const toggleAgentMoodFullscreen = () => {
     setIsAgentMoodFullscreen(!isAgentMoodFullscreen);
+  };
+
+  const handlePreloadComplete = () => {
+    setIsPreloaded(true);
+    console.log('Agent Mood preloaded successfully');
+  };
+
+  const handlePreloadError = () => {
+    console.log('Agent Mood preload failed, will fallback to regular loading');
   };
 
   const renderAgentMood = () => {
@@ -174,6 +184,15 @@ const Dashboard = () => {
         
         {currentView === 'dashboard' ? <SmartDashboard /> : renderAgentMood()}
       </div>
+      
+      {/* Preload Agent Mood iframe in background */}
+      <iframe
+        src="https://open-webui-production-7478.up.railway.app/"
+        className="absolute top-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
+        title="Agent Mood Preload"
+        onLoad={handlePreloadComplete}
+        onError={handlePreloadError}
+      />
     </DashboardLayout>
   );
 };

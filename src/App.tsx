@@ -90,6 +90,7 @@ const App = () => (
             </Routes>
           </SidebarProvider>
         </BrowserRouter>
+        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

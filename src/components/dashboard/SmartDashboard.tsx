@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Maximize2, Minimize2, Workflow, Calendar } from 'lucide-react';
+import { RefreshCw, Maximize2, Minimize2, Workflow, Calendar, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -24,7 +24,39 @@ const SmartDashboard = () => {
   const [dashboard, setDashboard] = useState<N8nDashboard | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState<string>('');
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isTimerActive, setIsTimerActive] = useState(false);
   const { toast } = useToast();
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isTimerActive && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds(seconds => {
+          if (seconds <= 1) {
+            setIsTimerActive(false);
+            return 0;
+          }
+          return seconds - 1;
+        });
+      }, 1000);
+    } else if (timerSeconds === 0) {
+      setIsTimerActive(false);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerActive, timerSeconds]);
+
+  // Format timer display
+  const formatTimer = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const loadLatestDashboard = async () => {
     setIsLoading(true);
@@ -81,6 +113,10 @@ const SmartDashboard = () => {
 
   const handleRefresh = async () => {
     try {
+      // Start 5-minute timer
+      setTimerSeconds(300); // 5 minutes = 300 seconds
+      setIsTimerActive(true);
+      
       // Trigger the webhook first
       console.log('Triggering dashboard refresh webhook...');
       await fetch('https://primary-production-245af.up.railway.app/webhook/dashboard', {
@@ -96,13 +132,15 @@ const SmartDashboard = () => {
       
       toast({
         title: "تم تفعيل التحديث",
-        description: "تم إرسال طلب تحديث الداشبورد بنجاح",
+        description: "تم إرسال طلب تحديث الداشبورد بنجاح - سيتم التحديث خلال 5 دقائق",
       });
       
       // Then load the latest dashboard
       await loadLatestDashboard();
     } catch (error) {
       console.error('Error triggering webhook:', error);
+      setIsTimerActive(false);
+      setTimerSeconds(0);
       toast({
         title: "خطأ في التحديث",
         description: "فشل في تفعيل تحديث الداشبورد",
@@ -162,10 +200,19 @@ const SmartDashboard = () => {
           <Button 
             onClick={() => handleRefresh()} 
             className="mt-4"
-            disabled={isLoading}
+            disabled={isLoading || isTimerActive}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            إعادة المحاولة
+            {isTimerActive ? (
+              <>
+                <Clock className="h-4 w-4 mr-2" />
+                {formatTimer(timerSeconds)}
+              </>
+            ) : (
+              <>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                إعادة المحاولة
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -208,10 +255,19 @@ const SmartDashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleRefresh()}
-                disabled={isLoading}
+                disabled={isLoading || isTimerActive}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                تحديث
+                {isTimerActive ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2" />
+                    {formatTimer(timerSeconds)}
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    تحديث
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -250,10 +306,19 @@ const SmartDashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleRefresh()}
-                disabled={isLoading}
+                disabled={isLoading || isTimerActive}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                تحديث
+                {isTimerActive ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2" />
+                    {formatTimer(timerSeconds)}
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    تحديث
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -310,11 +375,20 @@ const SmartDashboard = () => {
           </p>
           <Button 
             onClick={() => handleRefresh()} 
-            disabled={isLoading}
+            disabled={isLoading || isTimerActive}
             size="lg"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            البحث عن داشبورد
+            {isTimerActive ? (
+              <>
+                <Clock className="h-4 w-4 mr-2" />
+                {formatTimer(timerSeconds)}
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                البحث عن داشبورد
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

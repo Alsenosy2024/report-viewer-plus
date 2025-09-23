@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import SmartDashboard from '@/components/dashboard/SmartDashboard';
+import ElevenLabsAgent from '@/components/ElevenLabsAgent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, BarChart3, ArrowLeft, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import { Bot, BarChart3, ArrowLeft, Maximize2, Minimize2, ExternalLink, MessageCircle } from 'lucide-react';
 
 const Dashboard = () => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'agentMood'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'agentMood' | 'elevenLabsAgent'>('dashboard');
   const [iframeError, setIframeError] = useState(false);
   const [isAgentMoodFullscreen, setIsAgentMoodFullscreen] = useState(false);
   const [isPreloaded, setIsPreloaded] = useState(false);
@@ -180,9 +181,40 @@ const Dashboard = () => {
             <Bot className="h-4 w-4 mr-2" />
             Agent Mood
           </Button>
+          <Button
+            variant={currentView === 'elevenLabsAgent' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('elevenLabsAgent')}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            AI Assistant
+          </Button>
         </div>
         
-        {currentView === 'dashboard' ? <SmartDashboard /> : renderAgentMood()}
+        {currentView === 'dashboard' && <SmartDashboard />}
+        {currentView === 'agentMood' && renderAgentMood()}
+        {currentView === 'elevenLabsAgent' && (
+          <Card className="h-full">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  AI Assistant
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentView('dashboard')}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  العودة للداشبورد
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ElevenLabsAgent className="w-full" />
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       {/* Preload Agent Mood iframe in background */}

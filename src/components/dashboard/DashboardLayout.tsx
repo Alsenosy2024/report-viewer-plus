@@ -7,6 +7,7 @@ import { LogOut, User, Settings, BarChart3, MessageSquare, Bot, Mail, TrendingUp
 import { Card } from '@/components/ui/card';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -16,8 +17,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -56,17 +58,21 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   {navigationItems.map((item, index) => (
                     <SidebarMenuItem key={index}>
                       <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.path || "#"}
-                          end
-                          className={({ isActive }) =>
-                            isActive
-                              ? "bg-muted text-primary font-medium"
-                              : "hover:bg-muted/50"
-                          }
-                          onClick={(e) => {
-                            if (!item.path) e.preventDefault();
-                          }}
+                         <NavLink
+                           to={item.path || "#"}
+                           end
+                           className={({ isActive }) =>
+                             isActive
+                               ? "bg-muted text-primary font-medium"
+                               : "hover:bg-muted/50"
+                           }
+                           onClick={(e) => {
+                             if (!item.path) e.preventDefault();
+                             // Close sidebar on mobile after navigation
+                             if (isMobile && item.path) {
+                               setTimeout(() => setOpenMobile(false), 100);
+                             }
+                           }}
                         >
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.label}</span>}

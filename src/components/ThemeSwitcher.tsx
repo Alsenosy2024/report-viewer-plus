@@ -10,9 +10,12 @@ import {
 } from "./ui/dropdown-menu"
 
 const themeOptions = [
-  { value: "aurora", label: "Aurora", colors: ["#8B5CF6", "#818CF8", "#A78BFA"] },
+  { value: "aurora", label: "Aurora", colors: ["#A855F7", "#8B5CF6", "#C084FC"] },
   { value: "sunset", label: "Sunset", colors: ["#F97316", "#EC4899", "#FB923C"] },
   { value: "ocean", label: "Ocean", colors: ["#06B6D4", "#3B82F6", "#10B981"] },
+  { value: "neon", label: "Neon Cyber", colors: ["#E879F9", "#06D6A0", "#4ADE80"] },
+  { value: "tropical", label: "Tropical", colors: ["#F472B6", "#22D3EE", "#FBBF24"] },
+  { value: "galaxy", label: "Galaxy", colors: ["#A855F7", "#60A5FA", "#FDE047"] },
 ] as const
 
 export function ThemeSwitcher() {

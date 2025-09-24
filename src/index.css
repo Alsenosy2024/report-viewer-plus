@@ -37,35 +37,36 @@
     --glass-saturation: 200%;
     --glass-brightness: 120%;
 
-    /* Brand palette with glass integration */
-    --primary: 222 65% 26%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glass: 222 65% 26% / 0.15;
-    --accent: 12 78% 50%;
-    --accent-foreground: 0 0% 100%;
-    --accent-glass: 12 78% 50% / 0.2;
+    /* Enhanced Brand palette with vibrant glass integration */
+    --primary: hsl(var(--theme-primary));
+    --primary-foreground: 0 0% 98%;
+    --primary-glass: var(--theme-primary) / 0.18;
+    --primary-glow: var(--theme-primary);
+    --accent: hsl(var(--theme-accent));
+    --accent-foreground: 0 0% 9%;
+    --accent-glass: var(--theme-accent) / 0.25;
 
-    /* Dashboard Glass Elements */
-    --dashboard-primary: 12 78% 50%;
-    --dashboard-primary-foreground: 0 0% 100%;
-    --dashboard-primary-glass: 12 78% 50% / 0.15;
-    --dashboard-secondary: 222 24% 96%;
-    --dashboard-secondary-foreground: 222 30% 20%;
-    --dashboard-secondary-glass: 222 24% 96% / 0.8;
+    /* Enhanced Dashboard Glass Elements with vibrant theming */
+    --dashboard-primary: hsl(var(--theme-primary));
+    --dashboard-primary-foreground: 0 0% 98%;
+    --dashboard-primary-glass: var(--theme-primary) / 0.18;
+    --dashboard-secondary: hsl(var(--theme-secondary));
+    --dashboard-secondary-foreground: 0 0% 9%;
+    --dashboard-secondary-glass: var(--theme-secondary) / 0.15;
     
-    /* Status colors with glass variants */
-    --success: 142 70% 40%;
+    /* Enhanced status colors with vibrant glass variants */
+    --success: 142 75% 45%;
     --success-foreground: 0 0% 100%;
-    --success-glass: 142 70% 40% / 0.15;
-    --warning: 38 92% 50%;
+    --success-glass: 142 75% 45% / 0.18;
+    --warning: 38 95% 55%;
     --warning-foreground: 0 0% 100%;
-    --warning-glass: 38 92% 50% / 0.15;
-    --error: 0 72% 51%;
+    --warning-glass: 38 95% 55% / 0.18;
+    --error: 0 78% 58%;
     --error-foreground: 0 0% 100%;
-    --error-glass: 0 72% 51% / 0.15;
-    --info: 222 65% 26%;
+    --error-glass: 0 78% 58% / 0.18;
+    --info: hsl(var(--theme-secondary));
     --info-foreground: 0 0% 100%;
-    --info-glass: 222 65% 26% / 0.15;
+    --info-glass: var(--theme-secondary) / 0.18;
 
     /* Card and surfaces - Pure Glass */
     --card: rgba(var(--glass-light));
@@ -108,16 +109,17 @@
     --sidebar-border: rgba(var(--glass-border-light));
     --sidebar-ring: 12 78% 50%;
 
-    /* Enhanced Liquid Glass Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--theme-primary)), hsl(var(--theme-secondary)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--glass-light)), hsl(var(--glass-medium)));
-    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 60% 48%));
-    --gradient-smart: linear-gradient(135deg, hsl(var(--theme-primary)), hsl(var(--theme-secondary)), hsl(var(--theme-accent)));
+    /* Enhanced Liquid Glass Gradients with vibrant theme integration */
+    --gradient-primary: var(--theme-gradient);
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--theme-secondary)), hsl(var(--theme-accent)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 70% 52%));
+    --gradient-smart: var(--theme-gradient);
     --gradient-ai: linear-gradient(45deg, hsl(var(--theme-accent)), hsl(var(--theme-secondary)), hsl(var(--theme-primary)));
-    --gradient-dashboard: linear-gradient(135deg, hsl(var(--dashboard-primary)), hsl(var(--accent)));
-    --gradient-glass-light: linear-gradient(135deg, hsl(var(--glass-glow-light)), transparent 50%);
-    --gradient-glass-medium: linear-gradient(135deg, hsl(var(--glass-glow-medium)), transparent 60%);
-    --gradient-glass-radial: radial-gradient(circle at top left, hsl(var(--glass-glow-medium)), transparent 50%);
+    --gradient-dashboard: var(--theme-gradient);
+    --gradient-glass-light: linear-gradient(135deg, hsl(var(--theme-accent) / 0.15), transparent 50%);
+    --gradient-glass-medium: linear-gradient(135deg, hsl(var(--theme-primary) / 0.12), transparent 60%);
+    --gradient-glass-radial: radial-gradient(circle at top left, hsl(var(--theme-accent) / 0.2), transparent 50%);
+    --gradient-glow: radial-gradient(circle at center, hsl(var(--theme-primary) / 0.3), transparent 70%);
     
     /* Apple Liquid Glass Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -263,7 +265,9 @@
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, 
       hsl(var(--background)), 
-      color-mix(in srgb, hsl(var(--background)), hsl(var(--primary)) 5%));
+      color-mix(in srgb, hsl(var(--background)), hsl(var(--theme-primary)) 8%)),
+      var(--gradient-glow);
+    background-attachment: fixed;
     min-height: 100vh;
   }
 }

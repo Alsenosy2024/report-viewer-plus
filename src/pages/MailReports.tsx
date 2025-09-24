@@ -389,14 +389,14 @@ const MailReports = () => {
 
                         {/* Risk Assessment */}
                         {analysis.riskAssessment && (
-                          <Card dir="rtl">
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
+                          <LiquidGlassCard intensity="medium" floating className="glass-breathe" dir="rtl">
+                            <LiquidGlassCardHeader>
+                              <LiquidGlassCardTitle className="flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-yellow-500" />
                                 تقييم المخاطر
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                              </LiquidGlassCardTitle>
+                            </LiquidGlassCardHeader>
+                            <LiquidGlassCardContent>
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="font-medium">مستوى المخاطر:</span>
@@ -426,11 +426,11 @@ const MailReports = () => {
                         )}
 
                         {/* Original Report */}
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Original Report Content</CardTitle>
-                          </CardHeader>
-                          <CardContent>
+                        <LiquidGlassCard intensity="light" className="glass-shimmer">
+                          <LiquidGlassCardHeader>
+                            <LiquidGlassCardTitle>Original Report Content</LiquidGlassCardTitle>
+                          </LiquidGlassCardHeader>
+                          <LiquidGlassCardContent>
                             <ScrollArea className="max-h-[300px]">
                               <div className="text-sm leading-relaxed break-words text-foreground" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((processedContent?.original || selectedReport.content || '') as string).replace(/\n/g, '<br/>')) }} />
                             </ScrollArea>

@@ -80,22 +80,35 @@ export const useNavigationTools = () => {
   useEffect(() => {
     // Ensure window object exists (for SSR compatibility)
     if (typeof window !== 'undefined') {
+      console.log('🔧 Registering navigation tools...');
+      
       // Register each tool on the window object
       Object.entries(clientTools).forEach(([key, func]) => {
         (window as any)[key] = func;
+        console.log(`✅ Registered: ${key}`);
       });
 
-      console.log('✅ Navigation tools registered globally:', Object.keys(clientTools));
+      console.log('✅ All navigation tools registered:', Object.keys(clientTools));
       
       // Test one tool to make sure it works
       setTimeout(() => {
         try {
+          console.log('🧪 Testing navigation tools...');
           const testResult = (window as any).get_current_page();
-          console.log('🧪 Navigation tools test:', testResult);
+          console.log('✅ Navigation tools test successful:', testResult);
+          
+          // Verify all tools are accessible
+          Object.keys(clientTools).forEach(key => {
+            if (typeof (window as any)[key] === 'function') {
+              console.log(`✓ ${key} is available`);
+            } else {
+              console.error(`✗ ${key} is NOT available`);
+            }
+          });
         } catch (error) {
           console.error('❌ Navigation tools test failed:', error);
         }
-      }, 1000);
+      }, 500);
     }
   }, []);
 

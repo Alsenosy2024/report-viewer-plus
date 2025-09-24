@@ -95,6 +95,18 @@ const AppContent = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+      
+      {/* ElevenLabs widget - load after navigation tools are registered */}
+      <div 
+        dangerouslySetInnerHTML={{ 
+          __html: `
+            <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
+            <elevenlabs-convai 
+              agent-id="agent_2401k5v85f8beantem3febzmgj81"
+            ></elevenlabs-convai>
+          ` 
+        }} 
+      />
       </SidebarProvider>
   );
 };
@@ -109,16 +121,6 @@ const App = () => {
           <BrowserRouter>
             <AppContent />
           </BrowserRouter>
-          <div 
-            dangerouslySetInnerHTML={{ 
-              __html: `
-                <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
-                <elevenlabs-convai 
-                  agent-id="agent_2401k5v85f8beantem3febzmgj81"
-                ></elevenlabs-convai>
-              ` 
-            }} 
-          />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

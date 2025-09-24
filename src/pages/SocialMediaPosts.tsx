@@ -484,7 +484,7 @@ const SocialMediaPosts = () => {
           </Button>
           <Button onClick={() => setShowAddForm(!showAddForm)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Add New Post
+            New Post
           </Button>
         </div>
       </div>

@@ -23,6 +23,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationTools } from "@/hooks/useNavigationTools";
 import { NavigationController } from "@/utils/NavigationController";
 import { useEffect } from "react";
+import ElevenLabsAssistant from "@/components/voice/ElevenLabsAssistant";
 
 const queryClient = new QueryClient();
 
@@ -109,13 +110,7 @@ const App = () => {
           <BrowserRouter>
             <AppContent />
           </BrowserRouter>
-          <div 
-            dangerouslySetInnerHTML={{ 
-              __html: `<elevenlabs-convai 
-                agent-id="agent_2401k5v85f8beantem3febzmgj81"
-              ></elevenlabs-convai>` 
-            }} 
-          />
+          <ElevenLabsAssistant />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

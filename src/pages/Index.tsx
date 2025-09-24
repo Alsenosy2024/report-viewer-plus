@@ -151,6 +151,7 @@ const Index = () => {
               </LiquidGlassCard>
             ))}
           </div>
+        </div>
 
         {/* Final CTA */}
         <div className="mt-24">
@@ -179,7 +180,6 @@ const Index = () => {
           </LiquidGlassCard>
         </div>
       </div>
-    </div>
     </div>
   );
 };

@@ -71,6 +71,49 @@
     --glass-morph-transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
+  /* Enhanced RGBA variables for Tailwind compatibility */
+  :root {
+    /* Glass RGBA variables for Tailwind */
+    --glass-light: 255, 255, 255, 0.03;
+    --glass-medium: 255, 255, 255, 0.05;
+    --glass-strong: 255, 255, 255, 0.08;
+    
+    /* Glass border RGBA variables */
+    --glass-border-light: 255, 255, 255, 0.05;
+    --glass-border-medium: 255, 255, 255, 0.08;
+    --glass-border-strong: 255, 255, 255, 0.12;
+    
+    /* Glass glow RGBA variables */
+    --glass-glow-light: 255, 255, 255, 0.1;
+    --glass-glow-medium: 255, 255, 255, 0.15;
+    --glass-glow-strong: 255, 255, 255, 0.2;
+    
+    /* Additional variables for complete design system */
+    --gradient-glass-light: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    --gradient-glass-medium: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    --gradient-glass-radial: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1), transparent 70%);
+    
+    /* Glass shadows */
+    --shadow-glass-light: 0 4px 24px rgba(0,0,0,0.03);
+    --shadow-glass-medium: 0 8px 32px rgba(0,0,0,0.05);
+    --shadow-glass-strong: 0 12px 48px rgba(0,0,0,0.08);
+    --shadow-glass-glow: 0 0 40px rgba(255,255,255,0.1);
+    --shadow-glass-inset: inset 0 1px 0 rgba(255,255,255,0.1);
+    
+    /* Glass blur values */
+    --glass-blur-light: 16px;
+    --glass-blur-medium: 20px;
+    --glass-blur-strong: 24px;
+    --glass-blur-intense: 32px;
+  }
+
+  .dark {
+    /* Override RGBA variables for dark mode */
+    --glass-light: 255, 255, 255, 0.02;
+    --glass-medium: 255, 255, 255, 0.04;
+    --glass-strong: 255, 255, 255, 0.06;
+  }
+
   .dark {
     --background: 240 8% 8%;
     --foreground: 250 100% 96%;

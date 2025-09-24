@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogOut, Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 export function SiteHeader() {
   const { user, profile, signOut } = useAuth();
@@ -48,6 +49,8 @@ export function SiteHeader() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          <ThemeSwitcher />
+          
           {!user && (
             <Button variant="default" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/auth')}>
               Sign in

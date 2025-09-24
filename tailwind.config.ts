@@ -27,7 +27,7 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					glass: 'rgba(var(--primary-glass))'
+					glass: 'hsl(var(--primary-glass))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -44,7 +44,7 @@ export default {
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))',
-					glass: 'rgba(var(--accent-glass))'
+					glass: 'hsl(var(--accent-glass))'
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -54,35 +54,35 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))',
 					border: 'hsl(var(--card-border))',
-					glass: 'rgba(var(--card-glass))'
+					glass: 'hsl(var(--card-glass))'
 				},
 				dashboard: {
 					primary: 'hsl(var(--dashboard-primary))',
 					'primary-foreground': 'hsl(var(--dashboard-primary-foreground))',
-					'primary-glass': 'rgba(var(--dashboard-primary-glass))',
+					'primary-glass': 'hsl(var(--dashboard-primary-glass))',
 					secondary: 'hsl(var(--dashboard-secondary))',
 					'secondary-foreground': 'hsl(var(--dashboard-secondary-foreground))',
-					'secondary-glass': 'rgba(var(--dashboard-secondary-glass))'
+					'secondary-glass': 'hsl(var(--dashboard-secondary-glass))'
 				},
 				success: {
 					DEFAULT: 'hsl(var(--success))',
 					foreground: 'hsl(var(--success-foreground))',
-					glass: 'rgba(var(--success-glass))'
+					glass: 'hsl(var(--success-glass))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))',
-					glass: 'rgba(var(--warning-glass))'
+					glass: 'hsl(var(--warning-glass))'
 				},
 				error: {
 					DEFAULT: 'hsl(var(--error))',
 					foreground: 'hsl(var(--error-foreground))',
-					glass: 'rgba(var(--error-glass))'
+					glass: 'hsl(var(--error-glass))'
 				},
 				info: {
 					DEFAULT: 'hsl(var(--info))',
 					foreground: 'hsl(var(--info-foreground))',
-					glass: 'rgba(var(--info-glass))'
+					glass: 'hsl(var(--info-glass))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -95,15 +95,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				glass: {
-					light: 'rgba(var(--glass-light))',
-					medium: 'rgba(var(--glass-medium))',
-					strong: 'rgba(var(--glass-strong))',
-					'border-light': 'rgba(var(--glass-border-light))',
-					'border-medium': 'rgba(var(--glass-border-medium))',
-					'border-strong': 'rgba(var(--glass-border-strong))',
-					'glow-light': 'rgba(var(--glass-glow-light))',
-					'glow-medium': 'rgba(var(--glass-glow-medium))',
-					'glow-strong': 'rgba(var(--glass-glow-strong))'
+					light: 'hsl(var(--glass-light))',
+					medium: 'hsl(var(--glass-medium))',
+					strong: 'hsl(var(--glass-strong))',
+					'border-light': 'hsl(var(--glass-border-light))',
+					'border-medium': 'hsl(var(--glass-border-medium))',
+					'border-strong': 'hsl(var(--glass-border-strong))',
+					'glow-light': 'hsl(var(--glass-glow-light))',
+					'glow-medium': 'hsl(var(--glass-glow-medium))',
+					'glow-strong': 'hsl(var(--glass-glow-strong))'
 				}
 			},
 			spacing: {

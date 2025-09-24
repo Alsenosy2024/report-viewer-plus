@@ -18,13 +18,13 @@
     --background-glass: var(--theme-primary) / 0.03;
     --foreground: 222 33% 12%;
 
-    /* Enhanced Glass Material Properties */
-    --glass-light: var(--theme-primary) / 0.05;
-    --glass-medium: var(--theme-primary) / 0.08;
-    --glass-strong: var(--theme-primary) / 0.12;
-    --glass-border-light: var(--theme-accent) / 0.1;
-    --glass-border-medium: var(--theme-accent) / 0.2;
-    --glass-border-strong: var(--theme-accent) / 0.3;
+    /* Enhanced Glass Material Properties with proper HSL format */
+    --glass-light: var(--theme-primary) / 0.08;
+    --glass-medium: var(--theme-primary) / 0.12;
+    --glass-strong: var(--theme-primary) / 0.18;
+    --glass-border-light: var(--theme-accent) / 0.15;
+    --glass-border-medium: var(--theme-accent) / 0.25;
+    --glass-border-strong: var(--theme-accent) / 0.4;
     --glass-glow-light: var(--theme-accent) / 0.15;
     --glass-glow-medium: var(--theme-accent) / 0.25;
     --glass-glow-strong: var(--theme-accent) / 0.4;
@@ -68,29 +68,29 @@
     --info-foreground: 0 0% 100%;
     --info-glass: var(--theme-secondary) / 0.18;
 
-    /* Card and surfaces - Pure Glass */
-    --card: rgba(var(--glass-light));
+    /* Card and surfaces - Pure Glass with proper HSL */
+    --card: var(--glass-light);
     --card-foreground: 222 33% 12%;
-    --card-border: rgba(var(--glass-border-medium));
-    --card-glass: rgba(var(--glass-medium));
+    --card-border: var(--glass-border-medium);
+    --card-glass: var(--glass-medium);
 
-    /* Interactive elements */
-    --popover: rgba(var(--glass-medium));
+    /* Interactive elements with proper HSL */
+    --popover: var(--glass-medium);
     --popover-foreground: 222 33% 12%;
 
-    --secondary: rgba(var(--glass-light));
+    --secondary: var(--glass-light);
     --secondary-foreground: 222 30% 20%;
 
-    --muted: rgba(var(--glass-light));
+    --muted: var(--glass-light);
     --muted-foreground: 222 10% 40%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs - Glass style */
-    --border: rgba(var(--glass-border-light));
-    --input: rgba(var(--glass-light));
-    --ring: 12 78% 50%;
+    /* Borders and inputs - Glass style with proper HSL */
+    --border: var(--glass-border-light);
+    --input: var(--glass-light);
+    --ring: var(--theme-primary);
 
     /* Layout */
     --radius: 24px;

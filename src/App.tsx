@@ -20,10 +20,14 @@ import SocialMediaPosts from "./pages/SocialMediaPosts";
 import CoursesPrices from "./pages/CoursesPrices";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useNavigationTools } from "@/hooks/useNavigationTools";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const { clientTools } = useNavigationTools();
+
+  return (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
@@ -90,10 +94,18 @@ const App = () => (
             </Routes>
           </SidebarProvider>
         </BrowserRouter>
-        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
+        <div 
+          dangerouslySetInnerHTML={{ 
+            __html: `<elevenlabs-convai 
+              agent-id="agent_2401k5v85f8beantem3febzmgj81"
+              client-tools='${JSON.stringify(clientTools)}'
+            ></elevenlabs-convai>` 
+          }} 
+        />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

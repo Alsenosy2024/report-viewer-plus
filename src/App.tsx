@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -26,13 +27,14 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <SidebarProvider className="flex-col">
-            <SiteHeader />
-            <Routes>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <SidebarProvider className="flex-col">
+              <SiteHeader />
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/awaiting-approval" element={
@@ -87,11 +89,12 @@ const App = () => (
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </SidebarProvider>
-        </BrowserRouter>
-        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
-      </TooltipProvider>
+              </Routes>
+            </SidebarProvider>
+          </BrowserRouter>
+          <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
+        </TooltipProvider>
+      </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

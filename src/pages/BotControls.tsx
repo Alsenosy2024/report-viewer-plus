@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -162,7 +162,10 @@ const BotControls = () => {
           {isAdmin && (
             <Dialog open={addingOpen} onOpenChange={setAddingOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-primary text-dashboard-primary-foreground">
+                <Button 
+                  className="glass-primary glass-hover glass-glow-pulse"
+                  variant="glass-primary"
+                >
                   <Plus className="h-4 w-4 mr-2" /> Add Bot
                 </Button>
               </DialogTrigger>
@@ -182,7 +185,12 @@ const BotControls = () => {
                     <Label htmlFor="webhook">Webhook URL</Label>
                     <Input id="webhook" placeholder="https://..." value={newWebhook} onChange={(e) => setNewWebhook(e.target.value)} />
                   </div>
-                  <Button onClick={addBot} disabled={savingId === 'new'}>
+                  <Button 
+                    onClick={addBot} 
+                    disabled={savingId === 'new'}
+                    variant="glass-primary"
+                    className="glass-hover"
+                  >
                     {savingId === 'new' ? 'Adding...' : 'Add Bot'}
                   </Button>
                 </div>
@@ -192,14 +200,14 @@ const BotControls = () => {
         </header>
 
         <main>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-dashboard-primary" />
+          <LiquidGlassCard intensity="strong" interactive floating shimmer glow className="glass-morph">
+            <LiquidGlassCardHeader>
+              <LiquidGlassCardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-dashboard-primary animate-pulse" />
                 Registered Bots
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </LiquidGlassCardTitle>
+            </LiquidGlassCardHeader>
+            <LiquidGlassCardContent>
               {loading ? (
                 <div className="text-muted-foreground">Loading...</div>
               ) : bots.length === 0 ? (
@@ -219,8 +227,8 @@ const BotControls = () => {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </LiquidGlassCardContent>
+          </LiquidGlassCard>
         </main>
       </div>
     </DashboardLayout>
@@ -256,10 +264,11 @@ function BotRowItem({ bot, isAdmin, onSaveWebhook, onToggle, onRemove, savingId 
             />
             {isAdmin && (
               <Button
-                variant="outline"
+                variant="glass"
                 size="sm"
                 onClick={() => onSaveWebhook(bot.id, url)}
                 disabled={savingId === bot.id}
+                className="glass-hover"
               >
                 <LinkIcon className="h-4 w-4 mr-1" />
                 Save
@@ -286,7 +295,11 @@ function BotRowItem({ bot, isAdmin, onSaveWebhook, onToggle, onRemove, savingId 
           <div className="md:col-span-1 flex justify-end">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="icon">
+                <Button 
+                  variant="destructive" 
+                  size="icon"
+                  className="glass-hover"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>

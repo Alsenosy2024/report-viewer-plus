@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -21,20 +21,39 @@ const AwaitingApproval = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="max-w-lg w-full">
-        <CardHeader>
-          <CardTitle className="text-center">Awaiting Approval</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-center">
+    <div className="min-h-screen flex items-center justify-center glass-medium backdrop-blur-[32px] p-4">
+      <LiquidGlassCard 
+        intensity="strong" 
+        interactive 
+        floating 
+        shimmer 
+        glow 
+        className="max-w-lg w-full glass-morph glass-breathe"
+      >
+        <LiquidGlassCardHeader>
+          <LiquidGlassCardTitle className="text-center">Awaiting Approval</LiquidGlassCardTitle>
+        </LiquidGlassCardHeader>
+        <LiquidGlassCardContent className="space-y-4 text-center">
           <p>Your account ({user?.email}) has been created and is pending admin approval.</p>
           <p className="text-muted-foreground">You will be able to access the dashboard once approved.</p>
           <div className="flex gap-2 justify-center">
-            <Button variant="outline" onClick={() => navigate('/')}>Go to Home</Button>
-            <Button variant="destructive" onClick={async () => { await signOut(); navigate('/auth'); }}>Sign out</Button>
+            <Button 
+              variant="glass" 
+              onClick={() => navigate('/')}
+              className="glass-hover"
+            >
+              Go to Home
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={async () => { await signOut(); navigate('/auth'); }}
+              className="glass-hover"
+            >
+              Sign out
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </LiquidGlassCardContent>
+      </LiquidGlassCard>
     </div>
   );
 };

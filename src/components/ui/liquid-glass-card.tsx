@@ -21,21 +21,26 @@ const LiquidGlassCard = React.forwardRef<HTMLDivElement, LiquidGlassCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative isolation-isolate z-10",
+          "relative isolation-isolate z-10 group",
           intensityClasses[intensity],
-          interactive && "glass-hover cursor-pointer",
+          interactive && "glass-hover glass-morph glass-ripple cursor-pointer",
           floating && "glass-float",
           shimmer && "glass-shimmer",
-          glow && "glass-glow",
+          glow && "glass-glow glass-breathe",
           className
         )}
         {...props}
       >
-        {/* Glass highlight effect */}
-        <div className="absolute inset-0 bg-gradient-glass-light rounded-inherit pointer-events-none" />
+        {/* Enhanced glass highlight effect */}
+        <div className="absolute inset-0 rounded-inherit pointer-events-none opacity-40 group-hover:opacity-60 transition-opacity duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent rounded-inherit" />
+          <div className="absolute inset-0 bg-gradient-to-tl from-primary/5 via-transparent to-transparent rounded-inherit" />
+        </div>
         
-        {/* Specular highlight */}
-        <div className="absolute inset-0 bg-gradient-glass-radial rounded-inherit pointer-events-none opacity-60" />
+        {/* Soft specular highlight */}
+        <div className="absolute inset-0 rounded-inherit pointer-events-none opacity-30 group-hover:opacity-50 transition-opacity duration-700">
+          <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-radial from-white/20 to-transparent rounded-inherit" />
+        </div>
         
         {/* Content layer */}
         <div className="relative z-10">

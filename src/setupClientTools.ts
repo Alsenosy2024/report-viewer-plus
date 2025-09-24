@@ -44,8 +44,18 @@ import { NavigationController } from '@/utils/NavigationController';
     (window as any)[key] = func;
   });
 
+  // Also expose under a dedicated namespace for ElevenLabs
+  (window as any).elevenlabsClientTools = clientTools;
+
+  // Mark as ready and notify listeners
   (window as any).__client_tools_registered__ = true;
+  try {
+    window.dispatchEvent(new Event('client-tools-ready'));
+  } catch (e) {
+    console.warn('⚠️ Unable to dispatch client-tools-ready event', e);
+  }
   console.log('✅ (eager) Navigation tools registered globally:', Object.keys(clientTools));
+  console.log('✅ (eager) elevenlabsClientTools namespace available:', typeof (window as any).elevenlabsClientTools);
 })();
 
 export {};

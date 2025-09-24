@@ -22,7 +22,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationTools } from "@/hooks/useNavigationTools";
 import { NavigationController } from "@/utils/NavigationController";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -31,10 +31,48 @@ const AppContent = () => {
   const navigate = useNavigate();
   const { clientTools } = useNavigationTools();
 
+  // Delay widget load until client tools are available
+  const [canLoadWidget, setCanLoadWidget] = useState(false);
+
   useEffect(() => {
     // Set the navigate function in NavigationController
     NavigationController.setNavigateFunction(navigate);
   }, [navigate]);
+
+  useEffect(() => {
+    const checkReady = () => {
+      const ready =
+        typeof window !== 'undefined' &&
+        (window as any).__client_tools_registered__ === true;
+      if (ready) {
+        console.log('✅ ElevenLabs: client tools detected, enabling widget.');
+        setCanLoadWidget(true);
+      }
+      return ready;
+    };
+
+    if (checkReady()) return;
+
+    console.log('⏳ ElevenLabs: waiting for client tools to register...');
+    const onReady = () => {
+      console.log('✅ ElevenLabs: client-tools-ready event received.');
+      setCanLoadWidget(true);
+    };
+
+    window.addEventListener('client-tools-ready', onReady as any, { once: true } as any);
+
+    const interval = setInterval(() => {
+      if (checkReady()) {
+        clearInterval(interval);
+        window.removeEventListener('client-tools-ready', onReady as any);
+      }
+    }, 300);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('client-tools-ready', onReady as any);
+    };
+  }, []);
 
   return (
     <SidebarProvider className="flex-col">
@@ -97,16 +135,18 @@ const AppContent = () => {
             </Routes>
       
       {/* ElevenLabs widget - load after navigation tools are registered */}
-      <div 
-        dangerouslySetInnerHTML={{ 
-          __html: `
-            <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
-            <elevenlabs-convai 
-              agent-id="agent_2401k5v85f8beantem3febzmgj81"
-            ></elevenlabs-convai>
-          ` 
-        }} 
-      />
+      {canLoadWidget && (
+        <div 
+          dangerouslySetInnerHTML={{ 
+            __html: `
+              <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
+              <elevenlabs-convai 
+                agent-id="agent_2401k5v85f8beantem3febzmgj81"
+              ></elevenlabs-convai>
+            ` 
+          }} 
+        />
+      )}
       </SidebarProvider>
   );
 };

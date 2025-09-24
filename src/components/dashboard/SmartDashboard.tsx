@@ -256,7 +256,6 @@ const SmartDashboard = () => {
                 size="sm"
                 onClick={() => handleRefresh()}
                 disabled={isLoading || isTimerActive}
-                data-refresh-dashboard
               >
                 {isTimerActive ? (
                   <>
@@ -303,12 +302,11 @@ const SmartDashboard = () => {
               </span>
             </CardTitle>
             <div className="flex items-center gap-2">
-               <Button
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleRefresh()}
                 disabled={isLoading || isTimerActive}
-                data-refresh-dashboard
               >
                 {isTimerActive ? (
                   <>
@@ -375,11 +373,10 @@ const SmartDashboard = () => {
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             قم بتشغيل سير عمل n8n الخاص بك لإنشاء وتحميل داشبورد جديد
           </p>
-           <Button 
+          <Button 
             onClick={() => handleRefresh()} 
             disabled={isLoading || isTimerActive}
             size="lg"
-            data-refresh-dashboard
           >
             {isTimerActive ? (
               <>

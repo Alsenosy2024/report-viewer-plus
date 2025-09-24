@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -20,64 +20,19 @@ import SocialMediaPosts from "./pages/SocialMediaPosts";
 import CoursesPrices from "./pages/CoursesPrices";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useNavigationTools } from "@/hooks/useNavigationTools";
-import { NavigationController } from "@/utils/NavigationController";
-import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
-// Component to handle navigation setup inside the router
-const AppContent = () => {
-  const navigate = useNavigate();
-  const { clientTools } = useNavigationTools();
-
-  // Delay widget load until client tools are available
-  const [canLoadWidget, setCanLoadWidget] = useState(false);
-
-  useEffect(() => {
-    // Set the navigate function in NavigationController
-    NavigationController.setNavigateFunction(navigate);
-  }, [navigate]);
-
-  useEffect(() => {
-    const checkReady = () => {
-      const ready =
-        typeof window !== 'undefined' &&
-        (window as any).__client_tools_registered__ === true;
-      if (ready) {
-        console.log('✅ ElevenLabs: client tools detected, enabling widget.');
-        setCanLoadWidget(true);
-      }
-      return ready;
-    };
-
-    if (checkReady()) return;
-
-    console.log('⏳ ElevenLabs: waiting for client tools to register...');
-    const onReady = () => {
-      console.log('✅ ElevenLabs: client-tools-ready event received.');
-      setCanLoadWidget(true);
-    };
-
-    window.addEventListener('client-tools-ready', onReady as any, { once: true } as any);
-
-    const interval = setInterval(() => {
-      if (checkReady()) {
-        clearInterval(interval);
-        window.removeEventListener('client-tools-ready', onReady as any);
-      }
-    }, 300);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('client-tools-ready', onReady as any);
-    };
-  }, []);
-
-  return (
-    <SidebarProvider className="flex-col">
-      <SiteHeader />
-      <Routes>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <SidebarProvider className="flex-col">
+            <SiteHeader />
+            <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/awaiting-approval" element={
@@ -133,38 +88,12 @@ const AppContent = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-      
-      {/* ElevenLabs widget - load after navigation tools are registered */}
-      {canLoadWidget && (
-        <div 
-          dangerouslySetInnerHTML={{ 
-            __html: `
-              <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
-              <elevenlabs-convai 
-                agent-id="agent_2401k5v85f8beantem3febzmgj81"
-              ></elevenlabs-convai>
-            ` 
-          }} 
-        />
-      )}
-      </SidebarProvider>
-  );
-};
-
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-};
+          </SidebarProvider>
+        </BrowserRouter>
+        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;

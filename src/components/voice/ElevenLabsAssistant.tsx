@@ -52,7 +52,10 @@ const ElevenLabsAssistant: React.FC = () => {
     if (!hasMic) return;
 
     try {
-      await conversation.startSession({ agentId: id });
+      await conversation.startSession({ 
+        agentId: id,
+        connectionType: "webrtc"  // Required for public agents
+      });
       if (typeof localStorage !== "undefined") localStorage.setItem("elevenlabs_agent_id", id);
       console.log("[ElevenLabs] Session started with agent:", id);
     } catch (err) {

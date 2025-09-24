@@ -96,6 +96,7 @@ const AppContent = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+      <ElevenLabsAssistant />
       </SidebarProvider>
   );
 };
@@ -110,7 +111,6 @@ const App = () => {
           <BrowserRouter>
             <AppContent />
           </BrowserRouter>
-          <ElevenLabsAssistant />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

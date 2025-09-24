@@ -32,7 +32,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="min-h-screen bg-animated relative">
+            <div className="min-h-screen bg-background">
               <SidebarProvider className="flex-col">
                 <SiteHeader />
                 <Routes>

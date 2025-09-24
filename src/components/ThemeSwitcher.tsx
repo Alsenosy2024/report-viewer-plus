@@ -19,16 +19,13 @@ const themeIcons = {
 
 const themeColors = {
   'professional-dark': 'hsl(215, 85%, 60%)',
-  'professional-light': 'hsl(215, 85%, 45%)',
-  'business': 'hsl(210, 100%, 45%)'
+  'professional-light': 'hsl(213, 94%, 68%)',
+  'business': 'hsl(217, 91%, 60%)'
 };
 
 export function ThemeSwitcher() {
   const { theme, setTheme, themes } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-
-  console.log('Current theme in switcher:', theme);
-  console.log('Available themes:', themes);
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

@@ -1,10 +1,18 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, Settings } from 'lucide-react';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { Sparkles, Home } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   const { user, profile, signOut } = useAuth();
@@ -26,73 +34,105 @@ export function SiteHeader() {
     location.pathname.startsWith('/social-posts');
 
   return (
-    <header className="bg-card border-b border-card-border h-header sticky top-0 z-50 backdrop-blur-sm bg-card/80">
-      <div className="container h-full flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-          {isDashboard && (
-            <SidebarTrigger className="mr-1" aria-label="Open menu" />
-          )}
-          {/* Brand */}
-          <Link to="/" className="flex items-center gap-3 group min-w-0" aria-label="Professional Engineers home">
-            <img
-              src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
-              alt="Professional Engineers logo"
-              className="h-8 w-auto"
-              loading="lazy"
-            />
-            <span className="hidden sm:inline text-sm md:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors max-w-[40vw] md:max-w-none truncate">
-              Professional Engineers
-            </span>
-          </Link>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {!user && (
-            <Button variant="default" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/auth')}>
-              Sign in
-            </Button>
-          )}
-
-          {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full" aria-label="Account menu">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-dashboard-primary text-dashboard-primary-foreground">
-                      {getInitials(profile?.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium leading-none">{profile?.full_name || user.email}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+    <>
+      <header className={cn(
+        "sticky top-0 z-40 w-full border-b border-primary/20",
+        "glass-intense backdrop-blur-xl shadow-glass h-header",
+        "transition-all duration-300"
+      )}>
+        <div className="container flex h-full items-center justify-between">
+          <div className="flex items-center gap-4">
+            {isDashboard && <SidebarTrigger className="animate-bounce-in" />}
+            
+            <Link 
+              to="/" 
+              className={cn(
+                "flex items-center gap-3 text-xl font-bold",
+                "hover:scale-105 transition-all duration-300",
+                "text-shimmer group"
+              )}
+            >
+              <div className="relative">
+                <Sparkles className="w-6 h-6 text-primary animate-pulse-glow" />
+                <div className="absolute inset-0 animate-spin-slow">
+                  <Sparkles className="w-6 h-6 text-accent/50" />
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => navigate('/dashboard')}>Go to Dashboard</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => navigate('/social-posts')}>Social Media Posts</DropdownMenuItem>
-                {profile?.role === 'admin' && (
-                  <DropdownMenuItem onSelect={() => navigate('/admin/settings')}>
-                    <Settings className="mr-2 h-4 w-4" /> Settings
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" /> Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              </div>
+              <span className="bg-gradient-primary bg-clip-text text-transparent">
+                Professional Engineers
+              </span>
+            </Link>
+          </div>
 
-          {!isDashboard && (
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/dashboard')}>
-              Dashboard
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            <ThemeSwitcher />
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="glass" 
+                    className={cn(
+                      "relative h-10 w-auto px-4 rounded-full",
+                      "hover:shadow-glow transition-all duration-300 stagger-fade"
+                    )}
+                  >
+                    <Avatar className="h-8 w-8 mr-2">
+                      <AvatarFallback className="bg-gradient-primary text-primary-foreground">
+                        {getInitials(profile?.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">
+                      {profile?.full_name || user.email}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="w-64 glass-intense border-primary/20 animate-scale-in"
+                >
+                  <div className="p-3 border-b border-primary/20">
+                    <p className="font-medium text-shimmer">
+                      {profile?.full_name || user.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/dashboard')}
+                    className="hover:bg-primary/10 interactive"
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/social-posts')}
+                    className="hover:bg-primary/10 interactive"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Social Posts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={signOut}
+                    className="text-error hover:bg-error/10 interactive"
+                  >
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                onClick={() => navigate('/auth')}
+                variant="neon"
+                className="animate-pulse-glow"
+              >
+                Sign in
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      
+      {isDashboard && <FloatingActionButton />}
+    </>
   );
 }

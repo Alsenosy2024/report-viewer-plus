@@ -270,52 +270,104 @@
 
 /* Apple Liquid Glass Utility Classes */
 @layer utilities {
-  /* Enhanced Glass Material Base Classes - No Borders */
+  /* Enhanced Glass Material Base Classes - Borderless & Intense */
   .glass-light {
-    background: hsl(var(--glass-light));
-    backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
-    -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+    background: hsl(var(--glass-light) / 0.08);
+    backdrop-filter: blur(16px) saturate(200%) brightness(115%);
+    -webkit-backdrop-filter: blur(16px) saturate(200%) brightness(115%);
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-glass-light);
+    box-shadow: inset 0 1px 0 0 hsl(var(--glass-glow-light)), 0 8px 32px -8px hsl(var(--glass-glow-medium));
     transition: var(--transition-glass);
   }
   
   .glass-medium {
-    background: hsl(var(--glass-medium));
-    backdrop-filter: blur(var(--glass-blur-medium)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
-    -webkit-backdrop-filter: blur(var(--glass-blur-medium)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+    background: hsl(var(--glass-medium) / 0.15);
+    backdrop-filter: blur(24px) saturate(220%) brightness(125%);
+    -webkit-backdrop-filter: blur(24px) saturate(220%) brightness(125%);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-glass-medium);
+    box-shadow: inset 0 1px 0 0 hsl(var(--glass-glow-medium)), 0 16px 48px -12px hsl(var(--glass-glow-strong));
     transition: var(--transition-glass);
   }
   
   .glass-strong {
-    background: hsl(var(--glass-strong));
-    backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
-    -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+    background: hsl(var(--glass-strong) / 0.25);
+    backdrop-filter: blur(32px) saturate(250%) brightness(140%);
+    -webkit-backdrop-filter: blur(32px) saturate(250%) brightness(140%);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-glass-strong);
+    box-shadow: inset 0 1px 0 0 hsl(var(--glass-glow-strong)), 0 24px 64px -16px hsl(var(--glass-glow-strong));
     transition: var(--transition-glass);
   }
 
-  /* Enhanced Glass Interactive States */
+  /* Advanced Interactive Glass States */
   .glass-hover {
-    transition: var(--transition-glass);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateZ(0);
     will-change: transform, backdrop-filter, box-shadow;
+    position: relative;
+  }
+
+  .glass-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-glass-light);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
   }
 
   .glass-hover:hover {
-    backdrop-filter: blur(var(--glass-blur-intense)) saturate(220%) brightness(125%);
-    -webkit-backdrop-filter: blur(var(--glass-blur-intense)) saturate(220%) brightness(125%);
-    transform: scale(1.02) translateY(-4px) translateZ(8px);
-    box-shadow: var(--shadow-glass-strong), var(--shadow-glass-glow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(40px) saturate(280%) brightness(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(280%) brightness(150%);
+    transform: scale(1.03) translateY(-2px) translateZ(12px);
+    box-shadow: 0 32px 64px -16px hsl(var(--glass-glow-strong)), inset 0 2px 0 0 hsl(var(--glass-glow-light));
+  }
+
+  .glass-hover:hover::before {
+    opacity: 0.3;
   }
 
   .glass-hover:active {
-    transform: scale(0.98) translateZ(2px);
-    backdrop-filter: blur(var(--glass-blur-medium)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--glass-blur-medium)) saturate(150%);
+    transform: scale(0.97) translateY(0) translateZ(4px);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* Magnetic Effect */
+  .glass-magnetic {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  /* Breathing Animation */
+  .glass-breathe {
+    animation: glass-breathe 5s ease-in-out infinite;
+  }
+
+  /* Ripple Effect */
+  .glass-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: hsl(var(--glass-glow-light));
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    pointer-events: none;
+  }
+
+  .glass-ripple:active::after {
+    width: 300px;
+    height: 300px;
   }
 
   /* Glass Effects */
@@ -386,57 +438,91 @@
 
 /* Enhanced Liquid Glass Animations */
 @layer utilities {
+  /* Enhanced Animation Keyframes */
   @keyframes liquid-float {
     0%, 100% { 
       transform: translateY(0px) rotate(0deg) scale(1); 
     }
-    25% { 
-      transform: translateY(-6px) rotate(1deg) scale(1.01); 
+    33% { 
+      transform: translateY(-12px) rotate(1.5deg) scale(1.01); 
     }
-    50% { 
-      transform: translateY(-2px) rotate(-1deg) scale(1.02); 
-    }
-    75% { 
-      transform: translateY(-8px) rotate(0.5deg) scale(1.01); 
+    66% { 
+      transform: translateY(6px) rotate(-1.5deg) scale(1.02); 
     }
   }
 
   @keyframes glass-shimmer {
     0% {
-      transform: translateX(-100%) skewX(-15deg);
+      background-position: -200% 0;
       opacity: 0;
     }
     50% {
       opacity: 1;
     }
     100% {
-      transform: translateX(200%) skewX(-15deg);
+      background-position: 200% 0;
       opacity: 0;
     }
   }
 
   @keyframes glass-pulse {
     0%, 100% {
-      backdrop-filter: blur(var(--glass-blur-medium)) saturate(var(--glass-saturation));
-      -webkit-backdrop-filter: blur(var(--glass-blur-medium)) saturate(var(--glass-saturation));
+      opacity: 0.6;
       transform: scale(1);
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
     }
     50% {
-      backdrop-filter: blur(var(--glass-blur-strong)) saturate(220%);
-      -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(220%);
+      opacity: 0.9;
       transform: scale(1.02);
+      backdrop-filter: blur(32px) saturate(250%);
+      -webkit-backdrop-filter: blur(32px) saturate(250%);
+    }
+  }
+
+  @keyframes glass-breathe {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.01);
+      opacity: 1;
+    }
+  }
+
+  @keyframes glass-morph {
+    0%, 100% {
+      border-radius: var(--radius);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    50% {
+      border-radius: calc(var(--radius) * 2);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+    }
+  }
+
+  @keyframes glass-glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--glass-glow-medium));
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--glass-glow-strong));
     }
   }
 
   @keyframes magnetic-float {
     0%, 100% {
-      transform: translateY(0) scale(1);
+      transform: translateY(0px) scale(1);
     }
     50% {
-      transform: translateY(-4px) scale(1.01);
+      transform: translateY(-12px) scale(1.03);
     }
   }
 
+  /* Enhanced Animation Classes */
   .glass-shimmer {
     position: relative;
     overflow: hidden;
@@ -450,7 +536,7 @@
     width: 50%;
     height: 100%;
     background: linear-gradient(90deg, transparent, hsl(var(--glass-glow-light)), transparent);
-    animation: glass-shimmer 3s ease-in-out infinite;
+    animation: glass-shimmer 4s ease-in-out infinite;
     z-index: 1;
   }
 
@@ -459,10 +545,30 @@
   }
 
   .glass-float {
-    animation: liquid-float 6s ease-in-out infinite;
+    animation: liquid-float 8s ease-in-out infinite;
+  }
+
+  .glass-breathe {
+    animation: glass-breathe 5s ease-in-out infinite;
+  }
+
+  .glass-morph {
+    animation: glass-morph 6s ease-in-out infinite;
+  }
+
+  .glass-glow-pulse {
+    animation: glass-glow-pulse 3s ease-in-out infinite;
   }
 
   .magnetic-float {
-    animation: magnetic-float 4s ease-in-out infinite;
+    animation: magnetic-float 5s ease-in-out infinite;
   }
+
+  /* Stagger Animation for Multiple Elements */
+  .glass-stagger:nth-child(1) { animation-delay: 0s; }
+  .glass-stagger:nth-child(2) { animation-delay: 0.1s; }
+  .glass-stagger:nth-child(3) { animation-delay: 0.2s; }
+  .glass-stagger:nth-child(4) { animation-delay: 0.3s; }
+  .glass-stagger:nth-child(5) { animation-delay: 0.4s; }
+  .glass-stagger:nth-child(6) { animation-delay: 0.5s; }
 }

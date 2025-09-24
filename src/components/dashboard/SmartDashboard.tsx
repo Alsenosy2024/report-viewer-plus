@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Maximize2, Minimize2, Workflow, Calendar, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -188,19 +188,20 @@ const SmartDashboard = () => {
 
   if (error) {
     return (
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
+      <LiquidGlassCard intensity="strong" shimmer glow className="glass-pulse">
+        <LiquidGlassCardHeader>
+          <LiquidGlassCardTitle className="text-destructive flex items-center gap-2">
             <Workflow className="h-5 w-5" />
             خطأ في داشبورد n8n
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </LiquidGlassCardTitle>
+        </LiquidGlassCardHeader>
+        <LiquidGlassCardContent>
           <p className="text-muted-foreground">{error}</p>
           <Button 
             onClick={() => handleRefresh()} 
             className="mt-4"
             disabled={isLoading || isTimerActive}
+            variant="glass-primary"
           >
             {isTimerActive ? (
               <>
@@ -214,27 +215,27 @@ const SmartDashboard = () => {
               </>
             )}
           </Button>
-        </CardContent>
-      </Card>
+        </LiquidGlassCardContent>
+      </LiquidGlassCard>
     );
   }
 
   if (isLoading && !dashboard) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <LiquidGlassCard intensity="medium" shimmer floating className="glass-breathe">
+        <LiquidGlassCardHeader>
+          <LiquidGlassCardTitle className="flex items-center gap-2">
             <Workflow className="h-5 w-5" />
             داشبورد n8n الذكي
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </LiquidGlassCardTitle>
+        </LiquidGlassCardHeader>
+        <LiquidGlassCardContent>
           <div className="flex items-center justify-center p-8">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            <RefreshCw className="h-8 w-8 animate-spin text-primary glass-glow-pulse" />
             <span className="ml-3 text-lg">جاري تحميل الداشبورد...</span>
           </div>
-        </CardContent>
-      </Card>
+        </LiquidGlassCardContent>
+      </LiquidGlassCard>
     );
   }
 
@@ -291,22 +292,23 @@ const SmartDashboard = () => {
     }
 
     return (
-      <Card>
-        <CardHeader>
+      <LiquidGlassCard intensity="strong" interactive floating shimmer glow className="glass-morph">
+        <LiquidGlassCardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <LiquidGlassCardTitle className="flex items-center gap-2">
               <Workflow className="h-5 w-5" />
               {dashboard.dashboard_name}
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+              <span className="text-xs glass-light px-2 py-1 rounded glass-glow-pulse">
                 v{dashboard.version}
               </span>
-            </CardTitle>
+            </LiquidGlassCardTitle>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="glass"
                 size="sm"
                 onClick={() => handleRefresh()}
                 disabled={isLoading || isTimerActive}
+                className="glass-stagger glass-hover"
               >
                 {isTimerActive ? (
                   <>
@@ -321,21 +323,22 @@ const SmartDashboard = () => {
                 )}
               </Button>
               <Button
-                variant="outline"
+                variant="glass"
                 size="sm"
                 onClick={toggleFullscreen}
+                className="glass-stagger glass-hover"
               >
                 <Maximize2 className="h-4 w-4 mr-2" />
                 ملء الشاشة
               </Button>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-96 mb-4">
+        </LiquidGlassCardHeader>
+        <LiquidGlassCardContent>
+          <div className="h-96 mb-4 glass-medium rounded-md overflow-hidden glass-hover">
             <iframe
               srcDoc={dashboard.html_content}
-              className="w-full h-full border border-border rounded-md"
+              className="w-full h-full"
               title="n8n Dashboard"
             />
           </div>
@@ -353,22 +356,22 @@ const SmartDashboard = () => {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </LiquidGlassCardContent>
+      </LiquidGlassCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <LiquidGlassCard intensity="medium" floating shimmer className="glass-breathe">
+      <LiquidGlassCardHeader>
+        <LiquidGlassCardTitle className="flex items-center gap-2">
           <Workflow className="h-5 w-5" />
           داشبورد n8n الذكي
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </LiquidGlassCardTitle>
+      </LiquidGlassCardHeader>
+      <LiquidGlassCardContent>
         <div className="text-center py-12">
-          <Workflow className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+          <Workflow className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4 animate-pulse glass-glow-pulse" />
           <h3 className="text-lg font-semibold mb-2">لم يتم العثور على داشبورد نشط</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             قم بتشغيل سير عمل n8n الخاص بك لإنشاء وتحميل داشبورد جديد
@@ -377,6 +380,8 @@ const SmartDashboard = () => {
             onClick={() => handleRefresh()} 
             disabled={isLoading || isTimerActive}
             size="lg"
+            variant="glass-primary"
+            className="glass-hover glass-glow-pulse"
           >
             {isTimerActive ? (
               <>
@@ -391,8 +396,8 @@ const SmartDashboard = () => {
             )}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </LiquidGlassCardContent>
+    </LiquidGlassCard>
   );
 };
 

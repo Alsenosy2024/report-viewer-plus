@@ -1,4 +1,5 @@
 import { NavigationController } from '@/utils/NavigationController';
+import { useEffect } from 'react';
 
 export const useNavigationTools = () => {
   const clientTools = {
@@ -74,6 +75,19 @@ export const useNavigationTools = () => {
       You can also refresh the dashboard or scroll to top of any page.`;
     }
   };
+
+  // Register client tools globally so ElevenLabs can access them
+  useEffect(() => {
+    // Ensure window object exists (for SSR compatibility)
+    if (typeof window !== 'undefined') {
+      // Register each tool on the window object
+      Object.entries(clientTools).forEach(([key, func]) => {
+        (window as any)[key] = func;
+      });
+
+      console.log('Navigation tools registered globally:', Object.keys(clientTools));
+    }
+  }, []);
 
   return { clientTools };
 };

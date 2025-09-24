@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -21,22 +21,25 @@ import CoursesPrices from "./pages/CoursesPrices";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationTools } from "@/hooks/useNavigationTools";
+import { NavigationController } from "@/utils/NavigationController";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+// Component to handle navigation setup inside the router
+const AppContent = () => {
+  const navigate = useNavigate();
   const { clientTools } = useNavigationTools();
 
+  useEffect(() => {
+    // Set the navigate function in NavigationController
+    NavigationController.setNavigateFunction(navigate);
+  }, [navigate]);
+
   return (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <SidebarProvider className="flex-col">
-            <SiteHeader />
-            <Routes>
+    <SidebarProvider className="flex-col">
+      <SiteHeader />
+      <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/awaiting-approval" element={
@@ -92,19 +95,30 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </SidebarProvider>
-        </BrowserRouter>
-        <div 
-          dangerouslySetInnerHTML={{ 
-            __html: `<elevenlabs-convai 
-              agent-id="agent_2401k5v85f8beantem3febzmgj81"
-              client-tools='${JSON.stringify(clientTools)}'
-            ></elevenlabs-convai>` 
-          }} 
-        />
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+      </SidebarProvider>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+          <div 
+            dangerouslySetInnerHTML={{ 
+              __html: `<elevenlabs-convai 
+                agent-id="agent_2401k5v85f8beantem3febzmgj81"
+              ></elevenlabs-convai>` 
+            }} 
+          />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

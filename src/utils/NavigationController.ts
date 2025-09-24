@@ -3,14 +3,30 @@ interface NavigationResponse {
   message: string;
 }
 
+// Global navigation function that will be set by the App component
+let globalNavigate: ((path: string) => void) | null = null;
+
 export class NavigationController {
+  static setNavigateFunction(navigate: (path: string) => void) {
+    globalNavigate = navigate;
+  }
+
   static navigate(path: string): NavigationResponse {
     try {
-      window.location.href = path;
-      return {
-        success: true,
-        message: `Navigated to ${path}`
-      };
+      if (globalNavigate) {
+        globalNavigate(path);
+        return {
+          success: true,
+          message: `Navigated to ${path}`
+        };
+      } else {
+        // Fallback to window.location if navigate function is not available
+        window.location.href = path;
+        return {
+          success: true,
+          message: `Navigated to ${path}`
+        };
+      }
     } catch (error) {
       return {
         success: false,

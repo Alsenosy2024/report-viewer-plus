@@ -49,6 +49,8 @@ export function ThemeProvider({
   useEffect(() => {
     const root = document.documentElement;
     
+    console.log('Theme changing to:', theme);
+    
     // Remove all theme classes
     themes.forEach(({ value }) => {
       root.classList.remove(`theme-${value}`);
@@ -57,7 +59,12 @@ export function ThemeProvider({
     // Add current theme class
     if (theme !== 'professional-light') {
       root.classList.add(`theme-${theme}`);
+      console.log('Added theme class:', `theme-${theme}`);
+    } else {
+      console.log('Using default professional-light theme (no class added)');
     }
+    
+    console.log('Current document classes:', root.className);
     
     // Save to localStorage
     localStorage.setItem('lovable-theme', theme);

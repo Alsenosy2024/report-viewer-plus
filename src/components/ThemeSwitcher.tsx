@@ -27,6 +27,9 @@ export function ThemeSwitcher() {
   const { theme, setTheme, themes } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
+  console.log('Current theme in switcher:', theme);
+  console.log('Available themes:', themes);
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>

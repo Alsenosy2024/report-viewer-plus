@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardDescription, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield } from 'lucide-react';
 
@@ -50,29 +50,22 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center glass-medium backdrop-blur-[32px] p-4">
-      <LiquidGlassCard 
-        intensity="strong" 
-        interactive 
-        floating 
-        shimmer 
-        glow 
-        className="w-full max-w-md glass-morph glass-glow-pulse"
-      >
-        <LiquidGlassCardHeader className="text-center space-y-4">
-          <div className="mx-auto w-12 h-12 glass-strong rounded-full flex items-center justify-center glass-glow-pulse">
-            <Shield className="w-6 h-6 text-primary animate-pulse" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dashboard-secondary to-background p-4">
+      <Card className="w-full max-w-md shadow-lg border-card-border">
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+            <Shield className="w-6 h-6 text-dashboard-primary-foreground" />
           </div>
           <div>
-            <LiquidGlassCardTitle className="text-2xl font-bold text-foreground">
+            <CardTitle className="text-2xl font-bold text-foreground">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </LiquidGlassCardTitle>
-            <LiquidGlassCardDescription className="text-muted-foreground">
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
               {isSignUp ? 'Sign up to get started' : 'Sign in to access your dashboard'}
-            </LiquidGlassCardDescription>
+            </CardDescription>
           </div>
-        </LiquidGlassCardHeader>
-        <LiquidGlassCardContent>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <Alert variant="destructive">
@@ -110,8 +103,7 @@ export const LoginForm = () => {
             
             <Button 
               type="submit" 
-              className="w-full glass-primary glass-hover glass-glow-pulse"
-              variant="glass-primary"
+              className="w-full bg-gradient-primary hover:opacity-90 transition-all duration-300 shadow-md hover:shadow-glow"
               disabled={loading}
             >
               {loading ? (
@@ -126,8 +118,8 @@ export const LoginForm = () => {
 
             <Button
               type="button"
-              variant="glass"
-              className="w-full glass-hover"
+              variant="outline"
+              className="w-full"
               disabled={loading}
               onClick={async () => {
                 setError('');
@@ -145,8 +137,8 @@ export const LoginForm = () => {
             <div className="text-center">
               <Button
                 type="button"
-                variant="glass"
-                className="text-sm text-muted-foreground hover:text-foreground glass-hover"
+                variant="ghost"
+                className="text-sm text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setError('');
@@ -160,8 +152,8 @@ export const LoginForm = () => {
               </Button>
             </div>
           </form>
-        </LiquidGlassCardContent>
-      </LiquidGlassCard>
+        </CardContent>
+      </Card>
     </div>
   );
 };

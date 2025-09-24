@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardHeader, LiquidGlassCardTitle } from "@/components/ui/liquid-glass-card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users, MessageCircle, User, Check, X } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { format } from 'date-fns';
 
 interface Post {
   id: string;
@@ -29,15 +26,12 @@ interface Post {
   approved_at: string | null;
   scheduled_for: string | null;
   metadata: any;
-  author?: string | null;
-  user_name?: string | null;
+  user_name: string | null;
 }
 
 interface SocialUser {
   id: string;
   name: string;
-  platform?: string;
-  username?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -52,24 +46,19 @@ const SocialMediaPosts = () => {
   
   // AI Generation state
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [aiGenerationTimer, setAiGenerationTimer] = useState(0);
+  const [aiTimer, setAiTimer] = useState(0);
   
   // Form state
-  const [newPostContent, setNewPostContent] = useState("");
-  const [newPostPlatform, setNewPostPlatform] = useState("");
+  const [content, setContent] = useState("");
+  const [platform, setPlatform] = useState("general");
   const [scheduledFor, setScheduledFor] = useState("");
   
-  // User management state  
+  // User selection state
   const [socialUsers, setSocialUsers] = useState<SocialUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [showAddUserForm, setShowAddUserForm] = useState(false);
-  const [newUserPlatform, setNewUserPlatform] = useState("");
-  const [newUserUsername, setNewUserUsername] = useState("");
+  const [newUserName, setNewUserName] = useState("");
   
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [platformFilter, setPlatformFilter] = useState<string>("all");
-
   // Filter state
   const [filterByAccount, setFilterByAccount] = useState<string>("all");
 
@@ -83,9 +72,9 @@ const SocialMediaPosts = () => {
   // AI Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (aiGenerationTimer > 0) {
+    if (aiTimer > 0) {
       interval = setInterval(() => {
-        setAiGenerationTimer((prev) => {
+        setAiTimer((prev) => {
           if (prev <= 1) {
             setIsGeneratingAI(false);
             return 0;
@@ -97,7 +86,7 @@ const SocialMediaPosts = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [aiGenerationTimer]);
+  }, [aiTimer]);
 
   const fetchPosts = async () => {
     try {
@@ -140,28 +129,23 @@ const SocialMediaPosts = () => {
   };
 
   const handleAddUser = async () => {
-    if (!newUserPlatform.trim() || !newUserUsername.trim()) return;
+    if (!newUserName.trim()) return;
 
     try {
       const { data, error } = await supabase
         .from('social_users')
-        .insert([{ 
-          platform: newUserPlatform.trim(),
-          username: newUserUsername.trim(),
-          name: `${newUserPlatform}: ${newUserUsername}`
-        }])
+        .insert([{ name: newUserName.trim() }])
         .select()
         .single();
 
       if (error) throw error;
 
       toast({
-        title: "Success", 
-        description: "Social media user added successfully!",
+        title: "Success",
+        description: "User added successfully!",
       });
 
-      setNewUserPlatform("");
-      setNewUserUsername("");
+      setNewUserName("");
       setShowAddUserForm(false);
       fetchSocialUsers();
     } catch (error: any) {
@@ -201,17 +185,23 @@ const SocialMediaPosts = () => {
     }
   };
 
-  const handleCreatePost = async () => {
-    if (!user || !newPostContent.trim() || !newPostPlatform) return;
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !content.trim() || !selectedUser) return;
 
     setIsLoading(true);
     try {
+      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
       const postData: any = {
-        content: newPostContent.trim(),
-        platform: newPostPlatform,
+        content: content.trim(),
+        platform,
         created_by: user.id,
-        status: 'pending',
-        author: user.email || 'Unknown'
+        status: 'approved', // Default to approved
+        user_name: selectedUserData?.name,
+        metadata: {
+          social_user_id: selectedUser,
+          social_user_name: selectedUserData?.name
+        }
       };
 
       if (scheduledFor) {
@@ -231,8 +221,10 @@ const SocialMediaPosts = () => {
         description: "Post created successfully!",
       });
 
-      setNewPostContent("");
-      setNewPostPlatform("");
+      setContent("");
+      setPlatform("general");
+      setScheduledFor("");
+      setSelectedUser(socialUsers[0]?.id || "");
       setShowAddForm(false);
       fetchPosts();
     } catch (error: any) {
@@ -281,6 +273,10 @@ const SocialMediaPosts = () => {
   const handleDeletePost = async (postId: string) => {
     if (!user) return;
 
+    if (!confirm('Are you sure you want to delete this post?')) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('posts')
@@ -306,19 +302,39 @@ const SocialMediaPosts = () => {
 
   const handleEditPost = (post: Post) => {
     setEditingPost(post);
+    setContent(post.content);
+    setPlatform(post.platform);
+    setScheduledFor(post.scheduled_for ? new Date(post.scheduled_for).toISOString().slice(0, 16) : "");
+    setSelectedUser(post.metadata?.social_user_id || socialUsers[0]?.id || "");
   };
 
-  const handleUpdatePost = async () => {
-    if (!user || !editingPost?.content.trim()) return;
+  const handleUpdatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !content.trim() || !editingPost || !selectedUser) return;
 
     setIsLoading(true);
     try {
+      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
+      const updateData: any = {
+        content: content.trim(),
+        platform,
+        updated_at: new Date().toISOString(),
+        user_name: selectedUserData?.name,
+        metadata: {
+          social_user_id: selectedUser,
+          social_user_name: selectedUserData?.name
+        }
+      };
+
+      if (scheduledFor) {
+        updateData.scheduled_for = scheduledFor;
+      } else {
+        updateData.scheduled_for = null;
+      }
+
       const { error } = await supabase
         .from('posts')
-        .update({
-          content: editingPost.content.trim(),
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', editingPost.id);
 
       if (error) throw error;
@@ -329,6 +345,10 @@ const SocialMediaPosts = () => {
       });
 
       setEditingPost(null);
+      setContent("");
+      setPlatform("general");
+      setScheduledFor("");
+      setSelectedUser(socialUsers[0]?.id || "");
       fetchPosts();
     } catch (error: any) {
       toast({
@@ -343,13 +363,17 @@ const SocialMediaPosts = () => {
 
   const handleCancelEdit = () => {
     setEditingPost(null);
+    setContent("");
+    setPlatform("general");
+    setScheduledFor("");
+    setSelectedUser(socialUsers[0]?.id || "");
   };
 
   const handleGenerateWithAI = async () => {
     if (!user || isGeneratingAI) return;
 
     setIsGeneratingAI(true);
-    setAiGenerationTimer(300); // 5 minutes in seconds
+    setAiTimer(300); // 5 minutes in seconds
 
     try {
       const response = await fetch("https://primary-production-245af.up.railway.app/webhook/posts", {
@@ -377,7 +401,7 @@ const SocialMediaPosts = () => {
         variant: "destructive",
       });
       setIsGeneratingAI(false);
-      setAiGenerationTimer(0);
+      setAiTimer(0);
     }
   };
 
@@ -392,13 +416,6 @@ const SocialMediaPosts = () => {
     }
   };
 
-  // Filter posts based on status and platform
-  const filteredPosts = posts.filter(post => {
-    const statusMatch = statusFilter === "all" || post.status === statusFilter;
-    const platformMatch = platformFilter === "all" || post.platform === platformFilter;
-    return statusMatch && platformMatch;
-  });
-
   if (!user) {
     return (
       <DashboardLayout>
@@ -412,337 +429,377 @@ const SocialMediaPosts = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Header Section */}
-        <header className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Social Media Posts</h1>
-              <p className="text-muted-foreground mt-2">
-                Manage and schedule your social media content
-              </p>
-            </div>
-          </div>
-        </header>
-
-        {/* Stats Section */}
-        <section aria-labelledby="stats-heading" className="space-y-4">
-          <h2 id="stats-heading" className="sr-only">Post Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <LiquidGlassCard className="p-4" intensity="light">
-              <div className="text-2xl font-bold text-primary">{posts.length}</div>
-              <div className="text-sm text-muted-foreground">Total Posts</div>
-            </LiquidGlassCard>
-            <LiquidGlassCard className="p-4" intensity="light">
-              <div className="text-2xl font-bold text-green-500">{posts.filter(p => p.status === 'approved').length}</div>
-              <div className="text-sm text-muted-foreground">Approved</div>
-            </LiquidGlassCard>
-            <LiquidGlassCard className="p-4" intensity="light">
-              <div className="text-2xl font-bold text-yellow-500">{posts.filter(p => p.status === 'pending').length}</div>
-              <div className="text-sm text-muted-foreground">Pending</div>
-            </LiquidGlassCard>
-            <LiquidGlassCard className="p-4" intensity="light">
-              <div className="text-2xl font-bold text-red-500">{posts.filter(p => p.status === 'rejected').length}</div>
-              <div className="text-sm text-muted-foreground">Rejected</div>
-            </LiquidGlassCard>
-          </div>
-        </section>
-
-        {/* Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
-
-        {/* Filter Controls Section */}
-        <section aria-labelledby="filters-heading" className="space-y-4">
-          <h2 id="filters-heading" className="text-lg font-semibold">Filter & Actions</h2>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={platformFilter} onValueChange={setPlatformFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by platform" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Platforms</SelectItem>
-                <SelectItem value="twitter">Twitter</SelectItem>
-                <SelectItem value="facebook">Facebook</SelectItem>
-                <SelectItem value="linkedin">LinkedIn</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-4">
-            <Button
-              onClick={() => setShowAddUserForm(!showAddUserForm)}
-              variant="outline"
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Social User
-            </Button>
-            <Button onClick={() => setShowAddForm(!showAddForm)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              New Post
-            </Button>
-          </div>
-        </section>
-
-        {/* Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
-
-        {/* Social Users Management Section */}
-        {showAddUserForm && (
-          <section aria-labelledby="add-user-heading">
-            <LiquidGlassCard intensity="medium">
-              <LiquidGlassCardHeader>
-                <LiquidGlassCardTitle id="add-user-heading">Add Social Media User</LiquidGlassCardTitle>
-              </LiquidGlassCardHeader>
-              <LiquidGlassCardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input
-                    placeholder="Platform (e.g., twitter)"
-                    value={newUserPlatform}
-                    onChange={(e) => setNewUserPlatform(e.target.value)}
-                    aria-label="Platform name"
-                  />
-                  <Input
-                    placeholder="Username"
-                    value={newUserUsername}
-                    onChange={(e) => setNewUserUsername(e.target.value)}
-                    aria-label="Username"
-                  />
-                  <div className="flex gap-2">
-                    <Button onClick={handleAddUser} disabled={!newUserPlatform || !newUserUsername}>
-                      Add User
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowAddUserForm(false)}>
-                      Cancel
+      <div className="max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Social Media Posts</h1>
+          <p className="text-muted-foreground">Manage your social media content and approvals</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowAddUserForm(!showAddUserForm)} 
+            variant="outline"
+            className="gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add User
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Users className="w-4 h-4" />
+                Manage Users
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {socialUsers.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No users found
+                </div>
+              ) : (
+                socialUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between px-2 py-1.5">
+                    <span className="text-sm truncate flex-1">{user.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
-                </div>
-              </LiquidGlassCardContent>
-            </LiquidGlassCard>
-          </section>
-        )}
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button 
+            onClick={handleGenerateWithAI} 
+            disabled={isGeneratingAI}
+            className="gap-2"
+            variant="secondary"
+          >
+            <Sparkles className="w-4 h-4" />
+            {isGeneratingAI ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "Generate Posts with AI"}
+          </Button>
+          <Button onClick={() => setShowAddForm(!showAddForm)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add New Post
+          </Button>
+        </div>
+      </div>
 
-        {/* Add New Post Form Section */}
-        {showAddForm && (
-          <section aria-labelledby="create-post-heading">
-            <LiquidGlassCard intensity="medium">
-              <LiquidGlassCardHeader>
-                <LiquidGlassCardTitle id="create-post-heading">Create New Post</LiquidGlassCardTitle>
-              </LiquidGlassCardHeader>
-              <LiquidGlassCardContent>
-                <div className="space-y-4">
-                  <Textarea
-                    placeholder="Write your post content..."
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                    rows={4}
-                    aria-label="Post content"
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Select value={newPostPlatform} onValueChange={setNewPostPlatform}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select platform" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="twitter">Twitter</SelectItem>
-                        <SelectItem value="facebook">Facebook</SelectItem>
-                        <SelectItem value="linkedin">LinkedIn</SelectItem>
-                        <SelectItem value="instagram">Instagram</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={handleCreatePost} 
-                        disabled={!newPostContent || !newPostPlatform}
-                        className="flex-1"
-                      >
-                        Create Post
-                      </Button>
-                      <Button variant="outline" onClick={() => {
-                        setShowAddForm(false);
-                        setNewPostContent('');
-                        setNewPostPlatform('');
-                      }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </LiquidGlassCardContent>
-            </LiquidGlassCard>
-          </section>
-        )}
-
-        {/* AI Generation Status Section */}
-        {isGeneratingAI && (
-          <section aria-labelledby="ai-generation-heading" className="my-6">
-            <LiquidGlassCard className="border-primary/50" intensity="light" glow>
-              <LiquidGlassCardContent className="pt-6">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span className="text-sm text-muted-foreground" id="ai-generation-heading">
-                    AI is generating content... ({aiGenerationTimer}s)
-                  </span>
-                </div>
-              </LiquidGlassCardContent>
-            </LiquidGlassCard>
-          </section>
-        )}
-
-        {/* Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
-
-        {/* Posts List Section */}
-        <section aria-labelledby="posts-list-heading" className="space-y-6">
-          <h2 id="posts-list-heading" className="text-lg font-semibold">Posts ({filteredPosts.length})</h2>
-          <div className="space-y-4">
-            {filteredPosts.length === 0 ? (
-              <LiquidGlassCard intensity="light">
-                <LiquidGlassCardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No posts found matching your criteria</p>
-                    <p className="text-sm mt-1">Create your first post to get started</p>
-                  </div>
-                </LiquidGlassCardContent>
-              </LiquidGlassCard>
-            ) : (
-              filteredPosts.map((post) => (
-                <article key={post.id}>
-                  <LiquidGlassCard intensity="medium" interactive>
-                    <LiquidGlassCardContent className="pt-6">
-                      <div className="flex flex-col space-y-4">
-                        {/* Post Header */}
-                        <header className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="capitalize">
-                              {post.platform}
-                            </Badge>
-                            {getStatusBadge(post.status)}
-                          </div>
-                          <time className="text-sm text-muted-foreground" dateTime={post.created_at}>
-                            {format(new Date(post.created_at), 'MMM dd, yyyy HH:mm')}
-                          </time>
-                        </header>
-
-                        {/* Post Content */}
-                        {editingPost?.id === post.id ? (
-                          <div className="space-y-4">
-                            <Textarea
-                              value={editingPost.content}
-                              onChange={(e) => setEditingPost({
-                                ...editingPost,
-                                content: e.target.value
-                              })}
-                              rows={4}
-                              aria-label="Edit post content"
-                            />
-                            <div className="flex gap-2">
-                              <Button onClick={handleUpdatePost} size="sm">
-                                Save Changes
-                              </Button>
-                              <Button onClick={handleCancelEdit} variant="outline" size="sm">
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                              {post.content}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Post Footer */}
-                        <footer className="flex items-center justify-between pt-2 border-t border-border/50">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <User className="w-3 h-3" />
-                            <span>By {post.author || 'System'}</span>
-                          </div>
-                          <div className="flex gap-2" role="group" aria-label="Post actions">
-                            {post.status === 'pending' && (
-                              <>
-                                <Button
-                                  onClick={() => handleUpdatePostStatus(post.id, 'approved')}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  aria-label="Approve post"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  aria-label="Reject post"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              onClick={() => handleEditPost(post)}
-                              size="sm"
-                              variant="ghost"
-                              aria-label="Edit post"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="text-red-600 hover:text-red-700"
-                                  aria-label="Delete post"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Post</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete this post? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeletePost(post.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </footer>
-                      </div>
-                    </LiquidGlassCardContent>
-                  </LiquidGlassCard>
-                </article>
-              ))
+      {/* Filter Section */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <Label htmlFor="account-filter">Filter by Account:</Label>
+            <Select value={filterByAccount} onValueChange={setFilterByAccount}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Accounts</SelectItem>
+                {socialUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filterByAccount !== "all" && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setFilterByAccount("all")}
+              >
+                Clear Filter
+              </Button>
             )}
           </div>
-        </section>
+        </CardContent>
+      </Card>
+
+      {showAddUserForm && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Add New User</CardTitle>
+            <CardDescription>Add a new social media account to post from</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="username">User Name</Label>
+                <Input
+                  id="username"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="Enter user name..."
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <Button onClick={handleAddUser} disabled={!newUserName.trim()}>
+                  Add User
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddUserForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showAddForm && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Create New Post</CardTitle>
+            <CardDescription>Add content for your social media post</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreatePost} className="space-y-4">
+              <div>
+                <Label htmlFor="content">Content</Label>
+                <Textarea
+                  id="content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Write your social media post content..."
+                  required
+                  rows={4}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="user">User Account</Label>
+                  <Select value={selectedUser} onValueChange={setSelectedUser}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {socialUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="platform">Platform</Label>
+                  <Select value={platform} onValueChange={setPlatform}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="twitter">Twitter</SelectItem>
+                      <SelectItem value="facebook">Facebook</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="scheduled">Scheduled For (Optional)</Label>
+                  <Input
+                    id="scheduled"
+                    type="datetime-local"
+                    value={scheduledFor}
+                    onChange={(e) => setScheduledFor(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isLoading || !content.trim() || !selectedUser}>
+                  {isLoading ? "Creating..." : "Create Post"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-4">
+        {posts.filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount).length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">
+                {filterByAccount === "all" 
+                  ? "No posts found. Create your first post to get started!"
+                  : "No posts found for this account. Try selecting a different account or clear the filter."
+                }
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          posts
+            .filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount)
+            .map((post) => (
+            <Card key={post.id}>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          {getStatusBadge(post.status)}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background border shadow-lg z-50">
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'approved')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          Approved
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <XCircle className="w-3 h-3 text-red-600" />
+                          Rejected
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {post.user_name && (
+                      <Badge variant="outline" className="gap-1">
+                        <Users className="w-3 h-3" />
+                        {post.user_name}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="capitalize">{post.platform}</Badge>
+                    {post.scheduled_for && (
+                      <Badge variant="outline" className="gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(post.scheduled_for).toLocaleDateString()}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditPost(post)}
+                      className="gap-1"
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeletePost(post.id)}
+                      className="gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-muted-foreground mb-3">{post.content}</p>
+                
+                <div className="text-xs text-muted-foreground">
+                  Created: {new Date(post.created_at).toLocaleString()}
+                  {post.approved_at && (
+                    <span className="ml-4">
+                      {post.status === 'approved' ? 'Approved' : 'Rejected'}: {new Date(post.approved_at).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingPost} onOpenChange={() => handleCancelEdit()}>
+        <DialogContent className="max-w-2xl bg-background border shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+            <DialogDescription>
+              Update your social media post content and settings.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdatePost} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-content">Content</Label>
+              <Textarea
+                id="edit-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write your social media post content..."
+                required
+                rows={4}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit-user">User Account</Label>
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {socialUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="edit-platform">Platform</Label>
+                <Select value={platform} onValueChange={setPlatform}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="twitter">Twitter</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-scheduled">Scheduled For (Optional)</Label>
+                <Input
+                  id="edit-scheduled"
+                  type="datetime-local"
+                  value={scheduledFor}
+                  onChange={(e) => setScheduledFor(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading || !content.trim() || !selectedUser}>
+                {isLoading ? "Updating..." : "Update Post"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       </div>
     </DashboardLayout>
   );

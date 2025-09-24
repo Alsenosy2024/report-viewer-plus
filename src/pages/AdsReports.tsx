@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardDescription, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, BarChart3, FileText, ExternalLink } from 'lucide-react';
@@ -100,12 +100,12 @@ const AdsReports = () => {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
-              <LiquidGlassCard key={i} intensity="medium" className="glass-shimmer glass-stagger">
-                <LiquidGlassCardContent className="p-6">
-                  <div className="h-4 bg-muted rounded mb-2 animate-pulse"></div>
-                  <div className="h-8 bg-muted rounded animate-pulse"></div>
-                </LiquidGlassCardContent>
-              </LiquidGlassCard>
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-muted rounded mb-2"></div>
+                  <div className="h-8 bg-muted rounded"></div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -131,10 +131,10 @@ const AdsReports = () => {
         </div>
 
         {reports.length === 0 ? (
-          <LiquidGlassCard intensity="medium" floating shimmer className="text-center py-12 glass-breathe">
-            <LiquidGlassCardContent>
+          <Card className="text-center py-12">
+            <CardContent>
               <div className="flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 glass-light rounded-full flex items-center justify-center glass-glow-pulse">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
                   <FileText className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div>
@@ -144,37 +144,31 @@ const AdsReports = () => {
                   </p>
                 </div>
               </div>
-            </LiquidGlassCardContent>
-          </LiquidGlassCard>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {reports.map((report, index) => (
-              <LiquidGlassCard
+            {reports.map((report) => (
+              <Card
                 key={report.id}
-                intensity="medium"
-                interactive
-                floating
-                shimmer
-                glow
-                className="cursor-pointer glass-stagger"
-                style={{animationDelay: `${index * 0.1}s`}}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => openReport(report)}
               >
-                <LiquidGlassCardHeader>
-                  <LiquidGlassCardTitle className="flex items-center justify-between">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-primary animate-pulse" />
+                      <Calendar className="w-5 h-5 text-primary" />
                       <span className="text-lg">{formatDate(report.report_date)}</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                  </LiquidGlassCardTitle>
-                  <LiquidGlassCardDescription>
+                  </CardTitle>
+                  <CardDescription>
                     {report.content_type === 'html' ? 'Interactive HTML Report' : 'Text Report'}
-                  </LiquidGlassCardDescription>
-                </LiquidGlassCardHeader>
-                <LiquidGlassCardContent>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="flex items-center justify-between">
-                    <Badge variant={report.content_type === 'html' ? 'default' : 'secondary'} className="glass-light">
+                    <Badge variant={report.content_type === 'html' ? 'default' : 'secondary'}>
                       {report.content_type === 'html' ? 'HTML' : 'TEXT'}
                     </Badge>
                     <Button
@@ -183,14 +177,13 @@ const AdsReports = () => {
                         openReport(report);
                       }}
                       size="sm"
-                      variant="glass"
-                      className="glass-hover"
+                      variant="outline"
                     >
                       View Report
                     </Button>
                   </div>
-                </LiquidGlassCardContent>
-              </LiquidGlassCard>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

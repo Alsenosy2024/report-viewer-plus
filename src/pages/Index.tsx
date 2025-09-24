@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ThemeSwitcher } from '@/components/ThemeSwitcher';
-import { InteractiveCard } from '@/components/InteractiveCard';
-import { BarChart3, Shield, Users, Bot, Sparkles, Zap, MousePointer, Layers, Palette } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart3, Shield, Users, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
@@ -18,20 +17,18 @@ const Index = () => {
 
   // SEO
   useEffect(() => {
-    document.title = 'Professional Engineers Dashboard - Liquid Glass';
+    document.title = 'Professional Engineers Dashboard';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Experience the future of professional analytics with Apple Liquid Glass design - Professional Engineers dashboard.');
+    if (meta) meta.setAttribute('content', 'Professional Engineers analytics dashboard for reports and bot management.');
   }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <InteractiveCard intensity="medium" className="p-8">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </InteractiveCard>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-dashboard-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -40,194 +37,84 @@ const Index = () => {
     {
       icon: BarChart3,
       title: "Advanced Analytics",
-      description: "Real-time data visualization with liquid glass morphing effects and adaptive theming",
-      color: "text-blue-400"
+      description: "Comprehensive reporting and analytics for all your business metrics"
     },
     {
       icon: Shield,
-      title: "Secure Glass Layers",
-      description: "Multi-layered security with translucent authentication and biometric glass interfaces",
-      color: "text-green-400"
+      title: "Role-Based Access",
+      description: "Secure access control with admin-managed user permissions"
     },
     {
       icon: Users,
-      title: "Collaborative Interface",
-      description: "Team synchronization through shared glass workspaces with magnetic interactions",
-      color: "text-purple-400"
+      title: "Multi-User Support",
+      description: "Collaborative dashboard with granular section-level permissions"
     },
     {
       icon: Bot,
-      title: "AI Glass Assistant",
-      description: "Intelligent automation with liquid responses and contextual glass overlays",
-      color: "text-orange-400"
-    },
-    {
-      icon: MousePointer,
-      title: "Magnetic Interactions",
-      description: "Elements that respond to your presence with fluid motion and glass distortion",
-      color: "text-pink-400"
-    },
-    {
-      icon: Layers,
-      title: "Depth Dynamics",
-      description: "Multiple glass planes that create stunning parallax effects and visual hierarchy",
-      color: "text-cyan-400"
+      title: "Bot Management",
+      description: "Control and monitor your WhatsApp, Messenger, and Instagram bots"
     }
   ];
 
   return (
-    <div className="min-h-screen overflow-hidden">
-      {/* Ambient Background with Liquid Glass Gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-background via-primary/5 to-accent/5 -z-10" />
-      <div className="fixed inset-0 bg-gradient-glass-radial opacity-30 -z-10" />
-      
+    <div className="min-h-screen bg-gradient-to-br from-dashboard-secondary to-background">
       {/* Hero Section */}
-      <main className="container mx-auto px-6 py-16 relative" role="main">
-        {/* Floating Navigation Header */}
-        <header className="fixed top-6 left-6 right-6 z-50 animate-fade-in">
-          <InteractiveCard 
-            intensity="medium" 
-            magnetic={true}
-            className="px-8 py-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
-                  alt="Professional Engineers logo"
-                  className="h-8 w-auto"
-                  loading="lazy"
-                />
-                <span className="font-semibold text-foreground">Professional Engineers</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <ThemeSwitcher />
-                <Button 
-                  variant="glass" 
-                  size="sm"
-                  onClick={() => navigate('/auth')}
-                  className="glass-hover animate-pulse"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Access Dashboard
-                </Button>
-              </div>
-            </div>
-          </InteractiveCard>
-        </header>
-
-        <div className="pt-32 text-center mb-20">
-          {/* Hero Icon with Glass Effect */}
-          <div className="mx-auto mb-8 relative">
-            <InteractiveCard 
-              intensity="strong"
-              magnetic={true}
-              tilt={true}
-              className="w-20 h-20 flex items-center justify-center mx-auto glass-float"
-            >
-              <BarChart3 className="w-10 h-10 text-primary animate-pulse" />
-            </InteractiveCard>
+      <main className="container mx-auto px-6 py-16" role="main">
+        <div className="text-center mb-16">
+          <header className="mb-8 flex items-center justify-center">
+            <img
+              src="/lovable-uploads/7022dd5f-ca4d-4d4b-83f0-c5811cbca595.png"
+              alt="Professional Engineers logo"
+              className="h-14 w-auto drop-shadow-sm"
+              loading="lazy"
+            />
+          </header>
+          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow animate-scale-in">
+            <BarChart3 className="w-8 h-8 text-dashboard-primary-foreground" />
           </div>
-
-          <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-tight animate-fade-in">
-            <span className="bg-gradient-to-r from-theme-primary via-theme-secondary to-theme-accent bg-clip-text text-transparent animate-pulse">
-              Liquid Glass
-            </span>
-            <br />
-            <span className="text-foreground/90">Experience</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+            Professional Engineers Dashboard
           </h1>
-          
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{animationDelay: "0.2s"}}>
-            Immerse yourself in Apple's revolutionary 
-            <span className="text-primary font-medium"> Liquid Glass </span>
-            design language — where advanced interactions meet stunning visual depth.
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Unified analytics and reports with role-based access and bot management — designed for Professional Engineers.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in" style={{animationDelay: "0.4s"}}>
-            <Button 
-              variant="glass-primary" 
-              size="lg"
-              onClick={() => navigate('/auth')}
-              className="text-lg px-8 py-4 glass-hover"
-            >
-              <Zap className="w-5 h-5" />
-              Enter Experience
-            </Button>
-            <Button 
-              variant="floating" 
-              size="lg"
-              className="text-lg px-8 py-4"
-            >
-              <Palette className="w-5 h-5" />
-              Explore Themes
-            </Button>
-          </div>
+          <Button 
+            onClick={() => navigate('/auth')}
+            className="bg-gradient-primary hover:opacity-90 transition-all duration-300 shadow-md hover:shadow-glow text-base md:text-lg px-6 md:px-8 py-3"
+          >
+            Access Dashboard
+          </Button>
         </div>
 
-        {/* Enhanced Features Grid with Interactive Glass Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {features.map((feature, index) => (
-            <InteractiveCard 
-              key={index} 
-              intensity="medium" 
-              magnetic={true}
-              tilt={true}
-              className="text-center h-full p-8 animate-scale-in"
-              style={{animationDelay: `${index * 0.1}s`}}
-            >
-              <div className="mx-auto mb-6">
-                <InteractiveCard 
-                  intensity="light" 
-                  magnetic={true}
-                  className="w-16 h-16 flex items-center justify-center mx-auto"
-                >
-                  <feature.icon className={`w-8 h-8 ${feature.color} animate-pulse`} />
-                </InteractiveCard>
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-foreground">{feature.title}</h3>
-              <p className="text-base leading-relaxed text-muted-foreground">
-                {feature.description}
-              </p>
-            </InteractiveCard>
+            <Card key={index} className="border-card-border hover:shadow-md transition-smooth text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-dashboard-secondary rounded-lg flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-dashboard-primary" />
+                </div>
+                <CardTitle className="text-lg">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        {/* Enhanced CTA Section with Advanced Glass Effects */}
-        <InteractiveCard 
-          intensity="strong"
-          magnetic={true}
-          tilt={true} 
-          className="relative overflow-hidden animate-fade-in"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-theme-primary/10 via-theme-secondary/10 to-theme-accent/10" />
-          <div className="p-12 text-center relative">
-            <h2 className="text-3xl font-bold mb-6 text-foreground">
-              Ready for the Glass Revolution?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              Step into tomorrow's interface today. Experience the most advanced liquid glass dashboard 
-              with dynamic theming, magnetic interactions, and immersive visual depth.
+        {/* CTA Section */}
+        <Card className="bg-gradient-primary text-dashboard-primary-foreground border-0 shadow-lg">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
+            <p className="text-dashboard-primary-foreground/90 mb-6">
+              Contact your administrator to get access to the dashboard and start monitoring your business metrics.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
-                variant="glass-accent" 
-                size="lg"
-                className="text-lg px-8 glass-hover"
-              >
-                <Shield className="w-5 h-5" />
-                Request Access
-              </Button>
-              <Button 
-                variant="glass" 
-                size="lg"
-                className="text-lg px-8"
-              >
-                <Sparkles className="w-5 h-5" />
-                Live Demo
-              </Button>
-            </div>
-          </div>
-        </InteractiveCard>
+            <p className="text-sm text-dashboard-primary-foreground/80">
+              Note: User registration is managed by administrators only.
+            </p>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

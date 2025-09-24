@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -137,25 +137,25 @@ const AdminSettings = () => {
   if (profile?.role !== 'admin') {
     return (
       <DashboardLayout>
-        <LiquidGlassCard intensity="strong" shimmer glow className="glass-pulse">
-          <LiquidGlassCardHeader>
-            <LiquidGlassCardTitle>Not authorized</LiquidGlassCardTitle>
-          </LiquidGlassCardHeader>
-          <LiquidGlassCardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Not authorized</CardTitle>
+          </CardHeader>
+          <CardContent>
             You do not have permission to view this page.
-          </LiquidGlassCardContent>
-        </LiquidGlassCard>
+          </CardContent>
+        </Card>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <LiquidGlassCard intensity="strong" interactive floating shimmer glow className="glass-morph">
-        <LiquidGlassCardHeader>
-          <LiquidGlassCardTitle>Admin Settings — User Approvals</LiquidGlassCardTitle>
-        </LiquidGlassCardHeader>
-        <LiquidGlassCardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Admin Settings — User Approvals</CardTitle>
+        </CardHeader>
+        <CardContent>
           <section className="mb-6">
             <form onSubmit={createUser} className="grid gap-4 md:grid-cols-6 items-end">
               <div className="md:col-span-2">
@@ -187,12 +187,7 @@ const AdminSettings = () => {
                 <Label htmlFor="approved">Approved</Label>
               </div>
               <div>
-                <Button 
-                  type="submit" 
-                  disabled={creating || !newEmail || !newPassword}
-                  variant="glass-primary"
-                  className="glass-hover glass-stagger"
-                >
+                <Button type="submit" disabled={creating || !newEmail || !newPassword}>
                   {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Add user
                 </Button>
@@ -232,36 +227,19 @@ const AdminSettings = () => {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {r.is_approved ? (
-                          <Button 
-                            variant="glass" 
-                            size="sm" 
-                            onClick={() => approve(r.id, false)} 
-                            disabled={actionId === r.id}
-                            className="glass-hover"
-                          >
+                          <Button variant="outline" size="sm" onClick={() => approve(r.id, false)} disabled={actionId === r.id}>
                             {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldX className="h-4 w-4 mr-2" />}
                             Revoke
                           </Button>
                         ) : (
-                          <Button 
-                            size="sm" 
-                            onClick={() => approve(r.id, true)} 
-                            disabled={actionId === r.id}
-                            variant="glass-primary"
-                            className="glass-hover"
-                          >
+                          <Button size="sm" onClick={() => approve(r.id, true)} disabled={actionId === r.id}>
                             {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                             Approve
                           </Button>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="destructive" 
-                              size="sm" 
-                              disabled={deletingId === r.id}
-                              className="glass-hover"
-                            >
+                            <Button variant="destructive" size="sm" disabled={deletingId === r.id}>
                               {deletingId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                               Remove
                             </Button>
@@ -288,8 +266,8 @@ const AdminSettings = () => {
               </TableBody>
             </Table>
           )}
-        </LiquidGlassCardContent>
-      </LiquidGlassCard>
+        </CardContent>
+      </Card>
     </DashboardLayout>
   );
 };

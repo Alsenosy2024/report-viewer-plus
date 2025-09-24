@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { LiquidGlassCard, LiquidGlassCardContent, LiquidGlassCardDescription, LiquidGlassCardHeader, LiquidGlassCardTitle } from '@/components/ui/liquid-glass-card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Brain, TrendingUp, AlertTriangle, Target, BarChart3, Eye, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -128,23 +128,23 @@ const MailReports = () => {
         </div>
 
         {reports.length === 0 ? (
-          <LiquidGlassCard intensity="medium" floating shimmer className="glass-breathe">
-            <LiquidGlassCardContent className="flex flex-col items-center justify-center py-12">
-              <Mail className="h-12 w-12 text-muted-foreground mb-4 animate-pulse" />
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Mail className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Mail Reports Found</h3>
               <p className="text-muted-foreground text-center mb-4">
                 There are no Mail reports in your database yet. Reports will appear here once they are added.
               </p>
-              <Badge variant="outline" className="text-sm glass-light">Section: mail_reports</Badge>
-            </LiquidGlassCardContent>
-          </LiquidGlassCard>
+              <Badge variant="outline" className="text-sm">Section: mail_reports</Badge>
+            </CardContent>
+          </Card>
         ) : (
-          <LiquidGlassCard intensity="strong" interactive floating glow className="glass-morph">
-            <LiquidGlassCardHeader>
-              <LiquidGlassCardTitle>Mail Reports Database</LiquidGlassCardTitle>
-              <LiquidGlassCardDescription>Reports from your Supabase database</LiquidGlassCardDescription>
-            </LiquidGlassCardHeader>
-            <LiquidGlassCardContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Mail Reports Database</CardTitle>
+              <CardDescription>Reports from your Supabase database</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
                 {reports.map((report) => {
                   const processedContent = getProcessedContent(report);
@@ -170,11 +170,11 @@ const MailReports = () => {
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">{new Date(report.created_at).toLocaleDateString()}</Badge>
                           <Button
-                            variant="glass"
+                            variant="outline"
                             size="sm"
                             onClick={() => processWithDeepseek(report.id)}
                             disabled={processing === report.id}
-                            className="h-7 px-2 text-xs glass-hover"
+                            className="h-7 px-2 text-xs"
                             title={isProcessed ? 'Re-analyze report' : 'Analyze report'}
                           >
                             {processing === report.id ? (
@@ -190,13 +190,13 @@ const MailReports = () => {
                             )}
                           </Button>
                           <Button
-                            variant="glass"
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedReport(report);
                               setDialogOpen(true);
                             }}
-                            className="h-6 w-6 p-0 glass-hover"
+                            className="h-6 w-6 p-0"
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
@@ -251,8 +251,8 @@ const MailReports = () => {
                   );
                 })}
               </div>
-            </LiquidGlassCardContent>
-          </LiquidGlassCard>
+            </CardContent>
+          </Card>
         )}
 
         {/* Report Viewer Dialog */}
@@ -293,28 +293,28 @@ const MailReports = () => {
                     return (
                       <div className="space-y-6">
                         {/* Executive Summary */}
-                        <LiquidGlassCard intensity="strong" glow shimmer className="glass-pulse" dir="rtl">
-                          <LiquidGlassCardHeader>
-                            <LiquidGlassCardTitle className="flex items-center gap-2 text-primary">
+                        <Card className="border-primary/20" dir="rtl">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
                               <TrendingUp className="w-5 h-5" />
                               الملخص التنفيذي
-                            </LiquidGlassCardTitle>
-                          </LiquidGlassCardHeader>
-                          <LiquidGlassCardContent>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
                             <p className="text-foreground leading-relaxed text-right">{analysis.executiveSummary}</p>
-                          </LiquidGlassCardContent>
-                        </LiquidGlassCard>
+                          </CardContent>
+                        </Card>
 
                         {/* Performance Metrics */}
                         {analysis.performanceMetrics?.length > 0 && (
-                          <LiquidGlassCard intensity="medium" floating shimmer dir="rtl">
-                            <LiquidGlassCardHeader>
-                              <LiquidGlassCardTitle className="flex items-center gap-2">
+                          <Card dir="rtl">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-blue-500" />
                                 مقاييس الأداء
-                              </LiquidGlassCardTitle>
-                            </LiquidGlassCardHeader>
-                            <LiquidGlassCardContent>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
                               <div className="grid gap-4 md:grid-cols-2">
                                 {analysis.performanceMetrics.map((metric: any, idx: number) => (
                                   <div key={idx} className="p-4 border rounded-lg bg-muted/30">
@@ -328,20 +328,20 @@ const MailReports = () => {
                                   </div>
                                 ))}
                               </div>
-                            </LiquidGlassCardContent>
-                          </LiquidGlassCard>
+                            </CardContent>
+                          </Card>
                         )}
 
                         {/* Trends & Patterns */}
                         {analysis.trendsAndPatterns?.length > 0 && (
-                          <LiquidGlassCard intensity="medium" glow className="glass-breathe" dir="rtl">
-                            <LiquidGlassCardHeader>
-                              <LiquidGlassCardTitle className="flex items-center gap-2">
+                          <Card dir="rtl">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-green-500" />
                                 الاتجاهات والأنماط
-                              </LiquidGlassCardTitle>
-                            </LiquidGlassCardHeader>
-                            <LiquidGlassCardContent>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
                               <div className="space-y-4">
                                 {analysis.trendsAndPatterns.map((trend: any, idx: number) => (
                                   <div key={idx} className="p-4 border rounded-lg">
@@ -355,20 +355,20 @@ const MailReports = () => {
                                   </div>
                                 ))}
                               </div>
-                            </LiquidGlassCardContent>
-                          </LiquidGlassCard>
+                            </CardContent>
+                          </Card>
                         )}
 
                         {/* Recommendations */}
                         {analysis.recommendations?.length > 0 && (
-                          <LiquidGlassCard intensity="strong" floating shimmer glow className="glass-morph" dir="rtl">
-                            <LiquidGlassCardHeader>
-                              <LiquidGlassCardTitle className="flex items-center gap-2">
+                          <Card dir="rtl">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
                                 <Target className="w-5 h-5 text-purple-500" />
                                 التوصيات القابلة للتنفيذ
-                              </LiquidGlassCardTitle>
-                            </LiquidGlassCardHeader>
-                            <LiquidGlassCardContent>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
                               <div className="space-y-3">
                                 {analysis.recommendations.map((rec: any, idx: number) => (
                                   <div key={idx} className="p-4 border rounded-lg">
@@ -383,20 +383,20 @@ const MailReports = () => {
                                   </div>
                                 ))}
                               </div>
-                            </LiquidGlassCardContent>
-                          </LiquidGlassCard>
+                            </CardContent>
+                          </Card>
                         )}
 
                         {/* Risk Assessment */}
                         {analysis.riskAssessment && (
-                          <LiquidGlassCard intensity="medium" floating className="glass-breathe" dir="rtl">
-                            <LiquidGlassCardHeader>
-                              <LiquidGlassCardTitle className="flex items-center gap-2">
+                          <Card dir="rtl">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-yellow-500" />
                                 تقييم المخاطر
-                              </LiquidGlassCardTitle>
-                            </LiquidGlassCardHeader>
-                            <LiquidGlassCardContent>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="font-medium">مستوى المخاطر:</span>
@@ -421,42 +421,42 @@ const MailReports = () => {
                                   </div>
                                 )}
                               </div>
-                          </LiquidGlassCardContent>
-                        </LiquidGlassCard>
+                            </CardContent>
+                          </Card>
                         )}
 
                         {/* Original Report */}
-                        <LiquidGlassCard intensity="light" className="glass-shimmer">
-                          <LiquidGlassCardHeader>
-                            <LiquidGlassCardTitle>Original Report Content</LiquidGlassCardTitle>
-                          </LiquidGlassCardHeader>
-                          <LiquidGlassCardContent>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Original Report Content</CardTitle>
+                          </CardHeader>
+                          <CardContent>
                             <ScrollArea className="max-h-[300px]">
                               <div className="text-sm leading-relaxed break-words text-foreground" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((processedContent?.original || selectedReport.content || '') as string).replace(/\n/g, '<br/>')) }} />
                             </ScrollArea>
-                          </LiquidGlassCardContent>
-                        </LiquidGlassCard>
+                          </CardContent>
+                        </Card>
                       </div>
                     );
                   })()
                 ) : (
                   // Unprocessed view
                   <div className="space-y-4">
-                    <LiquidGlassCard intensity="light" className="glass-shimmer">
-                      <LiquidGlassCardContent className="py-8 text-center">
-                        <Brain className="w-8 h-8 text-primary mx-auto mb-3 animate-pulse" />
+                    <Card className="border-dashed">
+                      <CardContent className="py-8 text-center">
+                        <Brain className="w-8 h-8 text-primary mx-auto mb-3" />
                         <p className="text-muted-foreground mb-4">This report has not been analyzed yet. Click below to analyze with Deepseek R1.</p>
-                        <Button onClick={() => selectedReport && processWithDeepseek(selectedReport.id)} disabled={!selectedReport || processing === selectedReport?.id} variant="glass-primary" className="glass-hover">
+                        <Button onClick={() => selectedReport && processWithDeepseek(selectedReport.id)} disabled={!selectedReport || processing === selectedReport?.id}>
                           {processing === selectedReport?.id ? 'Processing...' : 'Analyze with AI'}
                         </Button>
-                      </LiquidGlassCardContent>
-                    </LiquidGlassCard>
+                      </CardContent>
+                    </Card>
 
-                    <LiquidGlassCard intensity="medium" floating>
-                      <LiquidGlassCardHeader>
-                        <LiquidGlassCardTitle>Original Report Content</LiquidGlassCardTitle>
-                      </LiquidGlassCardHeader>
-                      <LiquidGlassCardContent>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Original Report Content</CardTitle>
+                      </CardHeader>
+                      <CardContent>
                         <ScrollArea className="max-h-[300px]">
                           {selectedReport?.content_type === 'html' ? (
                             <div className="text-sm leading-relaxed break-words text-foreground" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(((selectedReport?.content || '') as string).replace(/\n/g, '<br/>')) }} />
@@ -464,8 +464,8 @@ const MailReports = () => {
                             <pre className="text-sm whitespace-pre-wrap text-foreground">{selectedReport?.content}</pre>
                           )}
                         </ScrollArea>
-                      </LiquidGlassCardContent>
-                    </LiquidGlassCard>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </div>

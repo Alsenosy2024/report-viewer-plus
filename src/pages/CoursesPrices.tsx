@@ -173,52 +173,59 @@ const CoursesPrices = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Courses & Prices</h1>
-            <p className="text-muted-foreground">Manage your course catalog and pricing</p>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Mobile-optimized Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Courses & Prices</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your course catalog and pricing</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleAddNew} className="flex items-center gap-2">
+              <Button 
+                onClick={handleAddNew} 
+                className="w-full sm:w-auto h-12 sm:h-auto min-h-[44px] flex items-center justify-center gap-2 text-base sm:text-sm font-medium"
+              >
                 <Plus className="w-4 h-4" />
                 Add Course
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-sm sm:max-w-md mx-4 sm:mx-auto">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">
                   {editingCourse ? 'Edit Course' : 'Add New Course'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Course Name</label>
                   <Input
                     value={formData['course name']}
                     onChange={(e) => setFormData({ ...formData, 'course name': e.target.value })}
                     placeholder="Enter course name"
+                    className="h-12 text-base"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Course Details</label>
                   <Textarea
                     value={formData['course details']}
                     onChange={(e) => setFormData({ ...formData, 'course details': e.target.value })}
                     placeholder="Enter course details"
                     rows={3}
+                    className="text-base resize-none"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Currency</label>
                   <Input
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                     placeholder="e.g., $ ( dollar )"
+                    className="h-12 text-base"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Course Price</label>
                   <Input
                     type="number"
@@ -226,17 +233,19 @@ const CoursesPrices = () => {
                     value={formData['course price']}
                     onChange={(e) => setFormData({ ...formData, 'course price': e.target.value })}
                     placeholder="Enter price"
+                    className="h-12 text-base"
+                    inputMode="decimal"
                   />
                 </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">
+                <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                  <Button type="submit" className="flex-1 h-12 text-base font-medium">
                     {editingCourse ? 'Update' : 'Add'} Course
                   </Button>
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={() => setIsDialogOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-12 text-base font-medium"
                   >
                     Cancel
                   </Button>
@@ -247,69 +256,135 @@ const CoursesPrices = () => {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              All Courses
-              <Badge variant="secondary">{courses.length} course{courses.length !== 1 ? 's' : ''}</Badge>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-base sm:text-lg">All Courses</span>
+              <Badge variant="secondary" className="w-fit">
+                {courses.length} course{courses.length !== 1 ? 's' : ''}
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
             {courses.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No courses found</p>
-                <Button onClick={handleAddNew}>Add your first course</Button>
+              <div className="text-center py-8 px-4">
+                <p className="text-muted-foreground mb-4 text-sm sm:text-base">No courses found</p>
+                <Button onClick={handleAddNew} className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium">
+                  Add your first course
+                </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Course Name</TableHead>
-                      <TableHead>Details</TableHead>
-                      <TableHead>Currency</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courses.map((course) => (
-                      <TableRow key={course.id}>
-                        <TableCell className="font-medium">
-                          {course['course name'] || '-'}
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="truncate" title={course['course details'] || ''}>
-                            {course['course details'] || '-'}
+              <>
+                {/* Mobile Card Layout */}
+                <div className="block md:hidden space-y-3 p-4">
+                  {courses.map((course) => (
+                    <Card key={course.id} className="p-4 hover-lift">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm sm:text-base leading-tight">
+                              {course['course name'] || 'Untitled Course'}
+                            </h3>
+                            {course['course details'] && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {course['course details']}
+                              </p>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell>{course.currency || '-'}</TableCell>
-                        <TableCell>
-                          {course['course price'] !== null ? course['course price'] : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(course)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(course.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Currency:</span>
+                              <span className="font-medium">{course.currency || '-'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Price:</span>
+                              <span className="font-medium text-primary">
+                                {course['course price'] !== null ? course['course price'] : '-'}
+                              </span>
+                            </div>
                           </div>
-                        </TableCell>
+                        </div>
+                        
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(course)}
+                            className="flex-1 h-10 text-xs font-medium"
+                          >
+                            <Edit className="w-3 h-3 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(course.id)}
+                            className="flex-1 h-10 text-xs font-medium text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-3 h-3 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Course Name</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>Currency</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {courses.map((course) => (
+                        <TableRow key={course.id}>
+                          <TableCell className="font-medium">
+                            {course['course name'] || '-'}
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="truncate" title={course['course details'] || ''}>
+                              {course['course details'] || '-'}
+                            </div>
+                          </TableCell>
+                          <TableCell>{course.currency || '-'}</TableCell>
+                          <TableCell className="font-medium text-primary">
+                            {course['course price'] !== null ? course['course price'] : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(course)}
+                                className="h-9 min-h-[36px]"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(course.id)}
+                                className="text-destructive hover:text-destructive h-9 min-h-[36px]"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

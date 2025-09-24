@@ -46,13 +46,14 @@ export function SiteHeader() {
             <Link 
               to="/" 
               className={cn(
-                "flex items-center text-xl font-bold",
-                "hover:opacity-80 transition-smooth"
+                "flex items-center hover:opacity-80 transition-smooth"
               )}
             >
-              <span className="text-foreground">
-                Professional Engineers
-              </span>
+              <img 
+                src="/lovable-uploads/85136.png.png" 
+                alt="Professional Engineers Logo" 
+                className="h-10 w-auto object-contain"
+              />
             </Link>
           </div>
 

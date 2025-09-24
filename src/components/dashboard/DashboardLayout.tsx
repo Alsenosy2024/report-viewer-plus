@@ -42,47 +42,49 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      {/* Header removed: global SiteHeader used */}
-
       <div className="flex">
-        {/* Sidebar */}
-        <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="icon">
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigationItems.map((item, index) => (
-                    <SidebarMenuItem key={index}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.path || "#"}
-                          end
-                          className={({ isActive }) =>
-                            isActive
-                              ? "bg-muted text-primary font-medium"
-                              : "hover:bg-muted/50"
-                          }
-                          onClick={(e) => {
-                            if (!item.path) e.preventDefault();
-                          }}
-                        >
-                          <item.icon className="mr-3 h-4 w-4" />
-                          {!isCollapsed && <span>{item.label}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+        {/* Navigation Sidebar */}
+        <nav aria-label="Main navigation" className={isCollapsed ? "w-14" : "w-60"}>
+          <Sidebar className="h-full" collapsible="icon">
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navigationItems.map((item, index) => (
+                      <SidebarMenuItem key={index}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.path || "#"}
+                            end
+                            className={({ isActive }) =>
+                              isActive
+                                ? "bg-muted text-primary font-medium"
+                                : "hover:bg-muted/50"
+                            }
+                            onClick={(e) => {
+                              if (!item.path) e.preventDefault();
+                            }}
+                            aria-label={item.label}
+                          >
+                            <item.icon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            {!isCollapsed && <span>{item.label}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+        </nav>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {children}
+        {/* Main Content Area */}
+        <main className="flex-1 p-6" role="main">
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
         </main>
       </div>
     </div>

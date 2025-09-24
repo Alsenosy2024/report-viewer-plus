@@ -117,13 +117,19 @@ const WhatsAppReports = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">WhatsApp Reports</h1>
-            <p className="text-muted-foreground mt-2">Monitor your WhatsApp messaging activity and reports</p>
+      <div className="space-y-8">
+        {/* Header Section */}
+        <header className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">WhatsApp Reports</h1>
+              <p className="text-muted-foreground mt-2">Monitor your WhatsApp messaging activity and reports</p>
+            </div>
           </div>
-        </div>
+        </header>
+
+        {/* Separator */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
 
         {reports.length === 0 ? (
           <Card>

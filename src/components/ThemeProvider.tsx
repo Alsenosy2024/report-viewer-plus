@@ -35,7 +35,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'professional-dark'
+  defaultTheme = 'professional-light'
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
 
@@ -55,7 +55,7 @@ export function ThemeProvider({
     });
     
     // Add current theme class
-    if (theme !== 'professional-dark') {
+    if (theme !== 'professional-light') {
       root.classList.add(`theme-${theme}`);
     }
     

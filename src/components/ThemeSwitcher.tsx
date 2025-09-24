@@ -18,9 +18,9 @@ const themeIcons = {
 };
 
 const themeColors = {
-  'professional-dark': 'hsl(220, 30%, 60%)',
-  'professional-light': 'hsl(210, 20%, 70%)',
-  'business': 'hsl(210, 100%, 60%)'
+  'professional-dark': 'hsl(215, 85%, 60%)',
+  'professional-light': 'hsl(215, 85%, 45%)',
+  'business': 'hsl(210, 100%, 45%)'
 };
 
 export function ThemeSwitcher() {

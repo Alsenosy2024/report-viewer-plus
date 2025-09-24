@@ -85,7 +85,17 @@ export const useNavigationTools = () => {
         (window as any)[key] = func;
       });
 
-      console.log('Navigation tools registered globally:', Object.keys(clientTools));
+      console.log('✅ Navigation tools registered globally:', Object.keys(clientTools));
+      
+      // Test one tool to make sure it works
+      setTimeout(() => {
+        try {
+          const testResult = (window as any).get_current_page();
+          console.log('🧪 Navigation tools test:', testResult);
+        } catch (error) {
+          console.error('❌ Navigation tools test failed:', error);
+        }
+      }, 1000);
     }
   }, []);
 

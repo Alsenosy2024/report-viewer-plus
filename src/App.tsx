@@ -111,9 +111,12 @@ const App = () => {
           </BrowserRouter>
           <div 
             dangerouslySetInnerHTML={{ 
-              __html: `<elevenlabs-convai 
-                agent-id="agent_2401k5v85f8beantem3febzmgj81"
-              ></elevenlabs-convai>` 
+              __html: `
+                <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
+                <elevenlabs-convai 
+                  agent-id="agent_2401k5v85f8beantem3febzmgj81"
+                ></elevenlabs-convai>
+              ` 
             }} 
           />
         </TooltipProvider>

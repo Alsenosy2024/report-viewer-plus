@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'neon-cyber' | 'tropical' | 'galaxy' | 'aurora' | 'electric' | 'light';
+type Theme = 'professional-dark' | 'professional-light' | 'business';
 
 type ThemeProviderContextType = {
   theme: Theme;
@@ -12,34 +12,19 @@ const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>
 
 export const themes = [
   {
-    value: 'neon-cyber' as Theme,
-    label: 'Neon Cyber',
-    description: 'Futuristic neon lights with purple and cyan'
+    value: 'professional-dark' as Theme,
+    label: 'Professional Dark',
+    description: 'Deep navy with subtle blue accents'
   },
   {
-    value: 'tropical' as Theme,
-    label: 'Tropical Paradise',
-    description: 'Vibrant coral, yellow, and turquoise'
+    value: 'professional-light' as Theme,
+    label: 'Professional Light',
+    description: 'Clean whites with refined gray tones'
   },
   {
-    value: 'galaxy' as Theme,
-    label: 'Galaxy Dreams',
-    description: 'Deep space purples with starlight accents'
-  },
-  {
-    value: 'aurora' as Theme,
-    label: 'Aurora Borealis',
-    description: 'Northern lights greens and blues'
-  },
-  {
-    value: 'electric' as Theme,
-    label: 'Electric Storm',
-    description: 'High-energy yellows and electric purple'
-  },
-  {
-    value: 'light' as Theme,
-    label: 'Pure Light',
-    description: 'Clean light mode with colorful accents'
+    value: 'business' as Theme,
+    label: 'Business',
+    description: 'Corporate blue with professional styling'
   }
 ];
 
@@ -50,7 +35,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'neon-cyber'
+  defaultTheme = 'professional-dark'
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
 
@@ -70,7 +55,7 @@ export function ThemeProvider({
     });
     
     // Add current theme class
-    if (theme !== 'neon-cyber') {
+    if (theme !== 'professional-dark') {
       root.classList.add(`theme-${theme}`);
     }
     

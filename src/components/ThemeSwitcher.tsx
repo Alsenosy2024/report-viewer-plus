@@ -7,26 +7,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Palette, Sparkles, Zap, Globe, Mountain, Sun } from 'lucide-react';
+import { Palette, Moon, Sun, Briefcase } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { cn } from '@/lib/utils';
 
 const themeIcons = {
-  'neon-cyber': Zap,
-  'tropical': Globe,
-  'galaxy': Sparkles,
-  'aurora': Mountain,
-  'electric': Zap,
-  'light': Sun
+  'professional-dark': Moon,
+  'professional-light': Sun,
+  'business': Briefcase
 };
 
 const themeColors = {
-  'neon-cyber': 'hsl(280 100% 70%)',
-  'tropical': 'hsl(340 100% 65%)',
-  'galaxy': 'hsl(260 100% 75%)',
-  'aurora': 'hsl(160 100% 60%)',
-  'electric': 'hsl(60 100% 60%)',
-  'light': 'hsl(280 80% 50%)'
+  'professional-dark': 'hsl(220, 30%, 60%)',
+  'professional-light': 'hsl(210, 20%, 70%)',
+  'business': 'hsl(210, 100%, 60%)'
 };
 
 export function ThemeSwitcher() {
@@ -41,18 +35,17 @@ export function ThemeSwitcher() {
           size="sm"
           className={cn(
             "relative gap-2 hover-lift glass interactive",
-            "hover:shadow-glow transition-all duration-300"
+            "hover:shadow-md transition-smooth"
           )}
         >
           <Palette className="h-4 w-4 text-primary" />
-          <span className="hidden sm:inline text-shimmer">
+          <span className="hidden sm:inline text-foreground">
             {themes.find(t => t.value === theme)?.label}
           </span>
           <div 
-            className="w-3 h-3 rounded-full shadow-inner animate-pulse-glow"
+            className="w-3 h-3 rounded-full shadow-inner"
             style={{ 
-              backgroundColor: themeColors[theme],
-              boxShadow: `0 0 10px ${themeColors[theme]}`
+              backgroundColor: themeColors[theme]
             }}
           />
         </Button>
@@ -60,8 +53,7 @@ export function ThemeSwitcher() {
       <DropdownMenuContent 
         align="end" 
         className={cn(
-          "w-80 p-2 glass-intense border-primary/20",
-          "animate-scale-in"
+          "w-80 p-2 glass border-border"
         )}
         sideOffset={8}
       >
@@ -75,10 +67,10 @@ export function ThemeSwitcher() {
                 key={themeOption.value}
                 className={cn(
                   "flex flex-col items-start p-3 cursor-pointer rounded-lg",
-                  "transition-all duration-300 hover:scale-105",
-                  "border border-transparent hover:border-primary/30",
+                  "transition-smooth hover:scale-[1.02]",
+                  "border border-transparent hover:border-primary/20",
                   "relative overflow-hidden group",
-                  isActive && "bg-primary/10 border-primary/50 shadow-glow"
+                  isActive && "bg-primary/10 border-primary/30 shadow-md"
                 )}
                 onClick={() => {
                   setTheme(themeOption.value);
@@ -87,7 +79,7 @@ export function ThemeSwitcher() {
               >
                 <div className="flex items-center gap-2 w-full mb-1">
                   <Icon 
-                    className="h-4 w-4 transition-all duration-300 group-hover:scale-110" 
+                    className="h-4 w-4 transition-smooth group-hover:scale-110" 
                     style={{ color: themeColors[themeOption.value] }}
                   />
                   <span className="font-medium text-sm">
@@ -96,7 +88,7 @@ export function ThemeSwitcher() {
                   {isActive && (
                     <Badge 
                       variant="secondary" 
-                      className="ml-auto text-xs animate-pulse-glow"
+                      className="ml-auto text-xs"
                     >
                       Active
                     </Badge>
@@ -119,9 +111,9 @@ export function ThemeSwitcher() {
           })}
         </div>
         
-        <div className="mt-3 pt-3 border-t border-primary/20">
+        <div className="mt-3 pt-3 border-t border-border">
           <div className="text-center text-xs text-muted-foreground">
-            <Sparkles className="inline-block w-3 h-3 mr-1 animate-spin-slow" />
+            <Palette className="inline-block w-3 h-3 mr-1" />
             Choose your visual experience
           </div>
         </div>

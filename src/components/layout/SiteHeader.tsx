@@ -10,8 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
-import { FloatingActionButton } from "@/components/FloatingActionButton";
-import { Sparkles, Home } from "lucide-react";
+import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -36,29 +35,22 @@ export function SiteHeader() {
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-40 w-full border-b border-primary/20",
-        "glass-intense backdrop-blur-xl shadow-glass h-header",
-        "transition-all duration-300"
+        "sticky top-0 z-40 w-full border-b border-border",
+        "glass backdrop-blur-xl shadow-md h-header",
+        "transition-smooth"
       )}>
         <div className="container flex h-full items-center justify-between">
           <div className="flex items-center gap-4">
-            {isDashboard && <SidebarTrigger className="animate-bounce-in" />}
+            {isDashboard && <SidebarTrigger className="micro-bounce" />}
             
             <Link 
               to="/" 
               className={cn(
-                "flex items-center gap-3 text-xl font-bold",
-                "hover:scale-105 transition-all duration-300",
-                "text-shimmer group"
+                "flex items-center text-xl font-bold",
+                "hover:opacity-80 transition-smooth"
               )}
             >
-              <div className="relative">
-                <Sparkles className="w-6 h-6 text-primary animate-pulse-glow" />
-                <div className="absolute inset-0 animate-spin-slow">
-                  <Sparkles className="w-6 h-6 text-accent/50" />
-                </div>
-              </div>
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
+              <span className="text-foreground">
                 Professional Engineers
               </span>
             </Link>
@@ -71,14 +63,14 @@ export function SiteHeader() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="glass" 
+                    variant="outline" 
                     className={cn(
-                      "relative h-10 w-auto px-4 rounded-full",
-                      "hover:shadow-glow transition-all duration-300 stagger-fade"
+                      "relative h-10 w-auto px-4 rounded-lg",
+                      "hover:shadow-md transition-smooth"
                     )}
                   >
                     <Avatar className="h-8 w-8 mr-2">
-                      <AvatarFallback className="bg-gradient-primary text-primary-foreground">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
                         {getInitials(profile?.full_name)}
                       </AvatarFallback>
                     </Avatar>
@@ -89,26 +81,26 @@ export function SiteHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="end" 
-                  className="w-64 glass-intense border-primary/20 animate-scale-in"
+                  className="w-64 glass border-border"
                 >
-                  <div className="p-3 border-b border-primary/20">
-                    <p className="font-medium text-shimmer">
+                  <div className="p-3 border-b border-border">
+                    <p className="font-medium text-foreground">
                       {profile?.full_name || user.email}
                     </p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuItem 
                     onClick={() => navigate('/dashboard')}
-                    className="hover:bg-primary/10 interactive"
+                    className="hover:bg-accent/10 interactive"
                   >
                     <Home className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => navigate('/social-posts')}
-                    className="hover:bg-primary/10 interactive"
+                    className="hover:bg-accent/10 interactive"
                   >
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Home className="mr-2 h-4 w-4" />
                     Social Posts
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -122,8 +114,8 @@ export function SiteHeader() {
             ) : (
               <Button 
                 onClick={() => navigate('/auth')}
-                variant="neon"
-                className="animate-pulse-glow"
+                variant="default"
+                className="hover:shadow-md transition-smooth"
               >
                 Sign in
               </Button>
@@ -131,8 +123,6 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
-      
-      {isDashboard && <FloatingActionButton />}
     </>
   );
 }

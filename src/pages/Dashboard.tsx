@@ -164,11 +164,12 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <Button
             variant={currentView === 'dashboard' ? 'default' : 'outline'}
             onClick={() => setCurrentView('dashboard')}
+            className="h-12 sm:h-auto min-h-[44px] text-sm sm:text-base justify-center"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             الداشبورد الذكي
@@ -176,13 +177,16 @@ const Dashboard = () => {
           <Button
             variant={currentView === 'agentMood' ? 'default' : 'outline'}
             onClick={() => setCurrentView('agentMood')}
+            className="h-12 sm:h-auto min-h-[44px] text-sm sm:text-base justify-center"
           >
             <Bot className="h-4 w-4 mr-2" />
             Agent Mood
           </Button>
         </div>
         
-        {currentView === 'dashboard' ? <SmartDashboard /> : renderAgentMood()}
+        <div className="min-h-0">
+          {currentView === 'dashboard' ? <SmartDashboard /> : renderAgentMood()}
+        </div>
       </div>
       
       {/* Preload Agent Mood iframe in background */}

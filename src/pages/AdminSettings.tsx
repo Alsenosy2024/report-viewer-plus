@@ -157,114 +157,265 @@ const AdminSettings = () => {
         </CardHeader>
         <CardContent>
           <section className="mb-6">
-            <form onSubmit={createUser} className="grid gap-4 md:grid-cols-6 items-end">
-              <div className="md:col-span-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
+            <form onSubmit={createUser} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    required 
+                    value={newEmail} 
+                    onChange={(e) => setNewEmail(e.target.value)} 
+                    placeholder="user@example.com"
+                    className="h-12 text-base"
+                    inputMode="email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
+                  <Input 
+                    id="name" 
+                    value={newName} 
+                    onChange={(e) => setNewName(e.target.value)} 
+                    placeholder="Optional"
+                    className="h-12 text-base"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    required 
+                    minLength={8} 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)} 
+                    placeholder="Min 8 characters"
+                    className="h-12 text-base"
+                  />
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Optional" />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
-              </div>
-              <div>
-                <Label>Role</Label>
-                <Select value={newRole} onValueChange={(v) => setNewRole(v as 'admin' | 'user')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch id="approved" checked={newApproved} onCheckedChange={setNewApproved} />
-                <Label htmlFor="approved">Approved</Label>
-              </div>
-              <div>
-                <Button type="submit" disabled={creating || !newEmail || !newPassword}>
-                  {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Add user
-                </Button>
+              <div className="grid gap-4 sm:grid-cols-3 items-end">
+                <div>
+                  <Label className="text-sm font-medium">Role</Label>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as 'admin' | 'user')}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-3 h-12">
+                  <Switch id="approved" checked={newApproved} onCheckedChange={setNewApproved} />
+                  <Label htmlFor="approved" className="text-sm font-medium">Approved</Label>
+                </div>
+                <div>
+                  <Button 
+                    type="submit" 
+                    disabled={creating || !newEmail || !newPassword}
+                    className="w-full h-12 text-base font-medium"
+                  >
+                    {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Add user
+                  </Button>
+                </div>
               </div>
             </form>
           </section>
           {loading ? (
-            <div className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Loading users...</div>
+            <div className="flex items-center gap-2 justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin" /> 
+              <span className="text-sm sm:text-base">Loading users...</span>
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Card Layout */}
+              <div className="block md:hidden space-y-4">
                 {rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>{r.full_name || '—'}</TableCell>
-                    <TableCell>{r.email}</TableCell>
-                    <TableCell>
-                      <Select value={r.role} onValueChange={(v) => updateRole(r.id, v as 'admin' | 'user')}>
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>{r.is_approved ? 'Approved' : 'Pending'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                  <Card key={r.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-sm">{r.full_name || '—'}</h3>
+                          <p className="text-xs text-muted-foreground break-all">{r.email}</p>
+                        </div>
+                        <div className={`px-2 py-1 rounded text-xs font-medium ${
+                          r.is_approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {r.is_approved ? 'Approved' : 'Pending'}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Role:</Label>
+                        <Select value={r.role} onValueChange={(v) => updateRole(r.id, v as 'admin' | 'user')}>
+                          <SelectTrigger className="h-8 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2">
                         {r.is_approved ? (
-                          <Button variant="outline" size="sm" onClick={() => approve(r.id, false)} disabled={actionId === r.id}>
-                            {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldX className="h-4 w-4 mr-2" />}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => approve(r.id, false)} 
+                            disabled={actionId === r.id}
+                            className="flex-1 h-10 text-xs"
+                          >
+                            {actionId === r.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <ShieldX className="h-3 w-3 mr-1" />}
                             Revoke
                           </Button>
                         ) : (
-                          <Button size="sm" onClick={() => approve(r.id, true)} disabled={actionId === r.id}>
-                            {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                          <Button 
+                            size="sm" 
+                            onClick={() => approve(r.id, true)} 
+                            disabled={actionId === r.id}
+                            className="flex-1 h-10 text-xs"
+                          >
+                            {actionId === r.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <ShieldCheck className="h-3 w-3 mr-1" />}
                             Approve
                           </Button>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" disabled={deletingId === r.id}>
-                              {deletingId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              disabled={deletingId === r.id}
+                              className="flex-1 h-10 text-xs"
+                            >
+                              {deletingId === r.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                               Remove
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="max-w-sm mx-4">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Remove user?</AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogTitle className="text-lg">Remove user?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-sm">
                                 This will permanently delete the user account and profile.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteUser(r.id)}>
+                            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                              <AlertDialogCancel className="w-full h-12">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteUser(r.id)}
+                                className="w-full h-12"
+                              >
                                 Confirm
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.full_name || '—'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{r.email}</TableCell>
+                        <TableCell>
+                          <Select value={r.role} onValueChange={(v) => updateRole(r.id, v as 'admin' | 'user')}>
+                            <SelectTrigger className="w-[120px] h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
+                            r.is_approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {r.is_approved ? 'Approved' : 'Pending'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {r.is_approved ? (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => approve(r.id, false)} 
+                                disabled={actionId === r.id}
+                                className="h-9"
+                              >
+                                {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldX className="h-4 w-4 mr-2" />}
+                                Revoke
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                onClick={() => approve(r.id, true)} 
+                                disabled={actionId === r.id}
+                                className="h-9"
+                              >
+                                {actionId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                                Approve
+                              </Button>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  disabled={deletingId === r.id}
+                                  className="h-9"
+                                >
+                                  {deletingId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                  Remove
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove user?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently delete the user account and profile.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteUser(r.id)}>
+                                    Confirm
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -292,12 +292,12 @@ const SmartDashboard = () => {
 
     return (
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Workflow className="h-5 w-5" />
-              {dashboard.dashboard_name}
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Workflow className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="truncate">{dashboard.dashboard_name}</span>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
                 v{dashboard.version}
               </span>
             </CardTitle>
@@ -307,16 +307,18 @@ const SmartDashboard = () => {
                 size="sm"
                 onClick={() => handleRefresh()}
                 disabled={isLoading || isTimerActive}
+                className="h-9 text-xs sm:text-sm"
               >
                 {isTimerActive ? (
                   <>
-                    <Clock className="h-4 w-4 mr-2" />
-                    {formatTimer(timerSeconds)}
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">{formatTimer(timerSeconds)}</span>
+                    <span className="sm:hidden">{formatTimer(timerSeconds).split(':')[0]}m</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    تحديث
+                    <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">تحديث</span>
                   </>
                 )}
               </Button>
@@ -324,32 +326,33 @@ const SmartDashboard = () => {
                 variant="outline"
                 size="sm"
                 onClick={toggleFullscreen}
+                className="h-9 text-xs sm:text-sm"
               >
-                <Maximize2 className="h-4 w-4 mr-2" />
-                ملء الشاشة
+                <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">ملء الشاشة</span>
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="h-96 mb-4">
+        <CardContent className="p-3 sm:p-6">
+          <div className="h-64 sm:h-96 mb-4">
             <iframe
               srcDoc={dashboard.html_content}
               className="w-full h-full border border-border rounded-md"
               title="n8n Dashboard"
             />
           </div>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>آخر تحديث: {formatDate(dashboard.updated_at)}</span>
             </div>
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
               {dashboard.workflow_id && (
-                <span>Workflow: {dashboard.workflow_id}</span>
+                <span className="truncate">Workflow: {dashboard.workflow_id}</span>
               )}
               {dashboard.created_by_workflow && (
-                <span>مُولد بواسطة: {dashboard.created_by_workflow}</span>
+                <span className="truncate">مُولد بواسطة: {dashboard.created_by_workflow}</span>
               )}
             </div>
           </div>

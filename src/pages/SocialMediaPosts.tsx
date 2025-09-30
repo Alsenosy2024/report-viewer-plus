@@ -1119,153 +1119,139 @@ const SocialMediaPosts = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {filteredPosts.map((post) => (
-              <Card key={post.id} className="group hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden">
-                <CardContent className="p-0">
-                  {/* Header with Platform & Account */}
-                  <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-muted/30 to-transparent">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getPlatformColor(post.platform)} border`}>
-                          {getPlatformIcon(post.platform)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">{post.user_name || 'Unknown User'}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{post.platform}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-                              {getStatusBadge(post.status)}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-background border shadow-lg z-50">
-                            <DropdownMenuItem 
-                              onClick={() => handleUpdatePostStatus(post.id, 'approved')}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <CheckCircle className="w-3 h-3 text-green-600" />
-                              Approved
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <XCircle className="w-3 h-3 text-red-600" />
-                              Rejected
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-                              {getPostingStatusBadge(post.posting_status, post.posted_at)}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-background border shadow-lg z-50">
-                            <DropdownMenuItem 
-                              onClick={() => handleUpdatePostingStatus(post.id, 'posted')}
-                              className="gap-2 cursor-pointer"
-                              disabled={post.status !== 'approved'}
-                            >
-                              <Send className="w-3 h-3 text-emerald-600" />
-                              Mark as Posted
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => {
-                                const error = prompt('Enter error message (optional):');
-                                handleUpdatePostingStatus(post.id, 'failed', error || undefined);
-                              }}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <AlertCircle className="w-3 h-3 text-rose-600" />
-                              Mark as Failed
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        
-                        {post.user_name && (
-                          <Badge variant="outline" className="gap-1 text-xs">
-                            <Users className="w-3 h-3" />
-                            <span className="truncate max-w-[120px]">{post.user_name}</span>
-                          </Badge>
-                        )}
-                        
-                        <Badge variant="outline" className="capitalize text-xs">{post.platform}</Badge>
-                        
-                        {post.scheduled_for && (
-                          <Badge variant="outline" className="gap-1 text-xs">
-                            <Calendar className="w-3 h-3" />
-                            <span className="hidden sm:inline">{new Date(post.scheduled_for).toLocaleDateString()}</span>
-                            <span className="sm:hidden">{new Date(post.scheduled_for).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {/* Action buttons - mobile full width */}
-                      <div className="flex gap-2 sm:flex-shrink-0 flex-wrap">
-                        <Button
-                          size="sm"
-                          onClick={() => handlePostNow(post)}
-                          disabled={post.status !== 'approved' || post.posting_status === 'posted' || post.posting_status === 'posting'}
-                          className="flex-1 sm:flex-none gap-1 h-9 text-xs font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        >
-                          <Send className="w-3 h-3" />
-                          <span className="hidden sm:inline">Post Now</span>
-                          <span className="sm:hidden">Post</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditPost(post)}
-                          className="flex-1 sm:flex-none gap-1 h-9 text-xs font-medium"
-                        >
-                          <Edit className="w-3 h-3" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeletePost(post.id)}
-                          className="flex-1 sm:flex-none gap-1 h-9 text-xs font-medium"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span className="hidden sm:inline">Delete</span>
-                        </Button>
-                      </div>
+              <Card key={post.id} className="group hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden flex flex-col">
+                {/* Header with Platform & Account */}
+                <CardHeader className="pb-3 bg-gradient-to-r from-muted/30 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${getPlatformColor(post.platform)} border shrink-0`}>
+                      {getPlatformIcon(post.platform)}
                     </div>
-                    
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <p className="text-sm leading-relaxed">{post.content}</p>
-                      
-                      {post.posting_error && (
-                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg">
-                          <p className="text-xs text-rose-800">
-                            <span className="font-semibold">Error: </span>
-                            {post.posting_error}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className="text-xs text-muted-foreground space-y-1 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row">
-                        <span>Created: {new Date(post.created_at).toLocaleString()}</span>
-                        {post.approved_at && (
-                          <span>
-                            {post.status === 'approved' ? 'Approved' : 'Rejected'}: {new Date(post.approved_at).toLocaleString()}
-                          </span>
-                        )}
-                        {post.posted_at && (
-                          <span className="text-emerald-700 font-medium">
-                            Posted: {new Date(post.posted_at).toLocaleString()}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base truncate">{post.user_name || 'Unknown User'}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{post.platform}</p>
                     </div>
                   </div>
+                </CardHeader>
+
+                {/* Content */}
+                <CardContent className="flex-1 pb-4">
+                  <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                  
+                  {post.posting_error && (
+                    <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 rounded-lg">
+                      <p className="text-xs text-rose-800 dark:text-rose-400">
+                        <span className="font-semibold">Error: </span>
+                        {post.posting_error}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
+
+                {/* Metadata Section */}
+                <div className="px-6 py-3 border-t bg-muted/30">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          {getStatusBadge(post.status)}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background border shadow-lg z-50">
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'approved')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          Approved
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <XCircle className="w-3 h-3 text-red-600" />
+                          Rejected
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          {getPostingStatusBadge(post.posting_status, post.posted_at)}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background border shadow-lg z-50">
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdatePostingStatus(post.id, 'posted')}
+                          className="gap-2 cursor-pointer"
+                          disabled={post.status !== 'approved'}
+                        >
+                          <Send className="w-3 h-3 text-emerald-600" />
+                          Mark as Posted
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            const error = prompt('Enter error message (optional):');
+                            handleUpdatePostingStatus(post.id, 'failed', error || undefined);
+                          }}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <AlertCircle className="w-3 h-3 text-rose-600" />
+                          Mark as Failed
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    {post.scheduled_for && (
+                      <Badge variant="outline" className="gap-1 h-8 px-3">
+                        <Calendar className="w-3 h-3" />
+                        <span>{new Date(post.scheduled_for).toLocaleDateString()}</span>
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>Created: {new Date(post.created_at).toLocaleString()}</div>
+                    {post.approved_at && (
+                      <div>
+                        {post.status === 'approved' ? 'Approved' : 'Rejected'}: {new Date(post.approved_at).toLocaleString()}
+                      </div>
+                    )}
+                    {post.posted_at && (
+                      <div className="text-emerald-700 dark:text-emerald-400 font-medium">
+                        Posted: {new Date(post.posted_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons Footer - Always Accessible */}
+                <div className="p-4 border-t bg-background flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={() => handlePostNow(post)}
+                    disabled={post.status !== 'approved' || post.posting_status === 'posted' || post.posting_status === 'posting'}
+                    className="w-full sm:flex-1 h-11 sm:h-10 gap-2 font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                    Post Now
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleEditPost(post)}
+                    className="w-full sm:w-auto h-11 sm:h-10 gap-2 font-medium"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeletePost(post.id)}
+                    className="w-full sm:w-auto h-11 sm:h-10 gap-2 font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>

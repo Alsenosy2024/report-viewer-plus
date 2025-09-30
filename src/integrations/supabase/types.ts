@@ -49,6 +49,24 @@ export type Database = {
           },
         ]
       }
+      ceo_helper_memmory: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       "courses prices": {
         Row: {
           "course details": string | null
@@ -70,6 +88,57 @@ export type Database = {
           "course price"?: number | null
           currency?: string | null
           id?: number
+        }
+        Relationships: []
+      }
+      "customer updates": {
+        Row: {
+          created_at: string
+          id: number
+          name: string | null
+          number: number | null
+          summary: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name?: string | null
+          number?: number | null
+          summary?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string | null
+          number?: number | null
+          summary?: string | null
+        }
+        Relationships: []
+      }
+      "demanded courses": {
+        Row: {
+          created_at: string
+          email: string | null
+          id: number
+          name: string | null
+          notes: string | null
+          number: number | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          name?: string | null
+          notes?: string | null
+          number?: number | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          name?: string | null
+          notes?: string | null
+          number?: number | null
         }
         Relationships: []
       }
@@ -232,6 +301,7 @@ export type Database = {
           late_tasks: string | null
           number_of_late_tasks: number | null
           number_of_tasks: number | null
+          tasks: string | null
         }
         Insert: {
           created_at?: string
@@ -241,6 +311,7 @@ export type Database = {
           late_tasks?: string | null
           number_of_late_tasks?: number | null
           number_of_tasks?: number | null
+          tasks?: string | null
         }
         Update: {
           created_at?: string
@@ -250,6 +321,7 @@ export type Database = {
           late_tasks?: string | null
           number_of_late_tasks?: number | null
           number_of_tasks?: number | null
+          tasks?: string | null
         }
         Relationships: []
       }
@@ -278,9 +350,13 @@ export type Database = {
           content: string
           created_at: string
           created_by: string
+          external_post_id: string | null
           id: string
           metadata: Json | null
           platform: string
+          posted_at: string | null
+          posting_error: string | null
+          posting_status: Database["public"]["Enums"]["posting_status_enum"]
           scheduled_for: string | null
           status: string
           updated_at: string
@@ -292,9 +368,13 @@ export type Database = {
           content: string
           created_at?: string
           created_by: string
+          external_post_id?: string | null
           id?: string
           metadata?: Json | null
           platform?: string
+          posted_at?: string | null
+          posting_error?: string | null
+          posting_status?: Database["public"]["Enums"]["posting_status_enum"]
           scheduled_for?: string | null
           status?: string
           updated_at?: string
@@ -306,9 +386,13 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string
+          external_post_id?: string | null
           id?: string
           metadata?: Json | null
           platform?: string
+          posted_at?: string | null
+          posting_error?: string | null
+          posting_status?: Database["public"]["Enums"]["posting_status_enum"]
           scheduled_for?: string | null
           status?: string
           updated_at?: string
@@ -658,6 +742,7 @@ export type Database = {
         | "ads_reports"
         | "mail_reports"
         | "bot_controls"
+      posting_status_enum: "not_posted" | "posting" | "posted" | "failed"
       reply_enum: "Bot" | "moderator"
       status_enum: "Todo" | "In progress" | "Done" | "new"
       user_role: "admin" | "user"
@@ -795,6 +880,7 @@ export const Constants = {
         "mail_reports",
         "bot_controls",
       ],
+      posting_status_enum: ["not_posted", "posting", "posted", "failed"],
       reply_enum: ["Bot", "moderator"],
       status_enum: ["Todo", "In progress", "Done", "new"],
       user_role: ["admin", "user"],

@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users, Send, AlertCircle, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 
@@ -19,6 +19,10 @@ interface Post {
   content: string;
   platform: string;
   status: 'pending' | 'approved' | 'rejected';
+  posting_status: 'not_posted' | 'posting' | 'posted' | 'failed';
+  posted_at: string | null;
+  posting_error: string | null;
+  external_post_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -61,6 +65,7 @@ const SocialMediaPosts = () => {
   
   // Filter state
   const [filterByAccount, setFilterByAccount] = useState<string>("all");
+  const [filterByPostingStatus, setFilterByPostingStatus] = useState<string>("all");
 
   useEffect(() => {
     if (user) {
@@ -416,6 +421,62 @@ const SocialMediaPosts = () => {
     }
   };
 
+  const getPostingStatusBadge = (postingStatus: string, postedAt?: string | null) => {
+    switch (postingStatus) {
+      case 'posted':
+        return (
+          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+            <Send className="w-3 h-3 mr-1" />
+            Posted{postedAt && <span className="ml-1 text-xs">• {new Date(postedAt).toLocaleDateString()}</span>}
+          </Badge>
+        );
+      case 'failed':
+        return <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>;
+      case 'posting':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Posting...</Badge>;
+      default:
+        return <Badge variant="outline" className="bg-gray-50"><Clock className="w-3 h-3 mr-1" />Not Posted</Badge>;
+    }
+  };
+
+  const handleUpdatePostingStatus = async (postId: string, newStatus: 'posted' | 'failed', errorMessage?: string) => {
+    if (!user) return;
+
+    try {
+      const updateData: any = {
+        posting_status: newStatus,
+      };
+
+      if (newStatus === 'posted') {
+        updateData.posted_at = new Date().toISOString();
+        updateData.posting_error = null;
+      } else if (newStatus === 'failed' && errorMessage) {
+        updateData.posting_error = errorMessage;
+        updateData.posted_at = null;
+      }
+
+      const { error } = await supabase
+        .from('posts')
+        .update(updateData)
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Post marked as ${newStatus}!`,
+      });
+
+      fetchPosts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!user) {
     return (
       <DashboardLayout>
@@ -509,32 +570,62 @@ const SocialMediaPosts = () => {
         {/* Mobile-optimized Filter Section */}
         <Card className="mb-4 sm:mb-6">
           <CardContent className="p-4 sm:pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <Label htmlFor="account-filter" className="text-sm font-medium">Filter by Account:</Label>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1">
-                <Select value={filterByAccount} onValueChange={setFilterByAccount}>
-                  <SelectTrigger className="h-12 sm:h-auto sm:w-[200px]">
-                    <SelectValue placeholder="Select account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Accounts</SelectItem>
-                    {socialUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {filterByAccount !== "all" && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setFilterByAccount("all")}
-                    className="h-10 sm:h-8 text-sm font-medium"
-                  >
-                    Clear Filter
-                  </Button>
-                )}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <Label htmlFor="account-filter" className="text-sm font-medium">Filter by Account:</Label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1">
+                  <Select value={filterByAccount} onValueChange={setFilterByAccount}>
+                    <SelectTrigger className="h-12 sm:h-auto sm:w-[200px]">
+                      <SelectValue placeholder="Select account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Accounts</SelectItem>
+                      {socialUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {filterByAccount !== "all" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setFilterByAccount("all")}
+                      className="h-10 sm:h-8 text-sm font-medium"
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <Label htmlFor="posting-filter" className="text-sm font-medium">Filter by Status:</Label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1">
+                  <Select value={filterByPostingStatus} onValueChange={setFilterByPostingStatus}>
+                    <SelectTrigger className="h-12 sm:h-auto sm:w-[200px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="not_posted">Not Posted</SelectItem>
+                      <SelectItem value="posting">Posting</SelectItem>
+                      <SelectItem value="posted">Posted</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {filterByPostingStatus !== "all" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setFilterByPostingStatus("all")}
+                      className="h-10 sm:h-8 text-sm font-medium"
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -671,7 +762,10 @@ const SocialMediaPosts = () => {
 
         {/* Mobile-optimized Posts List */}
         <div className="space-y-3 sm:space-y-4">
-          {posts.filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount).length === 0 ? (
+          {posts.filter(post => 
+            (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
+            (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
+          ).length === 0 ? (
             <Card>
               <CardContent className="p-6 sm:p-8 text-center">
                 <p className="text-muted-foreground text-sm sm:text-base">
@@ -684,7 +778,10 @@ const SocialMediaPosts = () => {
             </Card>
           ) : (
             posts
-              .filter(post => filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount)
+              .filter(post => 
+                (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
+                (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
+              )
               .map((post) => (
               <Card key={post.id} className="hover-lift">
                 <CardContent className="p-4 sm:p-6">
@@ -713,6 +810,34 @@ const SocialMediaPosts = () => {
                             >
                               <XCircle className="w-3 h-3 text-red-600" />
                               Rejected
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
+                              {getPostingStatusBadge(post.posting_status, post.posted_at)}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="bg-background border shadow-lg z-50">
+                            <DropdownMenuItem 
+                              onClick={() => handleUpdatePostingStatus(post.id, 'posted')}
+                              className="gap-2 cursor-pointer"
+                              disabled={post.status !== 'approved'}
+                            >
+                              <Send className="w-3 h-3 text-emerald-600" />
+                              Mark as Posted
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                const error = prompt('Enter error message (optional):');
+                                handleUpdatePostingStatus(post.id, 'failed', error || undefined);
+                              }}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <AlertCircle className="w-3 h-3 text-rose-600" />
+                              Mark as Failed
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -762,11 +887,25 @@ const SocialMediaPosts = () => {
                     <div className="space-y-3">
                       <p className="text-sm leading-relaxed">{post.content}</p>
                       
+                      {post.posting_error && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                          <p className="text-xs text-rose-800">
+                            <span className="font-semibold">Error: </span>
+                            {post.posting_error}
+                          </p>
+                        </div>
+                      )}
+                      
                       <div className="text-xs text-muted-foreground space-y-1 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row">
                         <span>Created: {new Date(post.created_at).toLocaleString()}</span>
                         {post.approved_at && (
                           <span>
                             {post.status === 'approved' ? 'Approved' : 'Rejected'}: {new Date(post.approved_at).toLocaleString()}
+                          </span>
+                        )}
+                        {post.posted_at && (
+                          <span className="text-emerald-700 font-medium">
+                            Posted: {new Date(post.posted_at).toLocaleString()}
                           </span>
                         )}
                       </div>

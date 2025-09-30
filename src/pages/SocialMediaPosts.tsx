@@ -74,6 +74,31 @@ const SocialMediaPosts = () => {
     }
   }, [user]);
 
+  // Subscribe to real-time updates for posts
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('posts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'posts'
+        },
+        (payload) => {
+          console.log('Post updated:', payload);
+          fetchPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // AI Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;

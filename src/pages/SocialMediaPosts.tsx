@@ -1257,34 +1257,41 @@ const SocialMediaPosts = () => {
           </div>
         )}
 
-        {/* Edit Post Modal - Full Screen on Mobile */}
+        {/* Edit Post Modal - Enhanced with Full Content Display */}
         <Dialog open={!!editingPost} onOpenChange={() => handleCancelEdit()}>
-          <DialogContent className="max-w-sm sm:max-w-2xl mx-4 sm:mx-auto bg-background border shadow-lg">
+          <DialogContent className="max-w-4xl max-h-[90vh] mx-4 sm:mx-auto bg-background border shadow-lg overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">Edit Post</DialogTitle>
               <DialogDescription className="text-sm">
                 Update your social media post content and settings.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleUpdatePost} className="space-y-4">
+            <form onSubmit={handleUpdatePost} className="space-y-6">
+              {/* Content Section - Full Width for Better Display */}
               <div className="space-y-2">
-                <Label htmlFor="edit-content" className="text-sm font-medium">Content</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="edit-content" className="text-sm font-medium">Content</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {content.length} characters
+                  </span>
+                </div>
                 <Textarea
                   id="edit-content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Write your social media post content..."
                   required
-                  rows={4}
-                  className="text-base resize-none"
+                  autoExpand
+                  className="text-base min-h-[200px]"
                 />
               </div>
               
+              {/* Settings Section - Grid Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-user" className="text-sm font-medium">User Account</Label>
                   <Select value={selectedUser} onValueChange={setSelectedUser}>
-                    <SelectTrigger className="h-12 sm:h-auto">
+                    <SelectTrigger className="h-12 sm:h-10">
                       <SelectValue placeholder="Select user" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border shadow-lg z-50">
@@ -1300,7 +1307,7 @@ const SocialMediaPosts = () => {
                 <div className="space-y-2">
                   <Label htmlFor="edit-platform" className="text-sm font-medium">Platform</Label>
                   <Select value={platform} onValueChange={setPlatform}>
-                    <SelectTrigger className="h-12 sm:h-auto">
+                    <SelectTrigger className="h-12 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-background border shadow-lg z-50">
@@ -1320,24 +1327,25 @@ const SocialMediaPosts = () => {
                     type="datetime-local"
                     value={scheduledFor}
                     onChange={(e) => setScheduledFor(e.target.value)}
-                    className="h-12 text-base"
+                    className="h-12 sm:h-10 text-base"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2">
+              {/* Action Buttons - Sticky Bottom */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={handleCancelEdit}
-                  className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
+                  className="h-12 sm:h-10 min-h-[44px] text-base sm:text-sm font-medium order-2 sm:order-1"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={isLoading || !content.trim() || !selectedUser}
-                  className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
+                  className="h-12 sm:h-10 min-h-[44px] text-base sm:text-sm font-medium order-1 sm:order-2"
                 >
                   {isLoading ? "Updating..." : "Update Post"}
                 </Button>

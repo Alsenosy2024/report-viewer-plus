@@ -477,6 +477,65 @@ const SocialMediaPosts = () => {
     }
   };
 
+  const handlePostNow = async (post: Post) => {
+    if (!user) return;
+
+    try {
+      // Update status to posting
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ posting_status: 'posting' })
+        .eq('id', post.id);
+
+      if (updateError) throw updateError;
+
+      // Trigger N8N webhook
+      const response = await fetch("https://primary-production-245af.up.railway.app/webhook-test/webpost", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          post_id: post.id,
+          content: post.content,
+          platform: post.platform,
+          user_name: post.user_name,
+          scheduled_for: post.scheduled_for,
+          metadata: post.metadata,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger posting webhook');
+      }
+
+      toast({
+        title: "Posting Started",
+        description: "Post is being published to social media...",
+      });
+
+      fetchPosts();
+    } catch (error: any) {
+      // Mark as failed on error
+      await supabase
+        .from('posts')
+        .update({ 
+          posting_status: 'failed',
+          posting_error: error.message 
+        })
+        .eq('id', post.id);
+
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      
+      fetchPosts();
+    }
+  };
+
   if (!user) {
     return (
       <DashboardLayout>
@@ -861,7 +920,17 @@ const SocialMediaPosts = () => {
                       </div>
                       
                       {/* Action buttons - mobile full width */}
-                      <div className="flex gap-2 sm:flex-shrink-0">
+                      <div className="flex gap-2 sm:flex-shrink-0 flex-wrap">
+                        <Button
+                          size="sm"
+                          onClick={() => handlePostNow(post)}
+                          disabled={post.status !== 'approved' || post.posting_status === 'posted' || post.posting_status === 'posting'}
+                          className="flex-1 sm:flex-none gap-1 h-9 text-xs font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span className="hidden sm:inline">Post Now</span>
+                          <span className="sm:hidden">Post</span>
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"

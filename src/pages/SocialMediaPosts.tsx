@@ -489,6 +489,9 @@ const SocialMediaPosts = () => {
 
       if (updateError) throw updateError;
 
+      // Prepare callback URL for N8N to report back
+      const callbackUrl = "https://flojlnzqivsziumuebgy.supabase.co/functions/v1/post-status-callback";
+
       // Trigger N8N webhook
       const response = await fetch("https://primary-production-245af.up.railway.app/webhook-test/webpost", {
         method: "POST",
@@ -503,6 +506,7 @@ const SocialMediaPosts = () => {
           scheduled_for: post.scheduled_for,
           metadata: post.metadata,
           timestamp: new Date().toISOString(),
+          callback_url: callbackUrl,
         }),
       });
 

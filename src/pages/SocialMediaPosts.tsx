@@ -89,7 +89,28 @@ const SocialMediaPosts = () => {
         },
         (payload) => {
           console.log('Post updated:', payload);
-          fetchPosts();
+          const updatedPost = payload.new as Post;
+          
+          // Update only the specific post in state
+          setPosts((prevPosts) => 
+            prevPosts.map((post) => 
+              post.id === updatedPost.id ? updatedPost : post
+            )
+          );
+
+          // Show toast notification for posting status changes
+          if (updatedPost.posting_status === 'posted') {
+            toast({
+              title: "Post Published! 🎉",
+              description: `Your post has been successfully published to ${updatedPost.platform}.`,
+            });
+          } else if (updatedPost.posting_status === 'failed') {
+            toast({
+              title: "Post Failed",
+              description: updatedPost.posting_error || "Failed to publish the post. Please try again.",
+              variant: "destructive",
+            });
+          }
         }
       )
       .subscribe();
@@ -97,7 +118,7 @@ const SocialMediaPosts = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, toast]);
 
   // AI Timer effect
   useEffect(() => {

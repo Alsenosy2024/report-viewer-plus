@@ -10,9 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users, Send, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users, Send, AlertCircle, Loader2, Facebook, Twitter, Linkedin, Instagram, Share2, Filter, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Post {
   id: string;
@@ -456,14 +457,60 @@ const SocialMediaPosts = () => {
     }
   };
 
+  // Platform icon and color helpers
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'twitter':
+        return <Twitter className="w-4 h-4" />;
+      case 'facebook':
+        return <Facebook className="w-4 h-4" />;
+      case 'instagram':
+        return <Instagram className="w-4 h-4" />;
+      case 'linkedin':
+        return <Linkedin className="w-4 h-4" />;
+      default:
+        return <Share2 className="w-4 h-4" />;
+    }
+  };
+
+  const getPlatformColor = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'twitter':
+        return 'bg-blue-500/10 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800';
+      case 'facebook':
+        return 'bg-blue-600/10 text-blue-800 border-blue-300 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-700';
+      case 'instagram':
+        return 'bg-pink-500/10 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-400 dark:border-pink-800';
+      case 'linkedin':
+        return 'bg-blue-700/10 text-blue-900 border-blue-400 dark:bg-blue-700/20 dark:text-blue-200 dark:border-blue-600';
+      default:
+        return 'bg-secondary/50 text-secondary-foreground border-border';
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-800 transition-colors">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Approved
+          </Badge>
+        );
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+        return (
+          <Badge className="bg-rose-500/10 text-rose-700 hover:bg-rose-500/20 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-800 transition-colors">
+            <XCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
       default:
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return (
+          <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-800 transition-colors">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
     }
   };
 
@@ -471,17 +518,33 @@ const SocialMediaPosts = () => {
     switch (postingStatus) {
       case 'posted':
         return (
-          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+          <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-800 transition-colors">
             <Send className="w-3 h-3 mr-1" />
-            Posted{postedAt && <span className="ml-1 text-xs">• {new Date(postedAt).toLocaleDateString()}</span>}
+            Posted
+            {postedAt && <span className="ml-1 text-xs opacity-75">• {new Date(postedAt).toLocaleDateString()}</span>}
           </Badge>
         );
       case 'failed':
-        return <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>;
+        return (
+          <Badge className="bg-rose-500/10 text-rose-700 hover:bg-rose-500/20 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-800 transition-colors">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Failed
+          </Badge>
+        );
       case 'posting':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Posting...</Badge>;
+        return (
+          <Badge className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800 transition-colors">
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Posting...
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="bg-gray-50"><Clock className="w-3 h-3 mr-1" />Not Posted</Badge>;
+        return (
+          <Badge variant="outline" className="bg-muted/50 transition-colors">
+            <Clock className="w-3 h-3 mr-1" />
+            Not Posted
+          </Badge>
+        );
     }
   };
 
@@ -597,95 +660,130 @@ const SocialMediaPosts = () => {
     );
   }
 
+  // Filtered posts
+  const filteredPosts = posts.filter(post => 
+    (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
+    (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
+  );
+
+  const hasActiveFilters = filterByAccount !== "all" || filterByPostingStatus !== "all";
+
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        {/* Mobile-optimized Header */}
-        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Social Media Posts</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Manage your social media content and approvals</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header Section with Gradient */}
+        <div className="mb-8 space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Social Media Posts
+            </h1>
+            <p className="text-base sm:text-lg text-muted-foreground">
+              Manage your social media content across all platforms
+            </p>
           </div>
           
-          {/* Mobile: Stack buttons vertically, Desktop: Horizontal */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)} 
+              size="lg"
+              className="h-11 sm:h-12 px-6 font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              <span>Create Post</span>
+            </Button>
+            
+            <Button 
+              onClick={handleGenerateWithAI} 
+              disabled={isGeneratingAI}
+              variant="secondary"
+              size="lg"
+              className="h-11 sm:h-12 px-6 font-medium shadow-lg hover:shadow-xl transition-all"
+            >
+              <Sparkles className={`w-5 h-5 mr-2 ${isGeneratingAI ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline">
+                {isGeneratingAI ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "AI Generate"}
+              </span>
+              <span className="sm:hidden">
+                {isGeneratingAI ? `${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "AI"}
+              </span>
+            </Button>
+
             <Button 
               onClick={() => setShowAddUserForm(!showAddUserForm)} 
               variant="outline"
-              className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium justify-center gap-2"
+              size="lg"
+              className="h-11 sm:h-12 px-6 font-medium"
             >
-              <UserPlus className="w-4 h-4" />
-              Add User
+              <UserPlus className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Add Account</span>
+              <span className="sm:hidden">Account</span>
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium justify-center gap-2"
+                  size="lg"
+                  className="h-11 sm:h-12 px-6 font-medium"
                 >
-                  <Users className="w-4 h-4" />
-                  Manage Users
+                  <Users className="w-5 h-5 mr-2" />
+                  <span className="hidden sm:inline">Manage Accounts</span>
+                  <span className="sm:hidden">Manage</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg">
+              <DropdownMenuContent align="start" className="w-64 bg-background/95 backdrop-blur-sm border shadow-xl">
                 {socialUsers.length === 0 ? (
-                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    No users found
+                  <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                    No accounts yet
                   </div>
                 ) : (
                   socialUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between px-2 py-1.5">
-                      <span className="text-sm truncate flex-1">{user.name}</span>
+                    <div key={user.id} className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors mx-1">
+                      <span className="text-sm font-medium truncate flex-1">{user.name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteUser(user.id);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ))
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            <Button 
-              onClick={handleGenerateWithAI} 
-              disabled={isGeneratingAI}
-              className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium justify-center gap-2"
-              variant="secondary"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {isGeneratingAI ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "Generate Posts with AI"}
-              </span>
-              <span className="sm:hidden">
-                {isGeneratingAI ? `${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "AI Generate"}
-              </span>
-            </Button>
-            
-            <Button 
-              onClick={() => setShowAddForm(!showAddForm)} 
-              className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add New Post
-            </Button>
           </div>
         </div>
 
-        {/* Mobile-optimized Filter Section */}
-        <Card className="mb-4 sm:mb-6">
-          <CardContent className="p-4 sm:pt-6">
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <Label htmlFor="account-filter" className="text-sm font-medium">Filter by Account:</Label>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1">
+        {/* Modern Filter Section */}
+        <Card className="mb-6 border-2 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Filters</h3>
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-auto">
+                  {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Account Filter */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Account
+                </Label>
+                <div className="flex gap-2">
                   <Select value={filterByAccount} onValueChange={setFilterByAccount}>
-                    <SelectTrigger className="h-12 sm:h-auto sm:w-[200px]">
-                      <SelectValue placeholder="Select account" />
+                    <SelectTrigger className="h-10 bg-background">
+                      <SelectValue placeholder="All accounts" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Accounts</SelectItem>
@@ -698,23 +796,27 @@ const SocialMediaPosts = () => {
                   </Select>
                   {filterByAccount !== "all" && (
                     <Button 
-                      variant="outline" 
-                      size="sm" 
+                      variant="ghost" 
+                      size="icon"
                       onClick={() => setFilterByAccount("all")}
-                      className="h-10 sm:h-8 text-sm font-medium"
+                      className="h-10 w-10 shrink-0"
                     >
-                      Clear Filter
+                      <X className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <Label htmlFor="posting-filter" className="text-sm font-medium">Filter by Status:</Label>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 flex-1">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Posting Status
+                </Label>
+                <div className="flex gap-2">
                   <Select value={filterByPostingStatus} onValueChange={setFilterByPostingStatus}>
-                    <SelectTrigger className="h-12 sm:h-auto sm:w-[200px]">
-                      <SelectValue placeholder="Select status" />
+                    <SelectTrigger className="h-10 bg-background">
+                      <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
@@ -726,53 +828,85 @@ const SocialMediaPosts = () => {
                   </Select>
                   {filterByPostingStatus !== "all" && (
                     <Button 
-                      variant="outline" 
-                      size="sm" 
+                      variant="ghost" 
+                      size="icon"
                       onClick={() => setFilterByPostingStatus("all")}
-                      className="h-10 sm:h-8 text-sm font-medium"
+                      className="h-10 w-10 shrink-0"
                     >
-                      Clear Filter
+                      <X className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Clear All Filters */}
+            {hasActiveFilters && (
+              <div className="mt-4 pt-4 border-t flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setFilterByAccount("all");
+                    setFilterByPostingStatus("all");
+                  }}
+                  className="gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Mobile-optimized Add User Form */}
+        {/* Add Account Form */}
         {showAddUserForm && (
-          <Card className="mb-4 sm:mb-6">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">Add New User</CardTitle>
-              <CardDescription className="text-sm">Add a new social media account to post from</CardDescription>
+          <Card className="mb-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent animate-fade-in">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-primary" />
+                    Add New Account
+                  </CardTitle>
+                  <CardDescription>Create a new social media account profile</CardDescription>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setShowAddUserForm(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium">User Name</Label>
+                  <Label htmlFor="username" className="text-sm font-medium">Account Name</Label>
                   <Input
                     id="username"
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Enter user name..."
-                    className="h-12 text-base"
+                    placeholder="e.g., Company Twitter, Personal Instagram..."
+                    className="h-11 text-base"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newUserName.trim()) {
+                        handleAddUser();
+                      }
+                    }}
                   />
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                <div className="flex gap-2 sm:items-end">
                   <Button 
                     onClick={handleAddUser} 
                     disabled={!newUserName.trim()}
-                    className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
+                    className="h-11 px-6 font-medium flex-1 sm:flex-none"
                   >
-                    Add User
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowAddUserForm(false)}
-                    className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
-                  >
-                    Cancel
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Account
                   </Button>
                 </div>
               </div>
@@ -780,34 +914,55 @@ const SocialMediaPosts = () => {
           </Card>
         )}
 
-        {/* Mobile-optimized Add Post Form */}
+        {/* Create Post Form */}
         {showAddForm && (
-          <Card className="mb-4 sm:mb-6">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">Create New Post</CardTitle>
-              <CardDescription className="text-sm">Add content for your social media post</CardDescription>
+          <Card className="mb-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent animate-fade-in">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-primary" />
+                    Create New Post
+                  </CardTitle>
+                  <CardDescription>Compose content for your social media channels</CardDescription>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setShowAddForm(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <form onSubmit={handleCreatePost} className="space-y-4">
+            <CardContent>
+              <form onSubmit={handleCreatePost} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="content" className="text-sm font-medium">Content</Label>
+                  <Label htmlFor="content" className="text-sm font-medium">Post Content *</Label>
                   <Textarea
                     id="content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Write your social media post content..."
+                    placeholder="Write your engaging social media content here..."
                     required
-                    rows={4}
-                    className="text-base resize-none"
+                    rows={5}
+                    className="text-base resize-none focus:ring-2 focus:ring-primary/20"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {content.length} characters
+                  </p>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="user" className="text-sm font-medium">User Account</Label>
+                    <Label htmlFor="user" className="text-sm font-medium flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Account *
+                    </Label>
                     <Select value={selectedUser} onValueChange={setSelectedUser}>
-                      <SelectTrigger className="h-12 sm:h-auto">
-                        <SelectValue placeholder="Select user" />
+                      <SelectTrigger className="h-11 bg-background">
+                        <SelectValue placeholder="Select account" />
                       </SelectTrigger>
                       <SelectContent>
                         {socialUsers.map((user) => (
@@ -820,46 +975,89 @@ const SocialMediaPosts = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="platform" className="text-sm font-medium">Platform</Label>
+                    <Label htmlFor="platform" className="text-sm font-medium flex items-center gap-2">
+                      <Share2 className="w-4 h-4" />
+                      Platform *
+                    </Label>
                     <Select value={platform} onValueChange={setPlatform}>
-                      <SelectTrigger className="h-12 sm:h-auto">
+                      <SelectTrigger className="h-11 bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="twitter">Twitter</SelectItem>
-                        <SelectItem value="facebook">Facebook</SelectItem>
-                        <SelectItem value="instagram">Instagram</SelectItem>
-                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="general">
+                          <div className="flex items-center gap-2">
+                            <Share2 className="w-4 h-4" />
+                            General
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="twitter">
+                          <div className="flex items-center gap-2">
+                            <Twitter className="w-4 h-4" />
+                            Twitter
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="facebook">
+                          <div className="flex items-center gap-2">
+                            <Facebook className="w-4 h-4" />
+                            Facebook
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="instagram">
+                          <div className="flex items-center gap-2">
+                            <Instagram className="w-4 h-4" />
+                            Instagram
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="linkedin">
+                          <div className="flex items-center gap-2">
+                            <Linkedin className="w-4 h-4" />
+                            LinkedIn
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                    <Label htmlFor="scheduled" className="text-sm font-medium">Scheduled For (Optional)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduled" className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Schedule (Optional)
+                    </Label>
                     <Input
                       id="scheduled"
                       type="datetime-local"
                       value={scheduledFor}
                       onChange={(e) => setScheduledFor(e.target.value)}
-                      className="h-12 text-base"
+                      className="h-11 text-base bg-background"
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t">
                   <Button 
                     type="submit" 
                     disabled={isLoading || !content.trim() || !selectedUser}
-                    className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
+                    size="lg"
+                    className="h-11 px-8 font-medium flex-1 sm:flex-none"
                   >
-                    {isLoading ? "Creating..." : "Create Post"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Post
+                      </>
+                    )}
                   </Button>
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={() => setShowAddForm(false)}
-                    className="h-12 sm:h-auto min-h-[44px] text-base sm:text-sm font-medium"
+                    size="lg"
+                    className="h-11 px-8 font-medium"
                   >
                     Cancel
                   </Button>
@@ -869,36 +1067,73 @@ const SocialMediaPosts = () => {
           </Card>
         )}
 
-        {/* Mobile-optimized Posts List */}
-        <div className="space-y-3 sm:space-y-4">
-          {posts.filter(post => 
-            (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
-            (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
-          ).length === 0 ? (
-            <Card>
-              <CardContent className="p-6 sm:p-8 text-center">
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  {filterByAccount === "all" 
-                    ? "No posts found. Create your first post to get started!"
-                    : "No posts found for this account. Try selecting a different account or clear the filter."
-                  }
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            posts
-              .filter(post => 
-                (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
-                (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
-              )
-              .map((post) => (
-              <Card key={post.id} className="hover-lift">
-                <CardContent className="p-4 sm:p-6">
-                  {/* Mobile: Stack everything vertically, Desktop: Keep original layout */}
-                  <div className="space-y-4">
-                    {/* Status and badges - mobile stacked */}
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
+        {/* Posts Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <Skeleton className="h-20 w-full" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <Card className="border-2 border-dashed">
+            <CardContent className="p-12 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Send className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                {hasActiveFilters ? "No posts match your filters" : "No posts yet"}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {hasActiveFilters 
+                  ? "Try adjusting your filters or create a new post" 
+                  : "Create your first social media post to get started!"}
+              </p>
+              {hasActiveFilters && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setFilterByAccount("all");
+                    setFilterByPostingStatus("all");
+                  }}
+                  className="gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear Filters
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {filteredPosts.map((post) => (
+              <Card key={post.id} className="group hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Header with Platform & Account */}
+                  <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-muted/30 to-transparent">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getPlatformColor(post.platform)} border`}>
+                          {getPlatformIcon(post.platform)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{post.user_name || 'Unknown User'}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{post.platform}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
@@ -1032,11 +1267,11 @@ const SocialMediaPosts = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* Mobile-optimized Edit Dialog */}
+        {/* Edit Post Modal - Full Screen on Mobile */}
         <Dialog open={!!editingPost} onOpenChange={() => handleCancelEdit()}>
           <DialogContent className="max-w-sm sm:max-w-2xl mx-4 sm:mx-auto bg-background border shadow-lg">
             <DialogHeader>

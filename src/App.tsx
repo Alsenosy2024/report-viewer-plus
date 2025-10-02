@@ -20,6 +20,7 @@ import SocialMediaPosts from "./pages/SocialMediaPosts";
 import CoursesPrices from "./pages/CoursesPrices";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ConvAINavigator } from "@/components/ConvAINavigator";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ConvAINavigator />
           <SidebarProvider className="flex-col">
             <SiteHeader />
             <Routes>

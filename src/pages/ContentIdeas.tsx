@@ -15,7 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 
@@ -270,15 +276,22 @@ export default function ContentIdeas() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <Label htmlFor="is_posted">حالة النشر</Label>
-                <Switch
-                  id="is_posted"
-                  checked={formData.is_posted}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_posted: checked })
+                <Select
+                  value={formData.is_posted ? "posted" : "not_posted"}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, is_posted: value === "posted" })
                   }
-                />
+                >
+                  <SelectTrigger className="text-right">
+                    <SelectValue placeholder="اختر حالة النشر" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_posted">غير منشور</SelectItem>
+                    <SelectItem value="posted">منشور</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <DialogFooter className="gap-2">

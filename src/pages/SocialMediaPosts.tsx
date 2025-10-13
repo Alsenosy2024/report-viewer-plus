@@ -10,17 +10,43 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Trash2, Edit, Sparkles, UserPlus, Users, Send, AlertCircle, Loader2, Facebook, Twitter, Linkedin, Instagram, Share2, Filter, X } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import {
+  Calendar,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Plus,
+  Trash2,
+  Edit,
+  Sparkles,
+  UserPlus,
+  Users,
+  Send,
+  AlertCircle,
+  Loader2,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Share2,
+  Filter,
+  X,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Post {
   id: string;
   content: string;
   platform: string;
-  status: 'pending' | 'approved' | 'rejected';
-  posting_status: 'not_posted' | 'posting' | 'posted' | 'failed';
+  status: "pending" | "approved" | "rejected";
+  posting_status: "not_posted" | "posting" | "posted" | "failed";
   posted_at: string | null;
   posting_error: string | null;
   external_post_id: string | null;
@@ -48,22 +74,22 @@ const SocialMediaPosts = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  
+
   // AI Generation state
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiTimer, setAiTimer] = useState(0);
-  
+
   // Form state
   const [content, setContent] = useState("");
   const [platform, setPlatform] = useState("general");
   const [scheduledFor, setScheduledFor] = useState("");
-  
+
   // User selection state
   const [socialUsers, setSocialUsers] = useState<SocialUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
-  
+
   // Filter state
   const [filterByAccount, setFilterByAccount] = useState<string>("all");
   const [filterByPostingStatus, setFilterByPostingStatus] = useState<string>("all");
@@ -80,39 +106,35 @@ const SocialMediaPosts = () => {
     if (!user) return;
 
     const channel = supabase
-      .channel('posts-changes')
+      .channel("posts-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'posts'
+          event: "UPDATE",
+          schema: "public",
+          table: "posts",
         },
         (payload) => {
-          console.log('Post updated:', payload);
+          console.log("Post updated:", payload);
           const updatedPost = payload.new as Post;
-          
+
           // Update only the specific post in state
-          setPosts((prevPosts) => 
-            prevPosts.map((post) => 
-              post.id === updatedPost.id ? updatedPost : post
-            )
-          );
+          setPosts((prevPosts) => prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post)));
 
           // Show toast notification for posting status changes
-          if (updatedPost.posting_status === 'posted') {
+          if (updatedPost.posting_status === "posted") {
             toast({
               title: "Post Published! 🎉",
               description: `Your post has been successfully published to ${updatedPost.platform}.`,
             });
-          } else if (updatedPost.posting_status === 'failed') {
+          } else if (updatedPost.posting_status === "failed") {
             toast({
               title: "Post Failed",
               description: updatedPost.posting_error || "Failed to publish the post. Please try again.",
               variant: "destructive",
             });
           }
-        }
+        },
       )
       .subscribe();
 
@@ -142,10 +164,7 @@ const SocialMediaPosts = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
 
       if (error) throw error;
       setPosts((data || []) as Post[]);
@@ -160,10 +179,7 @@ const SocialMediaPosts = () => {
 
   const fetchSocialUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('social_users')
-        .select('*')
-        .order('name');
+      const { data, error } = await supabase.from("social_users").select("*").order("name");
 
       if (error) throw error;
       const users = (data || []) as SocialUser[];
@@ -185,7 +201,7 @@ const SocialMediaPosts = () => {
 
     try {
       const { data, error } = await supabase
-        .from('social_users')
+        .from("social_users")
         .insert([{ name: newUserName.trim() }])
         .select()
         .single();
@@ -211,10 +227,7 @@ const SocialMediaPosts = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('social_users')
-        .delete()
-        .eq('id', userId);
+      const { error } = await supabase.from("social_users").delete().eq("id", userId);
 
       if (error) throw error;
 
@@ -243,28 +256,24 @@ const SocialMediaPosts = () => {
 
     setIsLoading(true);
     try {
-      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
+      const selectedUserData = socialUsers.find((u) => u.id === selectedUser);
       const postData: any = {
         content: content.trim(),
         platform,
         created_by: user.id,
-        status: 'approved', // Default to approved
+        status: "approved", // Default to approved
         user_name: selectedUserData?.name,
         metadata: {
           social_user_id: selectedUser,
-          social_user_name: selectedUserData?.name
-        }
+          social_user_name: selectedUserData?.name,
+        },
       };
 
       if (scheduledFor) {
         postData.scheduled_for = scheduledFor;
       }
 
-      const { data, error } = await supabase
-        .from('posts')
-        .insert([postData])
-        .select()
-        .single();
+      const { data, error } = await supabase.from("posts").insert([postData]).select().single();
 
       if (error) throw error;
 
@@ -290,20 +299,17 @@ const SocialMediaPosts = () => {
     }
   };
 
-  const handleUpdatePostStatus = async (postId: string, newStatus: 'approved' | 'rejected') => {
+  const handleUpdatePostStatus = async (postId: string, newStatus: "approved" | "rejected") => {
     if (!user) return;
 
     try {
       const updateData: any = {
         status: newStatus,
         approved_by: user.id,
-        approved_at: new Date().toISOString()
+        approved_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('posts')
-        .update(updateData)
-        .eq('id', postId);
+      const { error } = await supabase.from("posts").update(updateData).eq("id", postId);
 
       if (error) throw error;
 
@@ -325,15 +331,12 @@ const SocialMediaPosts = () => {
   const handleDeletePost = async (postId: string) => {
     if (!user) return;
 
-    if (!confirm('Are you sure you want to delete this post?')) {
+    if (!confirm("Are you sure you want to delete this post?")) {
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId);
+      const { error } = await supabase.from("posts").delete().eq("id", postId);
 
       if (error) throw error;
 
@@ -366,7 +369,7 @@ const SocialMediaPosts = () => {
 
     setIsLoading(true);
     try {
-      const selectedUserData = socialUsers.find(u => u.id === selectedUser);
+      const selectedUserData = socialUsers.find((u) => u.id === selectedUser);
       const updateData: any = {
         content: content.trim(),
         platform,
@@ -374,8 +377,8 @@ const SocialMediaPosts = () => {
         user_name: selectedUserData?.name,
         metadata: {
           social_user_id: selectedUser,
-          social_user_name: selectedUserData?.name
-        }
+          social_user_name: selectedUserData?.name,
+        },
       };
 
       if (scheduledFor) {
@@ -384,10 +387,7 @@ const SocialMediaPosts = () => {
         updateData.scheduled_for = null;
       }
 
-      const { error } = await supabase
-        .from('posts')
-        .update(updateData)
-        .eq('id', editingPost.id);
+      const { error } = await supabase.from("posts").update(updateData).eq("id", editingPost.id);
 
       if (error) throw error;
 
@@ -460,13 +460,13 @@ const SocialMediaPosts = () => {
   // Platform icon and color helpers
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
-      case 'twitter':
+      case "twitter":
         return <Twitter className="w-4 h-4" />;
-      case 'facebook':
+      case "facebook":
         return <Facebook className="w-4 h-4" />;
-      case 'instagram':
+      case "instagram":
         return <Instagram className="w-4 h-4" />;
-      case 'linkedin':
+      case "linkedin":
         return <Linkedin className="w-4 h-4" />;
       default:
         return <Share2 className="w-4 h-4" />;
@@ -475,29 +475,29 @@ const SocialMediaPosts = () => {
 
   const getPlatformColor = (platform: string) => {
     switch (platform.toLowerCase()) {
-      case 'twitter':
-        return 'bg-blue-500/10 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800';
-      case 'facebook':
-        return 'bg-blue-600/10 text-blue-800 border-blue-300 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-700';
-      case 'instagram':
-        return 'bg-pink-500/10 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-400 dark:border-pink-800';
-      case 'linkedin':
-        return 'bg-blue-700/10 text-blue-900 border-blue-400 dark:bg-blue-700/20 dark:text-blue-200 dark:border-blue-600';
+      case "twitter":
+        return "bg-blue-500/10 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800";
+      case "facebook":
+        return "bg-blue-600/10 text-blue-800 border-blue-300 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-700";
+      case "instagram":
+        return "bg-pink-500/10 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-400 dark:border-pink-800";
+      case "linkedin":
+        return "bg-blue-700/10 text-blue-900 border-blue-400 dark:bg-blue-700/20 dark:text-blue-200 dark:border-blue-600";
       default:
-        return 'bg-secondary/50 text-secondary-foreground border-border';
+        return "bg-secondary/50 text-secondary-foreground border-border";
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved':
+      case "approved":
         return (
           <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-800 transition-colors">
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <Badge className="bg-rose-500/10 text-rose-700 hover:bg-rose-500/20 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-800 transition-colors">
             <XCircle className="w-3 h-3 mr-1" />
@@ -516,7 +516,7 @@ const SocialMediaPosts = () => {
 
   const getPostingStatusBadge = (postingStatus: string, postedAt?: string | null) => {
     switch (postingStatus) {
-      case 'posted':
+      case "posted":
         return (
           <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-800 transition-colors">
             <Send className="w-3 h-3 mr-1" />
@@ -524,14 +524,14 @@ const SocialMediaPosts = () => {
             {postedAt && <span className="ml-1 text-xs opacity-75">• {new Date(postedAt).toLocaleDateString()}</span>}
           </Badge>
         );
-      case 'failed':
+      case "failed":
         return (
           <Badge className="bg-rose-500/10 text-rose-700 hover:bg-rose-500/20 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-800 transition-colors">
             <AlertCircle className="w-3 h-3 mr-1" />
             Failed
           </Badge>
         );
-      case 'posting':
+      case "posting":
         return (
           <Badge className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800 transition-colors">
             <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -548,7 +548,7 @@ const SocialMediaPosts = () => {
     }
   };
 
-  const handleUpdatePostingStatus = async (postId: string, newStatus: 'posted' | 'failed', errorMessage?: string) => {
+  const handleUpdatePostingStatus = async (postId: string, newStatus: "posted" | "failed", errorMessage?: string) => {
     if (!user) return;
 
     try {
@@ -556,18 +556,15 @@ const SocialMediaPosts = () => {
         posting_status: newStatus,
       };
 
-      if (newStatus === 'posted') {
+      if (newStatus === "posted") {
         updateData.posted_at = new Date().toISOString();
         updateData.posting_error = null;
-      } else if (newStatus === 'failed' && errorMessage) {
+      } else if (newStatus === "failed" && errorMessage) {
         updateData.posting_error = errorMessage;
         updateData.posted_at = null;
       }
 
-      const { error } = await supabase
-        .from('posts')
-        .update(updateData)
-        .eq('id', postId);
+      const { error } = await supabase.from("posts").update(updateData).eq("id", postId);
 
       if (error) throw error;
 
@@ -592,9 +589,9 @@ const SocialMediaPosts = () => {
     try {
       // Update status to posting
       const { error: updateError } = await supabase
-        .from('posts')
-        .update({ posting_status: 'posting' })
-        .eq('id', post.id);
+        .from("posts")
+        .update({ posting_status: "posting" })
+        .eq("id", post.id);
 
       if (updateError) throw updateError;
 
@@ -602,7 +599,7 @@ const SocialMediaPosts = () => {
       const callbackUrl = "https://flojlnzqivsziumuebgy.supabase.co/functions/v1/post-status-callback";
 
       // Trigger N8N webhook
-      const response = await fetch("https://primary-production-245af.up.railway.app/webhook-test/webpost", {
+      const response = await fetch("https://primary-production-245af.up.railway.app/webhook/webpost", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -620,7 +617,7 @@ const SocialMediaPosts = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to trigger posting webhook');
+        throw new Error("Failed to trigger posting webhook");
       }
 
       toast({
@@ -632,19 +629,19 @@ const SocialMediaPosts = () => {
     } catch (error: any) {
       // Mark as failed on error
       await supabase
-        .from('posts')
-        .update({ 
-          posting_status: 'failed',
-          posting_error: error.message 
+        .from("posts")
+        .update({
+          posting_status: "failed",
+          posting_error: error.message,
         })
-        .eq('id', post.id);
+        .eq("id", post.id);
 
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-      
+
       fetchPosts();
     }
   };
@@ -661,9 +658,10 @@ const SocialMediaPosts = () => {
   }
 
   // Filtered posts
-  const filteredPosts = posts.filter(post => 
-    (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
-    (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus)
+  const filteredPosts = posts.filter(
+    (post) =>
+      (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
+      (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus),
   );
 
   const hasActiveFilters = filterByAccount !== "all" || filterByPostingStatus !== "all";
@@ -681,36 +679,38 @@ const SocialMediaPosts = () => {
               Manage your social media content across all platforms
             </p>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            <Button 
-              onClick={() => setShowAddForm(!showAddForm)} 
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
               size="lg"
               className="h-11 sm:h-12 px-6 font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
             >
               <Plus className="w-5 h-5 mr-2" />
               <span>Create Post</span>
             </Button>
-            
-            <Button 
-              onClick={handleGenerateWithAI} 
+
+            <Button
+              onClick={handleGenerateWithAI}
               disabled={isGeneratingAI}
               variant="secondary"
               size="lg"
               className="h-11 sm:h-12 px-6 font-medium shadow-lg hover:shadow-xl transition-all"
             >
-              <Sparkles className={`w-5 h-5 mr-2 ${isGeneratingAI ? 'animate-pulse' : ''}`} />
+              <Sparkles className={`w-5 h-5 mr-2 ${isGeneratingAI ? "animate-pulse" : ""}`} />
               <span className="hidden sm:inline">
-                {isGeneratingAI ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "AI Generate"}
+                {isGeneratingAI
+                  ? `Generating... ${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, "0")}`
+                  : "AI Generate"}
               </span>
               <span className="sm:hidden">
-                {isGeneratingAI ? `${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, '0')}` : "AI"}
+                {isGeneratingAI ? `${Math.floor(aiTimer / 60)}:${(aiTimer % 60).toString().padStart(2, "0")}` : "AI"}
               </span>
             </Button>
 
-            <Button 
-              onClick={() => setShowAddUserForm(!showAddUserForm)} 
+            <Button
+              onClick={() => setShowAddUserForm(!showAddUserForm)}
               variant="outline"
               size="lg"
               className="h-11 sm:h-12 px-6 font-medium"
@@ -719,14 +719,10 @@ const SocialMediaPosts = () => {
               <span className="hidden sm:inline">Add Account</span>
               <span className="sm:hidden">Account</span>
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="h-11 sm:h-12 px-6 font-medium"
-                >
+                <Button variant="outline" size="lg" className="h-11 sm:h-12 px-6 font-medium">
                   <Users className="w-5 h-5 mr-2" />
                   <span className="hidden sm:inline">Manage Accounts</span>
                   <span className="sm:hidden">Manage</span>
@@ -734,12 +730,13 @@ const SocialMediaPosts = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 bg-background/95 backdrop-blur-sm border shadow-xl">
                 {socialUsers.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-muted-foreground text-center">
-                    No accounts yet
-                  </div>
+                  <div className="px-4 py-3 text-sm text-muted-foreground text-center">No accounts yet</div>
                 ) : (
                   socialUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors mx-1">
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors mx-1"
+                    >
                       <span className="text-sm font-medium truncate flex-1">{user.name}</span>
                       <Button
                         variant="ghost"
@@ -768,11 +765,11 @@ const SocialMediaPosts = () => {
               <h3 className="text-lg font-semibold">Filters</h3>
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-auto">
-                  {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}
+                  {filteredPosts.length} result{filteredPosts.length !== 1 ? "s" : ""}
                 </Badge>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Account Filter */}
               <div className="space-y-2">
@@ -795,8 +792,8 @@ const SocialMediaPosts = () => {
                     </SelectContent>
                   </Select>
                   {filterByAccount !== "all" && (
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={() => setFilterByAccount("all")}
                       className="h-10 w-10 shrink-0"
@@ -827,8 +824,8 @@ const SocialMediaPosts = () => {
                     </SelectContent>
                   </Select>
                   {filterByPostingStatus !== "all" && (
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={() => setFilterByPostingStatus("all")}
                       className="h-10 w-10 shrink-0"
@@ -843,8 +840,8 @@ const SocialMediaPosts = () => {
             {/* Clear All Filters */}
             {hasActiveFilters && (
               <div className="mt-4 pt-4 border-t flex justify-end">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setFilterByAccount("all");
@@ -872,12 +869,7 @@ const SocialMediaPosts = () => {
                   </CardTitle>
                   <CardDescription>Create a new social media account profile</CardDescription>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setShowAddUserForm(false)}
-                  className="h-8 w-8"
-                >
+                <Button variant="ghost" size="icon" onClick={() => setShowAddUserForm(false)} className="h-8 w-8">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -885,7 +877,9 @@ const SocialMediaPosts = () => {
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium">Account Name</Label>
+                  <Label htmlFor="username" className="text-sm font-medium">
+                    Account Name
+                  </Label>
                   <Input
                     id="username"
                     value={newUserName}
@@ -893,15 +887,15 @@ const SocialMediaPosts = () => {
                     placeholder="e.g., Company Twitter, Personal Instagram..."
                     className="h-11 text-base"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newUserName.trim()) {
+                      if (e.key === "Enter" && newUserName.trim()) {
                         handleAddUser();
                       }
                     }}
                   />
                 </div>
                 <div className="flex gap-2 sm:items-end">
-                  <Button 
-                    onClick={handleAddUser} 
+                  <Button
+                    onClick={handleAddUser}
                     disabled={!newUserName.trim()}
                     className="h-11 px-6 font-medium flex-1 sm:flex-none"
                   >
@@ -926,12 +920,7 @@ const SocialMediaPosts = () => {
                   </CardTitle>
                   <CardDescription>Compose content for your social media channels</CardDescription>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setShowAddForm(false)}
-                  className="h-8 w-8"
-                >
+                <Button variant="ghost" size="icon" onClick={() => setShowAddForm(false)} className="h-8 w-8">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -939,7 +928,9 @@ const SocialMediaPosts = () => {
             <CardContent>
               <form onSubmit={handleCreatePost} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="content" className="text-sm font-medium">Post Content *</Label>
+                  <Label htmlFor="content" className="text-sm font-medium">
+                    Post Content *
+                  </Label>
                   <Textarea
                     id="content"
                     value={content}
@@ -949,11 +940,9 @@ const SocialMediaPosts = () => {
                     rows={5}
                     className="text-base resize-none focus:ring-2 focus:ring-primary/20"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {content.length} characters
-                  </p>
+                  <p className="text-xs text-muted-foreground">{content.length} characters</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="user" className="text-sm font-medium flex items-center gap-2">
@@ -973,7 +962,7 @@ const SocialMediaPosts = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="platform" className="text-sm font-medium flex items-center gap-2">
                       <Share2 className="w-4 h-4" />
@@ -1034,8 +1023,8 @@ const SocialMediaPosts = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isLoading || !content.trim() || !selectedUser}
                     size="lg"
                     className="h-11 px-8 font-medium flex-1 sm:flex-none"
@@ -1052,9 +1041,9 @@ const SocialMediaPosts = () => {
                       </>
                     )}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setShowAddForm(false)}
                     size="lg"
                     className="h-11 px-8 font-medium"
@@ -1097,13 +1086,13 @@ const SocialMediaPosts = () => {
                 {hasActiveFilters ? "No posts match your filters" : "No posts yet"}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {hasActiveFilters 
-                  ? "Try adjusting your filters or create a new post" 
+                {hasActiveFilters
+                  ? "Try adjusting your filters or create a new post"
                   : "Create your first social media post to get started!"}
               </p>
               {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setFilterByAccount("all");
                     setFilterByPostingStatus("all");
@@ -1119,15 +1108,20 @@ const SocialMediaPosts = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {filteredPosts.map((post) => (
-              <Card key={post.id} className="group hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden flex flex-col">
+              <Card
+                key={post.id}
+                className="group hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden flex flex-col"
+              >
                 {/* Header with Platform & Account */}
                 <CardHeader className="pb-3 bg-gradient-to-r from-muted/30 to-transparent">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${getPlatformColor(post.platform)} border shrink-0`}>
+                    <div
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${getPlatformColor(post.platform)} border shrink-0`}
+                    >
                       {getPlatformIcon(post.platform)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base truncate">{post.user_name || 'Unknown User'}</p>
+                      <p className="font-semibold text-base truncate">{post.user_name || "Unknown User"}</p>
                       <p className="text-sm text-muted-foreground capitalize">{post.platform}</p>
                     </div>
                   </div>
@@ -1136,7 +1130,7 @@ const SocialMediaPosts = () => {
                 {/* Content */}
                 <CardContent className="flex-1 pb-4">
                   <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">{post.content}</p>
-                  
+
                   {post.posting_error && (
                     <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 rounded-lg">
                       <p className="text-xs text-rose-800 dark:text-rose-400">
@@ -1157,15 +1151,15 @@ const SocialMediaPosts = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-background border shadow-lg z-50">
-                        <DropdownMenuItem 
-                          onClick={() => handleUpdatePostStatus(post.id, 'approved')}
+                        <DropdownMenuItem
+                          onClick={() => handleUpdatePostStatus(post.id, "approved")}
                           className="gap-2 cursor-pointer"
                         >
                           <CheckCircle className="w-3 h-3 text-green-600" />
                           Approved
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
+                        <DropdownMenuItem
+                          onClick={() => handleUpdatePostStatus(post.id, "rejected")}
                           className="gap-2 cursor-pointer"
                         >
                           <XCircle className="w-3 h-3 text-red-600" />
@@ -1181,18 +1175,18 @@ const SocialMediaPosts = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-background border shadow-lg z-50">
-                        <DropdownMenuItem 
-                          onClick={() => handleUpdatePostingStatus(post.id, 'posted')}
+                        <DropdownMenuItem
+                          onClick={() => handleUpdatePostingStatus(post.id, "posted")}
                           className="gap-2 cursor-pointer"
-                          disabled={post.status !== 'approved'}
+                          disabled={post.status !== "approved"}
                         >
                           <Send className="w-3 h-3 text-emerald-600" />
                           Mark as Posted
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => {
-                            const error = prompt('Enter error message (optional):');
-                            handleUpdatePostingStatus(post.id, 'failed', error || undefined);
+                            const error = prompt("Enter error message (optional):");
+                            handleUpdatePostingStatus(post.id, "failed", error || undefined);
                           }}
                           className="gap-2 cursor-pointer"
                         >
@@ -1201,7 +1195,7 @@ const SocialMediaPosts = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    
+
                     {post.scheduled_for && (
                       <Badge variant="outline" className="gap-1 h-8 px-3">
                         <Calendar className="w-3 h-3" />
@@ -1209,12 +1203,13 @@ const SocialMediaPosts = () => {
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div>Created: {new Date(post.created_at).toLocaleString()}</div>
                     {post.approved_at && (
                       <div>
-                        {post.status === 'approved' ? 'Approved' : 'Rejected'}: {new Date(post.approved_at).toLocaleString()}
+                        {post.status === "approved" ? "Approved" : "Rejected"}:{" "}
+                        {new Date(post.approved_at).toLocaleString()}
                       </div>
                     )}
                     {post.posted_at && (
@@ -1229,7 +1224,11 @@ const SocialMediaPosts = () => {
                 <div className="p-4 border-t bg-background flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={() => handlePostNow(post)}
-                    disabled={post.status !== 'approved' || post.posting_status === 'posted' || post.posting_status === 'posting'}
+                    disabled={
+                      post.status !== "approved" ||
+                      post.posting_status === "posted" ||
+                      post.posting_status === "posting"
+                    }
                     className="w-full sm:flex-1 h-11 sm:h-10 gap-2 font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
                   >
                     <Send className="w-4 h-4" />
@@ -1270,10 +1269,10 @@ const SocialMediaPosts = () => {
               {/* Content Section - Full Width for Better Display */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="edit-content" className="text-sm font-medium">Content</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {content.length} characters
-                  </span>
+                  <Label htmlFor="edit-content" className="text-sm font-medium">
+                    Content
+                  </Label>
+                  <span className="text-xs text-muted-foreground">{content.length} characters</span>
                 </div>
                 <Textarea
                   id="edit-content"
@@ -1285,11 +1284,13 @@ const SocialMediaPosts = () => {
                   className="text-base min-h-[200px]"
                 />
               </div>
-              
+
               {/* Settings Section - Grid Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-user" className="text-sm font-medium">User Account</Label>
+                  <Label htmlFor="edit-user" className="text-sm font-medium">
+                    User Account
+                  </Label>
                   <Select value={selectedUser} onValueChange={setSelectedUser}>
                     <SelectTrigger className="h-12 sm:h-10">
                       <SelectValue placeholder="Select user" />
@@ -1303,9 +1304,11 @@ const SocialMediaPosts = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="edit-platform" className="text-sm font-medium">Platform</Label>
+                  <Label htmlFor="edit-platform" className="text-sm font-medium">
+                    Platform
+                  </Label>
                   <Select value={platform} onValueChange={setPlatform}>
                     <SelectTrigger className="h-12 sm:h-10">
                       <SelectValue />
@@ -1321,7 +1324,9 @@ const SocialMediaPosts = () => {
                 </div>
 
                 <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                  <Label htmlFor="edit-scheduled" className="text-sm font-medium">Scheduled For (Optional)</Label>
+                  <Label htmlFor="edit-scheduled" className="text-sm font-medium">
+                    Scheduled For (Optional)
+                  </Label>
                   <Input
                     id="edit-scheduled"
                     type="datetime-local"
@@ -1334,16 +1339,16 @@ const SocialMediaPosts = () => {
 
               {/* Action Buttons - Sticky Bottom */}
               <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={handleCancelEdit}
                   className="h-12 sm:h-10 min-h-[44px] text-base sm:text-sm font-medium order-2 sm:order-1"
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading || !content.trim() || !selectedUser}
                   className="h-12 sm:h-10 min-h-[44px] text-base sm:text-sm font-medium order-1 sm:order-2"
                 >

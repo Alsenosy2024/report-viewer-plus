@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      abdelsattarpost: {
+        Row: {
+          content: string | null
+          embedding: string | null
+          id: number
+          metadata: Json | null
+        }
+        Insert: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+        }
+        Update: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       bot_status: {
         Row: {
           bot_name: string
@@ -64,6 +85,36 @@ export type Database = {
           id?: number
           message?: Json
           session_id?: string
+        }
+        Relationships: []
+      }
+      content: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_posted: boolean
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_posted?: boolean
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_posted?: boolean
+          summary?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

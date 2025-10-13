@@ -49,6 +49,11 @@ export const ConvAINavigator = () => {
         toast({ title: "Navigating to Social Media Posts" });
         return "Navigated to social media posts successfully";
       },
+      show_content_ideas: () => {
+        navigate('/content-ideas');
+        toast({ title: "Navigating to Content Ideas" });
+        return "Navigated to content ideas successfully";
+      },
       show_courses_prices: () => {
         navigate('/courses-prices');
         toast({ title: "Navigating to Courses & Prices" });

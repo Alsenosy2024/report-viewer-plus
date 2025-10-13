@@ -18,6 +18,7 @@ import AwaitingApproval from "./pages/AwaitingApproval";
 import BotControls from "./pages/BotControls";
 import SocialMediaPosts from "./pages/SocialMediaPosts";
 import CoursesPrices from "./pages/CoursesPrices";
+import ContentIdeas from "./pages/ContentIdeas";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
@@ -80,6 +81,11 @@ const App = () => (
               <Route path="/social-posts" element={
                 <ProtectedRoute>
                   <SocialMediaPosts />
+                </ProtectedRoute>
+              } />
+              <Route path="/content-ideas" element={
+                <ProtectedRoute>
+                  <ContentIdeas />
                 </ProtectedRoute>
               } />
               <Route path="/courses-prices" element={

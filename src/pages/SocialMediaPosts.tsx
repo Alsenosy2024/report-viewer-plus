@@ -599,7 +599,7 @@ const SocialMediaPosts = () => {
       const callbackUrl = "https://flojlnzqivsziumuebgy.supabase.co/functions/v1/post-status-callback";
 
       // Trigger N8N webhook
-      const response = await fetch("https://primary-production-245af.up.railway.app/webhook/webpost", {
+      const response = await fetch("https://primary-production-245af.up.railway.app/webhook-test/direct", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

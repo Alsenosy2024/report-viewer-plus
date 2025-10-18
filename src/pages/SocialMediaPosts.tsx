@@ -658,11 +658,15 @@ const SocialMediaPosts = () => {
   }
 
   // Filtered posts
-  const filteredPosts = posts.filter(
-    (post) =>
-      (filterByAccount === "all" || post.metadata?.social_user_id === filterByAccount) &&
-      (filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus),
-  );
+  const filteredPosts = posts.filter((post) => {
+    const accountMatch = filterByAccount === "all" || 
+      post.metadata?.social_user_id === filterByAccount ||
+      post.user_name === socialUsers.find(u => u.id === filterByAccount)?.name;
+    
+    const statusMatch = filterByPostingStatus === "all" || post.posting_status === filterByPostingStatus;
+    
+    return accountMatch && statusMatch;
+  });
 
   const hasActiveFilters = filterByAccount !== "all" || filterByPostingStatus !== "all";
 

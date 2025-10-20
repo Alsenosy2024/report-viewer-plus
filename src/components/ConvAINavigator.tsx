@@ -218,10 +218,22 @@ Other:
     };
 
     // Register navigation tools globally for ElevenLabs ConvAI
+    // ElevenLabs expects tools on window.client object
+    if (!window.client) {
+      (window as any).client = {};
+    }
+
+    // Register each tool on window.client for ElevenLabs ConvAI widget
+    Object.keys(navigationTools).forEach(key => {
+      (window as any).client[key] = navigationTools[key];
+    });
+
+    // Also keep the old reference for backward compatibility
     window.convaiNavigationTools = navigationTools;
 
     // Log available commands for debugging
     console.log('[ConvAI Navigator] Initialized with commands:', Object.keys(navigationTools));
+    console.log('[ConvAI Navigator] Tools registered on window.client:', Object.keys((window as any).client));
 
     // Listen for custom events from ElevenLabs widget
     const handleConvAIMessage = (event: MessageEvent<ElevenLabsConvAIMessage>) => {
@@ -258,6 +270,14 @@ Other:
 
     return () => {
       window.removeEventListener('message', handleConvAIMessage);
+
+      // Clean up window.client tools
+      if ((window as any).client) {
+        Object.keys(navigationTools).forEach(key => {
+          delete (window as any).client[key];
+        });
+      }
+
       delete window.convaiNavigationTools;
       console.log('[ConvAI Navigator] Cleanup complete');
     };

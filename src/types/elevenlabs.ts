@@ -19,6 +19,7 @@ export interface NavigationTools {
 declare global {
   interface Window {
     convaiNavigationTools?: NavigationTools;
+    client?: NavigationTools;
   }
 }
 

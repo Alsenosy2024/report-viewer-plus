@@ -32,8 +32,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ConvAINavigator />
           <SidebarProvider className="flex-col">
+            <ConvAINavigator />
             <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />

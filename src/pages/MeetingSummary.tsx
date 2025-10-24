@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic, Video, Square, Loader2, Calendar, FileText } from 'lucide-react';
+import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 
@@ -23,6 +23,7 @@ export default function MeetingSummary() {
   const [meetingType, setMeetingType] = useState<'online' | 'offline'>('online');
   const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -71,6 +72,51 @@ export default function MeetingSummary() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendMeeting = async (meeting: MeetingSummary) => {
+    if (!meeting.recording_url) {
+      toast({
+        title: 'Error',
+        description: 'No recording URL available',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setResendingId(meeting.id);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error: functionError } = await supabase.functions.invoke('process-meeting', {
+        body: {
+          meeting_id: meeting.id,
+          recording_url: meeting.recording_url,
+          meeting_type: meeting.meeting_type,
+          user_id: user.id,
+        },
+      });
+
+      if (functionError) {
+        throw functionError;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Recording resent for processing',
+      });
+    } catch (error) {
+      console.error('Error resending meeting:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to resend recording',
+        variant: 'destructive',
+      });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -380,15 +426,29 @@ export default function MeetingSummary() {
                         )}
                       </div>
 
-                      {meeting.recording_url && (
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(meeting.recording_url!, '_blank')}
+                          onClick={() => handleResendMeeting(meeting)}
+                          disabled={resendingId === meeting.id}
                         >
-                          View Recording
+                          {resendingId === meeting.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
                         </Button>
-                      )}
+                        {meeting.recording_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(meeting.recording_url!, '_blank')}
+                          >
+                            View Recording
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

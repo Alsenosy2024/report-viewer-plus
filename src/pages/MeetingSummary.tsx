@@ -123,36 +123,68 @@ export default function MeetingSummary() {
   const startRecording = async () => {
     try {
       let stream: MediaStream;
+      let mimeType: string;
 
       if (meetingType === 'online') {
-        // Get screen capture with audio
+        // Get screen capture with system audio
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: true
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
         });
 
         // Get user microphone
-        const audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: true
+        const micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
         });
 
-        // Combine both streams
-        const tracks = [
-          ...screenStream.getVideoTracks(),
-          ...screenStream.getAudioTracks(),
-          ...audioStream.getAudioTracks()
-        ];
+        // Create audio context to mix audio tracks
+        const audioContext = new AudioContext();
+        const audioDestination = audioContext.createMediaStreamDestination();
 
-        stream = new MediaStream(tracks);
+        // Add screen audio if available
+        const screenAudioTracks = screenStream.getAudioTracks();
+        if (screenAudioTracks.length > 0) {
+          const screenAudioSource = audioContext.createMediaStreamSource(
+            new MediaStream(screenAudioTracks)
+          );
+          screenAudioSource.connect(audioDestination);
+        }
+
+        // Add microphone audio
+        const micAudioSource = audioContext.createMediaStreamSource(micStream);
+        micAudioSource.connect(audioDestination);
+
+        // Combine video and mixed audio
+        const videoTrack = screenStream.getVideoTracks()[0];
+        const mixedAudioTrack = audioDestination.stream.getAudioTracks()[0];
+        
+        stream = new MediaStream([videoTrack, mixedAudioTrack]);
+        mimeType = 'video/webm;codecs=vp8,opus';
       } else {
-        // Offline: only microphone
+        // Offline: only microphone with enhanced settings
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: true
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 48000,
+            channelCount: 2
+          }
         });
+        mimeType = 'audio/webm;codecs=opus';
       }
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp8,opus'
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000
       });
 
       mediaRecorderRef.current = mediaRecorder;

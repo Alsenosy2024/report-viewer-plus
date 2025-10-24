@@ -19,6 +19,7 @@ import BotControls from "./pages/BotControls";
 import SocialMediaPosts from "./pages/SocialMediaPosts";
 import CoursesPrices from "./pages/CoursesPrices";
 import ContentIdeas from "./pages/ContentIdeas";
+import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
@@ -86,6 +87,11 @@ const App = () => (
               <Route path="/content-ideas" element={
                 <ProtectedRoute>
                   <ContentIdeas />
+                </ProtectedRoute>
+              } />
+              <Route path="/meeting-summary" element={
+                <ProtectedRoute>
+                  <MeetingSummary />
                 </ProtectedRoute>
               } />
               <Route path="/courses-prices" element={

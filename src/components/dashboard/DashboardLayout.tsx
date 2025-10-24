@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Settings, BarChart3, MessageSquare, Bot, Mail, TrendingUp, Share2, BookOpen, Lightbulb } from 'lucide-react';
+import { LogOut, User, Settings, BarChart3, MessageSquare, Bot, Mail, TrendingUp, Share2, BookOpen, Lightbulb, Video } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
@@ -39,6 +39,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Bot, label: 'Bot Controls', path: '/bots', section: 'bot_controls' },
     { icon: Share2, label: 'Social Posts', path: '/social-posts' },
     { icon: Lightbulb, label: 'Content Ideas', path: '/content-ideas' },
+    { icon: Video, label: 'Meeting Summary', path: '/meeting-summary' },
     { icon: BookOpen, label: 'Courses & Prices', path: '/courses-prices' },
     ...(profile?.role === 'admin' ? [{ icon: Settings, label: 'Settings', path: '/admin/settings' }] : []),
   ];

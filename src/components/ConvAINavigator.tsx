@@ -61,6 +61,11 @@ export const ConvAINavigator = () => {
         toast({ title: "Opening Content Ideas", description: "Loading content suggestions" });
         return "Navigated to content ideas successfully";
       },
+      show_meeting_summary: () => {
+        navigate('/meeting-summary');
+        toast({ title: "Opening Meeting Summary", description: "Loading meeting recorder" });
+        return "Navigated to meeting summary successfully";
+      },
       show_courses_prices: () => {
         navigate('/courses-prices');
         toast({ title: "Opening Courses & Prices", description: "Loading course information" });
@@ -119,36 +124,32 @@ export const ConvAINavigator = () => {
       },
 
       // ==================== AUTHENTICATION ====================
-      sign_out: async () => {
-        try {
-          await signOut();
+      sign_out: () => {
+        signOut().then(() => {
           toast({ title: "Signing Out", description: "Logging you out..." });
-          return "Successfully signed out";
-        } catch (error) {
+        }).catch((error) => {
           console.error('Sign out error:', error);
           toast({
             title: "Sign Out Failed",
             description: "There was an error signing out. Please try again.",
             variant: "destructive"
           });
-          return "Failed to sign out";
-        }
+        });
+        return "Signing out...";
       },
-      logout: async () => {
+      logout: () => {
         // Alias for sign_out
-        try {
-          await signOut();
+        signOut().then(() => {
           toast({ title: "Logging Out", description: "Goodbye!" });
-          return "Successfully logged out";
-        } catch (error) {
+        }).catch((error) => {
           console.error('Logout error:', error);
           toast({
             title: "Logout Failed",
             description: "There was an error logging out. Please try again.",
             variant: "destructive"
           });
-          return "Failed to logout";
-        }
+        });
+        return "Logging out...";
       },
 
       // ==================== UTILITY COMMANDS ====================
@@ -165,6 +166,7 @@ export const ConvAINavigator = () => {
           '/bots': 'Bot Controls',
           '/social-posts': 'Social Media Posts',
           '/content-ideas': 'Content Ideas',
+          '/meeting-summary': 'Meeting Summary',
           '/courses-prices': 'Courses & Prices',
           '/auth': 'Authentication',
           '/awaiting-approval': 'Awaiting Approval',
@@ -188,6 +190,7 @@ Navigation:
 - "Open bot controls"
 - "Show social posts"
 - "Show content ideas"
+- "Show meeting summary"
 - "Show courses and prices"
 - "Go home"
 ${user ? '- "Open admin settings" (admin only)' : ''}

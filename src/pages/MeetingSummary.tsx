@@ -235,7 +235,14 @@ export default function MeetingSummary() {
             channelCount: 2
           }
         });
-        mimeType = 'audio/webm;codecs=opus';
+        // Try MP4 format, fall back to WebM if not supported
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else {
+          mimeType = 'audio/webm';
+        }
       }
 
       const mediaRecorder = new MediaRecorder(stream, {
@@ -346,9 +353,11 @@ export default function MeetingSummary() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create blob from chunks
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      const fileName = `${user.id}/${Date.now()}_${meetingType}.webm`;
+      // Create blob from chunks with appropriate type
+      const blobType = meetingType === 'offline' ? 'audio/mp4' : 'video/webm';
+      const fileExtension = meetingType === 'offline' ? 'mp4' : 'webm';
+      const blob = new Blob(chunksRef.current, { type: blobType });
+      const fileName = `${user.id}/${Date.now()}_${meetingType}.${fileExtension}`;
 
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage

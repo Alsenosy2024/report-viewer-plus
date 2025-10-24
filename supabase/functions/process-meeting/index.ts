@@ -16,29 +16,18 @@ Deno.serve(async (req) => {
 
     console.log('Processing meeting:', { meeting_id, recording_url, meeting_type, user_id });
 
-    // Download the video file from storage
-    console.log('Downloading video from storage...');
-    const videoResponse = await fetch(recording_url);
-    
-    if (!videoResponse.ok) {
-      throw new Error(`Failed to download video: ${videoResponse.status}`);
-    }
-
-    const videoBlob = await videoResponse.blob();
-    console.log('Video downloaded, size:', videoBlob.size, 'bytes');
-
-    // Create form data with the video file
-    const formData = new FormData();
-    formData.append('video', videoBlob, `${meeting_id}.webm`);
-    formData.append('meeting_id', meeting_id);
-    formData.append('meeting_type', meeting_type);
-    formData.append('user_id', user_id);
-
-    // Send video file to webhook
-    console.log('Sending video to webhook...');
+    // Send to webhook
     const webhookResponse = await fetch('https://primary-production-245af.up.railway.app/webhook-test/PEmeeting', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        meeting_id,
+        recording_url,
+        meeting_type,
+        user_id,
+      }),
     });
 
     console.log('Webhook response status:', webhookResponse.status);

@@ -23,7 +23,8 @@ export function SiteHeader() {
     location.pathname.startsWith('/mail-reports') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/bots') ||
-    location.pathname.startsWith('/social-posts');
+    location.pathname.startsWith('/social-posts') ||
+    location.pathname.startsWith('/meeting-summary');
 
   return (
     <header className="bg-card border-b border-card-border h-header sticky top-0 z-50 backdrop-blur-sm bg-card/80">

@@ -298,20 +298,23 @@ export default function MeetingSummary() {
         format: 'a4',
       });
       
-      const imgWidth = 210; // A4 width in mm
+      const margin = 15; // 15mm margin on all sides
+      const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
+      const imgWidth = pageWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const availableHeight = pageHeight - (margin * 2);
       let heightLeft = imgHeight;
-      let position = 0;
+      let position = margin;
       
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= availableHeight;
       
       while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
+        position = margin - (imgHeight - heightLeft);
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= availableHeight;
       }
       
       const fileName = `meeting-summary-${selectedMeeting.meeting_type}-${format(new Date(selectedMeeting.created_at), 'yyyy-MM-dd')}.pdf`;

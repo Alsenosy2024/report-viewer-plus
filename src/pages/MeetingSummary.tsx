@@ -1,18 +1,78 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic, Video, Square, Loader2 } from 'lucide-react';
+import { Mic, Video, Square, Loader2, Calendar, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
+
+interface MeetingSummary {
+  id: string;
+  meeting_type: string;
+  recording_url: string | null;
+  summary_html: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function MeetingSummary() {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [meetingType, setMeetingType] = useState<'online' | 'offline'>('online');
+  const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  // Fetch meetings on mount
+  useEffect(() => {
+    fetchMeetings();
+  }, []);
+
+  // Subscribe to realtime updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('meeting-summaries-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meeting_summaries'
+        },
+        () => {
+          fetchMeetings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchMeetings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('meeting_summaries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMeetings(data || []);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load meetings',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -259,6 +319,84 @@ export default function MeetingSummary() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Recorded Meetings List */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Recorded Meetings</CardTitle>
+          <CardDescription>View your meeting recordings and summaries</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : meetings.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              No meetings recorded yet
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {meetings.map((meeting) => (
+                <Card key={meeting.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          {meeting.meeting_type === 'online' ? (
+                            <Video className="w-4 h-4 text-primary" />
+                          ) : (
+                            <Mic className="w-4 h-4 text-primary" />
+                          )}
+                          <span className="font-medium capitalize">
+                            {meeting.meeting_type} Meeting
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            {format(new Date(meeting.created_at), 'PPpp')}
+                          </span>
+                        </div>
+
+                        {meeting.summary_html && (
+                          <div className="mt-4 p-4 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="w-4 h-4" />
+                              <span className="font-medium text-sm">Summary</span>
+                            </div>
+                            <div 
+                              className="prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: meeting.summary_html }}
+                            />
+                          </div>
+                        )}
+
+                        {!meeting.summary_html && (
+                          <p className="text-sm text-muted-foreground italic">
+                            Summary processing...
+                          </p>
+                        )}
+                      </div>
+
+                      {meeting.recording_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(meeting.recording_url!, '_blank')}
+                        >
+                          View Recording
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

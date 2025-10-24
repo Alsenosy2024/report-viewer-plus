@@ -9,6 +9,7 @@ import html2canvas from 'html2canvas';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 
 interface MeetingSummary {
   id: string;
@@ -416,7 +417,8 @@ export default function MeetingSummary() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">Meeting Summary</h1>
         <p className="text-muted-foreground">Record and summarize your meetings</p>
@@ -662,5 +664,6 @@ export default function MeetingSummary() {
         </DialogContent>
       </Dialog>
     </div>
+    </DashboardLayout>
   );
 }

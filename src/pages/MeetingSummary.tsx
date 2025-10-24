@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw } from 'lucide-react';
+import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 
@@ -24,6 +24,7 @@ export default function MeetingSummary() {
   const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -117,6 +118,55 @@ export default function MeetingSummary() {
       });
     } finally {
       setResendingId(null);
+    }
+  };
+
+  const handleDeleteMeeting = async (meeting: MeetingSummary) => {
+    if (!confirm('Are you sure you want to delete this meeting recording?')) {
+      return;
+    }
+
+    setDeletingId(meeting.id);
+
+    try {
+      // Delete the recording file from storage if it exists
+      if (meeting.recording_url) {
+        const urlParts = meeting.recording_url.split('/meeting-recordings/');
+        if (urlParts.length === 2) {
+          const filePath = urlParts[1];
+          const { error: storageError } = await supabase.storage
+            .from('meeting-recordings')
+            .remove([filePath]);
+
+          if (storageError) {
+            console.error('Error deleting file from storage:', storageError);
+          }
+        }
+      }
+
+      // Delete the database record
+      const { error: deleteError } = await supabase
+        .from('meeting_summaries')
+        .delete()
+        .eq('id', meeting.id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Meeting record deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete meeting record',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -463,7 +513,7 @@ export default function MeetingSummary() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleResendMeeting(meeting)}
-                          disabled={resendingId === meeting.id}
+                          disabled={resendingId === meeting.id || deletingId === meeting.id}
                         >
                           {resendingId === meeting.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -476,10 +526,23 @@ export default function MeetingSummary() {
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(meeting.recording_url!, '_blank')}
+                            disabled={deletingId === meeting.id}
                           >
                             View Recording
                           </Button>
                         )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteMeeting(meeting)}
+                          disabled={deletingId === meeting.id || resendingId === meeting.id}
+                        >
+                          {deletingId === meeting.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

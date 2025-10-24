@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2 } from 'lucide-react';
+import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
@@ -27,8 +29,10 @@ export default function MeetingSummary() {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSummary | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const summaryContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch meetings on mount
   useEffect(() => {
@@ -273,6 +277,59 @@ export default function MeetingSummary() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    if (!summaryContentRef.current || !selectedMeeting) return;
+    
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(summaryContentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      const fileName = `meeting-summary-${selectedMeeting.meeting_type}-${format(new Date(selectedMeeting.created_at), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: 'Success',
+        description: 'PDF downloaded successfully',
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -555,21 +612,37 @@ export default function MeetingSummary() {
       <Dialog open={!!selectedMeeting} onOpenChange={(open) => !open && setSelectedMeeting(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {selectedMeeting && (
-                <div className="flex items-center gap-2">
-                  {selectedMeeting.meeting_type === 'online' ? (
-                    <Video className="w-5 h-5" />
-                  ) : (
-                    <Mic className="w-5 h-5" />
-                  )}
-                  <span className="capitalize">{selectedMeeting.meeting_type} Meeting Summary</span>
-                </div>
-              )}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                {selectedMeeting && (
+                  <div className="flex items-center gap-2">
+                    {selectedMeeting.meeting_type === 'online' ? (
+                      <Video className="w-5 h-5" />
+                    ) : (
+                      <Mic className="w-5 h-5" />
+                    )}
+                    <span className="capitalize">{selectedMeeting.meeting_type} Meeting Summary</span>
+                  </div>
+                )}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadAsPDF}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Download PDF
+              </Button>
+            </div>
           </DialogHeader>
           {selectedMeeting?.summary_html && (
             <div 
+              ref={summaryContentRef}
               className="w-full"
               dangerouslySetInnerHTML={{ __html: selectedMeeting.summary_html }}
             />

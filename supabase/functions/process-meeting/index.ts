@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     formData.append('user_email', userEmail);
 
     // Send to webhook with video file
-    const webhookResponse = await fetch('https://primary-production-245af.up.railway.app/webhook-test/PEmeeting', {
+    const webhookResponse = await fetch('https://primary-production-245af.up.railway.app/webhook/PEmeeting', {
       method: 'POST',
       body: formData,
     });

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 
 interface MeetingSummary {
@@ -25,6 +26,7 @@ export default function MeetingSummary() {
   const [isLoading, setIsLoading] = useState(true);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingSummary | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -466,7 +468,11 @@ export default function MeetingSummary() {
           ) : (
             <div className="space-y-4">
               {meetings.map((meeting) => (
-                <Card key={meeting.id}>
+                <Card 
+                  key={meeting.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => meeting.summary_html && setSelectedMeeting(meeting)}
+                >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2 flex-1">
@@ -488,27 +494,19 @@ export default function MeetingSummary() {
                           </span>
                         </div>
 
-                        {meeting.summary_html && (
-                          <div className="mt-4 p-4 bg-muted rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FileText className="w-4 h-4" />
-                              <span className="font-medium text-sm">Summary</span>
-                            </div>
-                            <div 
-                              className="prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: meeting.summary_html }}
-                            />
+                        {meeting.summary_html ? (
+                          <div className="flex items-center gap-2 text-sm text-primary">
+                            <FileText className="w-4 h-4" />
+                            <span>Click to view summary</span>
                           </div>
-                        )}
-
-                        {!meeting.summary_html && (
+                        ) : (
                           <p className="text-sm text-muted-foreground italic">
                             Summary processing...
                           </p>
                         )}
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="outline"
                           size="sm"
@@ -552,6 +550,32 @@ export default function MeetingSummary() {
           )}
         </CardContent>
       </Card>
+
+      {/* Summary Dialog */}
+      <Dialog open={!!selectedMeeting} onOpenChange={(open) => !open && setSelectedMeeting(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedMeeting && (
+                <div className="flex items-center gap-2">
+                  {selectedMeeting.meeting_type === 'online' ? (
+                    <Video className="w-5 h-5" />
+                  ) : (
+                    <Mic className="w-5 h-5" />
+                  )}
+                  <span className="capitalize">{selectedMeeting.meeting_type} Meeting Summary</span>
+                </div>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedMeeting?.summary_html && (
+            <div 
+              className="w-full"
+              dangerouslySetInnerHTML={{ __html: selectedMeeting.summary_html }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

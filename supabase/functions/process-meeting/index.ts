@@ -42,12 +42,24 @@ Deno.serve(async (req) => {
 
     console.log('Video downloaded successfully, size:', videoData.size);
 
+    // Get user email
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
+    
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      throw new Error(`Failed to fetch user: ${userError.message}`);
+    }
+
+    const userEmail = userData?.user?.email || '';
+    console.log('User email:', userEmail);
+
     // Prepare FormData with the video file
     const formData = new FormData();
     formData.append('video', videoData, 'recording.webm');
     formData.append('meeting_id', meeting_id);
     formData.append('meeting_type', meeting_type);
     formData.append('user_id', user_id);
+    formData.append('user_email', userEmail);
 
     // Send to webhook with video file
     const webhookResponse = await fetch('https://primary-production-245af.up.railway.app/webhook-test/PEmeeting', {

@@ -185,19 +185,19 @@ export default function MeetingSummary() {
 
       if (summaryError) throw summaryError;
 
-      // Send to webhook
-      await fetch('https://primary-production-245af.up.railway.app/webhook-test/PEmeeting', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Send to webhook via edge function
+      const { error: functionError } = await supabase.functions.invoke('process-meeting', {
+        body: {
           meeting_id: summaryData.id,
           recording_url: urlData.publicUrl,
           meeting_type: meetingType,
           user_id: user.id,
-        }),
+        },
       });
+
+      if (functionError) {
+        console.error('Error calling process-meeting function:', functionError);
+      }
 
       toast({
         title: 'Success',

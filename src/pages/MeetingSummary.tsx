@@ -447,7 +447,7 @@ export default function MeetingSummary() {
                 <Button
                   size="lg"
                   onClick={startRecording}
-                  className="w-full max-w-md h-16 text-lg"
+                  className="w-full max-w-md h-16 text-lg bg-red-600 hover:bg-red-700 text-white"
                 >
                   <Video className="w-6 h-6 mr-2" />
                   Start Recording

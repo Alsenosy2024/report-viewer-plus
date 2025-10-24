@@ -16,18 +16,43 @@ Deno.serve(async (req) => {
 
     console.log('Processing meeting:', { meeting_id, recording_url, meeting_type, user_id });
 
-    // Send to webhook
+    // Extract the storage path from the URL
+    // URL format: https://.../storage/v1/object/public/meeting-recordings/user_id/filename.webm
+    const urlParts = recording_url.split('/meeting-recordings/');
+    if (urlParts.length !== 2) {
+      throw new Error('Invalid recording URL format');
+    }
+    const filePath = urlParts[1];
+    
+    console.log('Downloading video from storage:', filePath);
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data: videoData, error: downloadError } = await supabase.storage
+      .from('meeting-recordings')
+      .download(filePath);
+
+    if (downloadError || !videoData) {
+      console.error('Error downloading video:', downloadError);
+      throw new Error(`Failed to download video: ${downloadError?.message}`);
+    }
+
+    console.log('Video downloaded successfully, size:', videoData.size);
+
+    // Prepare FormData with the video file
+    const formData = new FormData();
+    formData.append('video', videoData, 'recording.webm');
+    formData.append('meeting_id', meeting_id);
+    formData.append('meeting_type', meeting_type);
+    formData.append('user_id', user_id);
+
+    // Send to webhook with video file
     const webhookResponse = await fetch('https://primary-production-245af.up.railway.app/webhook-test/PEmeeting', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        meeting_id,
-        recording_url,
-        meeting_type,
-        user_id,
-      }),
+      body: formData,
     });
 
     console.log('Webhook response status:', webhookResponse.status);
@@ -41,11 +66,6 @@ Deno.serve(async (req) => {
 
     // If webhook returns HTML summary, update the database
     if (webhookData.summary_html) {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
       const { error: updateError } = await supabase
         .from('meeting_summaries')
         .update({ summary_html: webhookData.summary_html })

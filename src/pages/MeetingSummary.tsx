@@ -187,21 +187,35 @@ export default function MeetingSummary() {
   };
 
   const handleSaveName = async (meetingId: string) => {
+    if (!editingName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Meeting name cannot be empty',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('meeting_summaries')
-        .update({ meeting_name: editingName })
+        .update({ meeting_name: editingName.trim() })
         .eq('id', meetingId);
 
       if (error) throw error;
+
+      // Update local state immediately
+      setMeetings(prev => prev.map(m => 
+        m.id === meetingId ? { ...m, meeting_name: editingName.trim() } : m
+      ));
+      
+      setEditingId(null);
+      setEditingName('');
 
       toast({
         title: 'Success',
         description: 'Meeting name updated',
       });
-      
-      setEditingId(null);
-      fetchMeetings();
     } catch (error) {
       console.error('Error updating meeting name:', error);
       toast({

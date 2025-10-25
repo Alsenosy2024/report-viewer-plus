@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2, Download } from 'lucide-react';
+import { Mic, Video, Square, Loader2, Calendar, FileText, RefreshCw, Trash2, Download, Pencil, Check, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Input } from '@/components/ui/input';
 
 interface MeetingSummary {
   id: string;
@@ -18,6 +19,7 @@ interface MeetingSummary {
   summary_html: string | null;
   created_at: string;
   updated_at: string;
+  meeting_name: string | null;
 }
 
 export default function MeetingSummary() {
@@ -31,6 +33,8 @@ export default function MeetingSummary() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSummary | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const summaryContentRef = useRef<HTMLDivElement>(null);
@@ -175,6 +179,42 @@ export default function MeetingSummary() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleEditName = (meeting: MeetingSummary) => {
+    setEditingId(meeting.id);
+    setEditingName(meeting.meeting_name || `${meeting.meeting_type} Meeting - ${format(new Date(meeting.created_at), 'MMM dd, yyyy')}`);
+  };
+
+  const handleSaveName = async (meetingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('meeting_summaries')
+        .update({ meeting_name: editingName })
+        .eq('id', meetingId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Meeting name updated',
+      });
+      
+      setEditingId(null);
+      fetchMeetings();
+    } catch (error) {
+      console.error('Error updating meeting name:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update meeting name',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
   };
 
   const startRecording = async () => {
@@ -553,9 +593,51 @@ export default function MeetingSummary() {
                           ) : (
                             <Mic className="w-4 h-4 text-primary" />
                           )}
-                          <span className="font-medium capitalize">
-                            {meeting.meeting_type} Meeting
-                          </span>
+                          {editingId === meeting.id ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                className="h-8"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveName(meeting.id);
+                                  if (e.key === 'Escape') handleCancelEdit();
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSaveName(meeting.id)}
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEdit}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="font-medium">
+                                {meeting.meeting_name || `${meeting.meeting_type} Meeting - ${format(new Date(meeting.created_at), 'MMM dd, yyyy')}`}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditName(meeting);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                         
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">

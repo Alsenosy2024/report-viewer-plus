@@ -236,6 +236,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          meeting_name: string | null
           meeting_type: string
           recording_url: string | null
           summary_html: string | null
@@ -245,6 +246,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          meeting_name?: string | null
           meeting_type: string
           recording_url?: string | null
           summary_html?: string | null
@@ -254,6 +256,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          meeting_name?: string | null
           meeting_type?: string
           recording_url?: string | null
           summary_html?: string | null

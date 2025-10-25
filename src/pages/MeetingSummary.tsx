@@ -608,7 +608,7 @@ export default function MeetingSummary() {
                             <Mic className="w-4 h-4 text-primary" />
                           )}
                           {editingId === meeting.id ? (
-                            <div className="flex items-center gap-2 flex-1">
+                            <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                               <Input
                                 value={editingName}
                                 onChange={(e) => setEditingName(e.target.value)}

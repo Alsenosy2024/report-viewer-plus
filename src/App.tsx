@@ -23,6 +23,7 @@ import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
+import { SimpleNavigationTest } from "@/components/SimpleNavigationTest";
 import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
 
@@ -39,6 +40,7 @@ const App = () => {
             <BrowserRouter>
               <SidebarProvider className="flex-col">
                 <ConvAINavigator />
+                <SimpleNavigationTest />
                 <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />

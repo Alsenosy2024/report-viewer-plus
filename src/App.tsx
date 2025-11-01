@@ -23,19 +23,32 @@ import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
+import { AgentNavigationListener } from "@/components/AgentNavigationListener";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <SidebarProvider className="flex-col">
-            <ConvAINavigator />
-            <SiteHeader />
+const App = () => {
+  // LiveKit Agent Navigation - Enable voice agent to navigate website
+  // Set enabled=true and provide LiveKit credentials to activate
+  const enableAgentNavigation = import.meta.env.VITE_ENABLE_AGENT_NAVIGATION === 'true';
+  const livekitUrl = import.meta.env.VITE_LIVEKIT_URL;
+  const livekitToken = import.meta.env.VITE_LIVEKIT_TOKEN;
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <SidebarProvider className="flex-col">
+              <ConvAINavigator />
+              <AgentNavigationListener
+                enabled={enableAgentNavigation}
+                livekitUrl={livekitUrl}
+                livekitToken={livekitToken}
+              />
+              <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -108,6 +121,7 @@ const App = () => (
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

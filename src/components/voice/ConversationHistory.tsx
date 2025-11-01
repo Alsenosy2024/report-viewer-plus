@@ -19,7 +19,7 @@ export const ConversationHistory: React.FC = () => {
   if (transcript.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-center text-[10px] text-muted-foreground px-2">
+        <p className="text-center text-[8px] text-muted-foreground px-1">
           {language === 'ar'
             ? 'ابدأ المحادثة...'
             : 'Start speaking...'}
@@ -29,28 +29,28 @@ export const ConversationHistory: React.FC = () => {
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       {transcript.map((message, index) => (
         <div
           key={index}
           className={cn(
-            'flex gap-1.5 items-start',
+            'flex gap-1 items-start',
             message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
           )}
         >
           {/* Avatar */}
           <div
             className={cn(
-              'flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center',
+              'flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center',
               message.role === 'user'
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-secondary text-secondary-foreground'
             )}
           >
             {message.role === 'user' ? (
-              <User className="w-2.5 h-2.5" />
+              <User className="w-2 h-2" />
             ) : (
-              <Bot className="w-2.5 h-2.5" />
+              <Bot className="w-2 h-2" />
             )}
           </div>
 
@@ -63,15 +63,15 @@ export const ConversationHistory: React.FC = () => {
           >
             <div
               className={cn(
-                'inline-block px-2 py-1 rounded-lg text-[10px]',
+                'inline-block px-1.5 py-0.5 rounded-lg text-[9px]',
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-foreground'
               )}
             >
-              <p className="whitespace-pre-wrap leading-snug">{message.content}</p>
+              <p className="whitespace-pre-wrap leading-tight">{message.content}</p>
             </div>
-            <p className="text-[8px] text-muted-foreground mt-0.5 px-1">
+            <p className="text-[7px] text-muted-foreground mt-0.5 px-0.5">
               {format(new Date(message.timestamp), 'HH:mm:ss')}
             </p>
           </div>

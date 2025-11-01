@@ -197,14 +197,14 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   return (
     <Card 
       className={`fixed bottom-20 right-6 shadow-2xl border-2 z-50 flex flex-col transition-all duration-300 ${
-        isMinimized ? 'w-64 h-12' : 'w-80 h-[450px]'
+        isMinimized ? 'w-56 h-10' : 'w-72 h-[320px]'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b bg-primary/5">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-          <h3 className="text-xs font-semibold">
+      <div className="flex items-center justify-between p-1 border-b bg-primary/5">
+        <div className="flex items-center gap-1">
+          <div className={`w-1 h-1 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+          <h3 className="text-[9px] font-semibold">
             {language === 'ar' ? 'مساعد صوتي' : 'Voice Assistant'}
           </h3>
         </div>
@@ -212,27 +212,27 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-5 w-5"
             onClick={toggleLanguage}
             title={language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
           >
-            <Globe className="w-3 h-3" />
+            <Globe className="w-2.5 h-2.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-5 w-5"
             onClick={() => setIsMinimized(!isMinimized)}
           >
-            {isMinimized ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
+            {isMinimized ? <Maximize2 className="w-2.5 h-2.5" /> : <Minimize2 className="w-2.5 h-2.5" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-5 w-5"
             onClick={handleDisconnect}
           >
-            <X className="w-3 h-3" />
+            <X className="w-2.5 h-2.5" />
           </Button>
         </div>
       </div>
@@ -242,9 +242,9 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
         {tokenLoading || !token || !livekitUrl ? (
           !isMinimized && (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
-                <p className="text-[10px] text-muted-foreground">
+              <div className="text-center space-y-1">
+                <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary" />
+                <p className="text-[8px] text-muted-foreground">
                   {language === 'ar' ? 'جاري الاتصال...' : 'Connecting...'}
                 </p>
               </div>
@@ -288,19 +288,19 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             {!isMinimized && (
               <>
                 {/* Conversation Transcript */}
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-1.5">
                   <ConversationHistory />
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-2 border-t bg-background/50 backdrop-blur">
+                <div className="p-1.5 border-t bg-background/50 backdrop-blur">
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={handleDisconnect}
-                    className="w-full gap-1.5 h-8 text-xs"
+                    className="w-full gap-1 h-6 text-[9px]"
                   >
-                    <Phone className="w-3 h-3" />
+                    <Phone className="w-2.5 h-2.5" />
                     {language === 'ar' ? 'إنهاء' : 'End Call'}
                   </Button>
                 </div>

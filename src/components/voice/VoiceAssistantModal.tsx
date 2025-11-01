@@ -9,6 +9,7 @@ import {
 } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
+import { AgentNavigationListener } from '@/components/AgentNavigationListener';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
@@ -212,8 +213,9 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           }}
         >
           <MicrophoneEnabler />
+          <AgentNavigationListener />
           <RoomAudioRenderer />
-          
+
           {/* Minimal Controls with Status Indicator */}
           <div className="relative">
             {/* Connection Status Indicator */}

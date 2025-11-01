@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useRoomContext } from '@livekit/components-react';
+import { RoomEvent } from 'livekit-client';
 
 interface NavigationCommand {
   type: 'agent-navigation';
@@ -8,99 +10,54 @@ interface NavigationCommand {
   params?: Record<string, any>;
 }
 
-interface AgentNavigationListenerProps {
-  livekitUrl?: string;
-  livekitToken?: string;
-  enabled?: boolean;
-}
-
 /**
  * Component that listens for navigation commands from the LiveKit voice agent
  * and executes them on the frontend.
  *
- * To use this component:
- * 1. Install LiveKit SDK: npm install livekit-client @livekit/components-react
- * 2. Add this component to your App.tsx
- * 3. Provide LiveKit connection details (URL and token)
- * 4. The voice agent can now navigate the website using function tools
+ * This component hooks into the existing LiveKit room connection created by
+ * the VoiceAssistantModal. No additional configuration needed - it will
+ * automatically start listening when the user connects to the voice assistant.
  */
-export const AgentNavigationListener = ({
-  livekitUrl,
-  livekitToken,
-  enabled = false
-}: AgentNavigationListenerProps) => {
+export const AgentNavigationListener = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const roomRef = useRef<any>(null);
+  const room = useRoomContext();
 
   useEffect(() => {
-    if (!enabled || !livekitUrl || !livekitToken) {
-      console.log('[Agent Navigation] Not enabled or missing credentials');
+    if (!room) {
       return;
     }
 
-    // Dynamic import to avoid errors if LiveKit SDK is not installed
-    const connectToRoom = async () => {
+    console.log('[Agent Navigation] Listening for navigation commands from agent');
+
+    // Handle data messages from the agent
+    const handleDataReceived = (
+      payload: Uint8Array,
+      participant: any,
+      kind: any
+    ) => {
       try {
-        // @ts-ignore - Dynamic import
-        const { Room, RoomEvent } = await import('livekit-client');
+        const decoder = new TextDecoder();
+        const message = JSON.parse(decoder.decode(payload)) as NavigationCommand;
 
-        const room = new Room({
-          adaptiveStream: true,
-          dynacast: true,
-        });
-
-        roomRef.current = room;
-
-        // Handle data messages from the agent
-        room.on(RoomEvent.DataReceived, (
-          payload: Uint8Array,
-          participant: any,
-          kind: any
-        ) => {
-          try {
-            const decoder = new TextDecoder();
-            const message = JSON.parse(decoder.decode(payload)) as NavigationCommand;
-
-            if (message.type === 'agent-navigation') {
-              console.log('[Agent Navigation] Received command:', message.command);
-              executeNavigationCommand(message.command, message.params);
-            }
-          } catch (error) {
-            console.error('[Agent Navigation] Error parsing data message:', error);
-          }
-        });
-
-        // Connect to the room
-        await room.connect(livekitUrl, livekitToken);
-        console.log('[Agent Navigation] Connected to LiveKit room');
-
-        toast({
-          title: "Voice Agent Connected",
-          description: "The voice agent can now navigate the website",
-        });
-
+        if (message.type === 'agent-navigation') {
+          console.log('[Agent Navigation] Received command:', message.command);
+          executeNavigationCommand(message.command, message.params);
+        }
       } catch (error) {
-        console.error('[Agent Navigation] Error connecting to LiveKit:', error);
-        toast({
-          title: "Connection Error",
-          description: "Could not connect to voice agent. Please check your credentials.",
-          variant: "destructive"
-        });
+        console.error('[Agent Navigation] Error parsing data message:', error);
       }
     };
 
-    connectToRoom();
+    // Subscribe to data messages
+    room.on(RoomEvent.DataReceived, handleDataReceived);
 
     // Cleanup
     return () => {
-      if (roomRef.current) {
-        roomRef.current.disconnect();
-        console.log('[Agent Navigation] Disconnected from LiveKit room');
-      }
+      room.off(RoomEvent.DataReceived, handleDataReceived);
     };
-  }, [livekitUrl, livekitToken, enabled]);
+  }, [room]);
 
   const executeNavigationCommand = (command: string, params?: Record<string, any>) => {
     const pageNames: Record<string, string> = {

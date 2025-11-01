@@ -7,12 +7,26 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Loader2, Phone, Globe } from 'lucide-react';
-import { LiveKitRoom } from '@livekit/components-react';
+import { LiveKitRoom, useLocalParticipant } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { VoiceAssistantAvatar } from './VoiceAssistantAvatar';
 import { ConversationHistory } from './ConversationHistory';
 import '@livekit/components-styles';
+
+// Component to enable microphone automatically
+const MicrophoneEnabler: React.FC = () => {
+  const { localParticipant } = useLocalParticipant();
+
+  useEffect(() => {
+    if (localParticipant) {
+      // Enable microphone automatically when participant connects
+      localParticipant.setMicrophoneEnabled(true).catch(console.error);
+    }
+  }, [localParticipant]);
+
+  return null;
+};
 
 interface VoiceAssistantModalProps {
   open: boolean;
@@ -103,10 +117,28 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
               token={token}
               connect={true}
               audio={true}
+              video={false}
+              options={{
+                publishDefaults: {
+                  audioPreset: {
+                    maxBitrate: 32000,
+                  },
+                  dtx: true,
+                  red: true,
+                },
+                audioCaptureDefaults: {
+                  autoGainControl: true,
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                },
+              }}
               onConnected={() => setIsConnected(true)}
               onDisconnected={() => setIsConnected(false)}
               className="flex-1 flex flex-col"
             >
+              {/* Auto-enable microphone */}
+              <MicrophoneEnabler />
+
               {/* Avatar Video */}
               <div className="flex-shrink-0">
                 <VoiceAssistantAvatar />

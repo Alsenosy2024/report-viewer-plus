@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Loader2, Phone, Globe } from 'lucide-react';
-import { LiveKitRoom, useLocalParticipant } from '@livekit/components-react';
+import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { VoiceAssistantAvatar } from './VoiceAssistantAvatar';
@@ -168,6 +168,8 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             >
               {/* Auto-enable microphone */}
               <MicrophoneEnabler />
+              {/* Play remote audio */}
+              <RoomAudioRenderer />
 
               {/* Avatar Video */}
               <div className="flex-shrink-0">

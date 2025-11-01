@@ -22,7 +22,6 @@ import ContentIdeas from "./pages/ContentIdeas";
 import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ConvAINavigator } from "@/components/ConvAINavigator";
 import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
 
@@ -37,7 +36,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
           <SidebarProvider className="flex-col">
-            <ConvAINavigator />
             <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />
@@ -110,7 +108,6 @@ const App = () => (
           {/* LiveKit Voice Assistant Widget */}
           <VoiceAssistantWidget />
         </BrowserRouter>
-        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
       </TooltipProvider>
       </VoiceAssistantProvider>
     </AuthProvider>

@@ -14,6 +14,7 @@ const MicrophoneEnabler: React.FC = () => {
   const { localParticipant } = useLocalParticipant();
   const remoteParticipants = useRemoteParticipants();
   const room = useRoomContext();
+  const { setIsSpeaking } = useVoiceAssistantContext();
 
   useEffect(() => {
     const enableMicrophone = async () => {
@@ -66,7 +67,7 @@ const MicrophoneEnabler: React.FC = () => {
     });
   }, [remoteParticipants]);
 
-  // Listen for track subscribed events
+  // Listen for track subscribed events and attach audio elements
   useEffect(() => {
     if (!room) return;
 
@@ -76,6 +77,34 @@ const MicrophoneEnabler: React.FC = () => {
         participant: participant.identity,
         trackSid: publication.trackSid,
       });
+
+      // If it's an audio track, attach it to an audio element
+      if (track.kind === 'audio') {
+        const audioElement = track.attach();
+        audioElement.autoplay = true;
+        audioElement.playsInline = true;
+        
+        // Attempt to play with user interaction recovery
+        const playPromise = audioElement.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('[VoiceAssistant] Audio playback started successfully');
+            })
+            .catch((error) => {
+              console.error('[VoiceAssistant] Audio playback failed:', error);
+              // Try to play again after a small delay
+              setTimeout(() => {
+                audioElement.play().catch((e) => 
+                  console.error('[VoiceAssistant] Retry play failed:', e)
+                );
+              }, 100);
+            });
+        }
+        
+        document.body.appendChild(audioElement);
+        console.log('[VoiceAssistant] Audio element attached and playing');
+      }
     };
 
     const handleTrackUnsubscribed = (track: any, publication: any, participant: any) => {
@@ -83,16 +112,32 @@ const MicrophoneEnabler: React.FC = () => {
         kind: track.kind,
         participant: participant.identity,
       });
+      
+      if (track.kind === 'audio') {
+        track.detach().forEach((element: HTMLMediaElement) => {
+          element.remove();
+        });
+      }
+    };
+
+    // Monitor speaking state
+    const handleParticipantMetadataChanged = (participant: any) => {
+      if (participant.isSpeaking !== undefined) {
+        console.log('[VoiceAssistant] Participant speaking state:', participant.isSpeaking);
+        setIsSpeaking(participant.isSpeaking);
+      }
     };
 
     room.on('trackSubscribed', handleTrackSubscribed);
     room.on('trackUnsubscribed', handleTrackUnsubscribed);
+    room.on('participantMetadataChanged', handleParticipantMetadataChanged);
 
     return () => {
       room.off('trackSubscribed', handleTrackSubscribed);
       room.off('trackUnsubscribed', handleTrackUnsubscribed);
+      room.off('participantMetadataChanged', handleParticipantMetadataChanged);
     };
-  }, [room]);
+  }, [room, setIsSpeaking]);
 
   return null;
 };

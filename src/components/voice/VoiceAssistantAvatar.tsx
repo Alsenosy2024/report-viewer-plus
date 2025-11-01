@@ -22,7 +22,8 @@ export const VoiceAssistantAvatar: React.FC = () => {
 
     if (agentParticipant) {
       // Subscribe to video track
-      const videoTrack = agentParticipant.getTrack(Track.Source.Camera)?.videoTrack;
+      const videoPublication = agentParticipant.getTrackPublication(Track.Source.Camera);
+      const videoTrack = videoPublication?.videoTrack;
 
       if (videoTrack && videoRef.current) {
         videoTrack.attach(videoRef.current);
@@ -30,7 +31,8 @@ export const VoiceAssistantAvatar: React.FC = () => {
       }
 
       // Monitor audio for speaking detection
-      const audioTrack = agentParticipant.getTrack(Track.Source.Microphone)?.audioTrack;
+      const audioPublication = agentParticipant.getTrackPublication(Track.Source.Microphone);
+      const audioTrack = audioPublication?.audioTrack;
       if (audioTrack) {
         // Track volume will be handled by useTrackVolume hook
       }
@@ -45,9 +47,8 @@ export const VoiceAssistantAvatar: React.FC = () => {
 
   // Monitor speaking state from first remote participant
   const firstParticipant = participants[0];
-  const volume = useTrackVolume(
-    firstParticipant?.getTrack(Track.Source.Microphone)?.track
-  );
+  const audioPublication = firstParticipant?.getTrackPublication(Track.Source.Microphone);
+  const volume = useTrackVolume(audioPublication?.audioTrack);
 
   useEffect(() => {
     // Detect speaking based on volume threshold

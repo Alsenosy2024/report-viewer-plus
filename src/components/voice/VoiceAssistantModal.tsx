@@ -238,9 +238,9 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
       </div>
 
       {/* Content */}
-      {!isMinimized && (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {tokenLoading || !token || !livekitUrl ? (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {tokenLoading || !token || !livekitUrl ? (
+          !isMinimized && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center space-y-2">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
@@ -249,62 +249,66 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                 </p>
               </div>
             </div>
-          ) : (
-            <LiveKitRoom
-              serverUrl={livekitUrl}
-              token={token}
-              connect={true}
-              audio={true}
-              video={false}
-              options={{
-                publishDefaults: {
-                  audioPreset: { maxBitrate: 32000 },
-                  dtx: true,
-                  red: true,
-                },
-                audioCaptureDefaults: {
-                  autoGainControl: true,
-                  echoCancellation: true,
-                  noiseSuppression: true,
-                },
-              }}
-              onConnected={() => {
-                console.log('[VoiceAssistant] Connected to LiveKit room');
-                setIsConnected(true);
-              }}
-              onDisconnected={() => {
-                console.log('[VoiceAssistant] Disconnected from LiveKit room');
-                setIsConnected(false);
-              }}
-              onError={(error) => {
-                console.error('[VoiceAssistant] LiveKit error:', error);
-              }}
-              className="flex-1 flex flex-col overflow-hidden"
-            >
-              <MicrophoneEnabler />
-              <RoomAudioRenderer />
+          )
+        ) : (
+          <LiveKitRoom
+            serverUrl={livekitUrl}
+            token={token}
+            connect={true}
+            audio={true}
+            video={false}
+            options={{
+              publishDefaults: {
+                audioPreset: { maxBitrate: 32000 },
+                dtx: true,
+                red: true,
+              },
+              audioCaptureDefaults: {
+                autoGainControl: true,
+                echoCancellation: true,
+                noiseSuppression: true,
+              },
+            }}
+            onConnected={() => {
+              console.log('[VoiceAssistant] Connected to LiveKit room');
+              setIsConnected(true);
+            }}
+            onDisconnected={() => {
+              console.log('[VoiceAssistant] Disconnected from LiveKit room');
+              setIsConnected(false);
+            }}
+            onError={(error) => {
+              console.error('[VoiceAssistant] LiveKit error:', error);
+            }}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <MicrophoneEnabler />
+            <RoomAudioRenderer />
 
-              {/* Conversation Transcript */}
-              <div className="flex-1 overflow-y-auto p-2">
-                <ConversationHistory />
-              </div>
+            {!isMinimized && (
+              <>
+                {/* Conversation Transcript */}
+                <div className="flex-1 overflow-y-auto p-2">
+                  <ConversationHistory />
+                </div>
 
-              {/* Footer Controls */}
-              <div className="p-2 border-t bg-background/50 backdrop-blur">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDisconnect}
-                  className="w-full gap-1.5 h-8 text-xs"
-                >
-                  <Phone className="w-3 h-3" />
-                  {language === 'ar' ? 'إنهاء' : 'End Call'}
-                </Button>
-              </div>
-            </LiveKitRoom>
-          )}
-        </div>
-      )}
+                {/* Footer Controls */}
+                <div className="p-2 border-t bg-background/50 backdrop-blur">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDisconnect}
+                    className="w-full gap-1.5 h-8 text-xs"
+                  >
+                    <Phone className="w-3 h-3" />
+                    {language === 'ar' ? 'إنهاء' : 'End Call'}
+                  </Button>
+                </div>
+              </>
+            )}
+          </LiveKitRoom>
+        )}
+      </div>
     </Card>
   );
 };

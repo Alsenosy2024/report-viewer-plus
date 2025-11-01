@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2, Phone, Globe } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Loader2, Phone, Globe, X, Minimize2, Maximize2 } from 'lucide-react';
 import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
@@ -71,6 +66,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string>('voice-assistant');
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     if (open && !token) {
@@ -98,37 +94,60 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     onOpenChange(false);
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden"
-      >
-        <SheetHeader className="p-6 pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-xl">
-              {language === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Voice Assistant'}
-            </SheetTitle>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleLanguage}
-              title={language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-            >
-              <Globe className="w-4 h-4" />
-            </Button>
-          </div>
-        </SheetHeader>
+  if (!open) return null;
 
+  return (
+    <Card 
+      className={`fixed bottom-20 right-6 shadow-2xl border-2 z-50 flex flex-col transition-all duration-300 ${
+        isMinimized ? 'w-80 h-14' : 'w-96 h-[600px]'
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 border-b bg-primary/5">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+          <h3 className="text-sm font-semibold">
+            {language === 'ar' ? 'مساعد صوتي' : 'Voice Assistant'}
+          </h3>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={toggleLanguage}
+            title={language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+          >
+            <Globe className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setIsMinimized(!isMinimized)}
+          >
+            {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleDisconnect}
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      {!isMinimized && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {tokenLoading || !token || !livekitUrl ? (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-                <p className="text-muted-foreground">
-                  {language === 'ar'
-                    ? 'جاري الاتصال بالمساعد...'
-                    : 'Connecting to assistant...'}
+              <div className="text-center space-y-3">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'جاري الاتصال...' : 'Connecting...'}
                 </p>
               </div>
             </div>
@@ -141,9 +160,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
               video={false}
               options={{
                 publishDefaults: {
-                  audioPreset: {
-                    maxBitrate: 32000,
-                  },
+                  audioPreset: { maxBitrate: 32000 },
                   dtx: true,
                   red: true,
                 },
@@ -164,41 +181,32 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
               onError={(error) => {
                 console.error('[VoiceAssistant] LiveKit error:', error);
               }}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col overflow-hidden"
             >
-              {/* Auto-enable microphone */}
               <MicrophoneEnabler />
-              {/* Play remote audio */}
               <RoomAudioRenderer />
 
-              {/* Avatar Video */}
-              <div className="flex-shrink-0">
-                <VoiceAssistantAvatar />
-              </div>
-
-              {/* Conversation History */}
-              <div className="flex-1 overflow-y-auto">
+              {/* Conversation Transcript */}
+              <div className="flex-1 overflow-y-auto p-3">
                 <ConversationHistory />
               </div>
 
-              {/* Controls */}
-              <div className="p-4 border-t bg-background">
-                <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="destructive"
-                    size="lg"
-                    onClick={handleDisconnect}
-                    className="gap-2"
-                  >
-                    <Phone className="w-4 h-4" />
-                    {language === 'ar' ? 'إنهاء المكالمة' : 'End Call'}
-                  </Button>
-                </div>
+              {/* Footer Controls */}
+              <div className="p-3 border-t bg-background/50 backdrop-blur">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDisconnect}
+                  className="w-full gap-2"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {language === 'ar' ? 'إنهاء' : 'End Call'}
+                </Button>
               </div>
             </LiveKitRoom>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      )}
+    </Card>
   );
 };

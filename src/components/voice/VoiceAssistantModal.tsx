@@ -19,10 +19,31 @@ const MicrophoneEnabler: React.FC = () => {
   const { localParticipant } = useLocalParticipant();
 
   useEffect(() => {
-    if (localParticipant) {
-      // Enable microphone automatically when participant connects
-      localParticipant.setMicrophoneEnabled(true).catch(console.error);
-    }
+    const enableMicrophone = async () => {
+      if (localParticipant) {
+        try {
+          console.log('[VoiceAssistant] Enabling microphone...');
+          await localParticipant.setMicrophoneEnabled(true);
+          console.log('[VoiceAssistant] Microphone enabled successfully');
+
+          // Log track status
+          const tracks = localParticipant.audioTrackPublications;
+          console.log('[VoiceAssistant] Audio tracks:', tracks.size);
+          tracks.forEach((publication, key) => {
+            console.log(`[VoiceAssistant] Track ${key}:`, {
+              kind: publication.kind,
+              source: publication.source,
+              isMuted: publication.isMuted,
+              isSubscribed: publication.isSubscribed,
+            });
+          });
+        } catch (error) {
+          console.error('[VoiceAssistant] Failed to enable microphone:', error);
+        }
+      }
+    };
+
+    enableMicrophone();
   }, [localParticipant]);
 
   return null;
@@ -132,8 +153,17 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                   noiseSuppression: true,
                 },
               }}
-              onConnected={() => setIsConnected(true)}
-              onDisconnected={() => setIsConnected(false)}
+              onConnected={() => {
+                console.log('[VoiceAssistant] Connected to LiveKit room');
+                setIsConnected(true);
+              }}
+              onDisconnected={() => {
+                console.log('[VoiceAssistant] Disconnected from LiveKit room');
+                setIsConnected(false);
+              }}
+              onError={(error) => {
+                console.error('[VoiceAssistant] LiveKit error:', error);
+              }}
               className="flex-1 flex flex-col"
             >
               {/* Auto-enable microphone */}

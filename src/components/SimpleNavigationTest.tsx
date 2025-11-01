@@ -2,6 +2,12 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
+// Initialize immediately on module load
+if (typeof window !== 'undefined') {
+  (window as any).navTest = (window as any).navTest || {};
+  console.log('[SimpleNavTest] Module loaded - navTest object initialized');
+}
+
 /**
  * Simplified navigation tester - registers navigation functions on window
  * This is a debug component to test if navigation tools can be registered
@@ -13,7 +19,12 @@ export const SimpleNavigationTest = () => {
   useEffect(() => {
     console.log('[SimpleNavTest] Component mounted, registering navigation tools...');
 
-    // Create window.navTest object
+    // Ensure window.navTest exists
+    if (!(window as any).navTest) {
+      (window as any).navTest = {};
+    }
+
+    // Register navigation tools
     (window as any).navTest = {
       open_dashboard: () => {
         console.log('[SimpleNavTest] open_dashboard called!');

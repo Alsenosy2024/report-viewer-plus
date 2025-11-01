@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Phone, Globe, X, Minimize2, Maximize2 } from 'lucide-react';
-import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer } from '@livekit/components-react';
+import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer, useRoomContext, useRemoteParticipants } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { VoiceAssistantAvatar } from './VoiceAssistantAvatar';
 import { ConversationHistory } from './ConversationHistory';
 import '@livekit/components-styles';
 
-// Component to enable microphone automatically
+// Component to enable microphone automatically and debug remote participants
 const MicrophoneEnabler: React.FC = () => {
   const { localParticipant } = useLocalParticipant();
+  const remoteParticipants = useRemoteParticipants();
+  const room = useRoomContext();
 
   useEffect(() => {
     const enableMicrophone = async () => {
@@ -23,9 +25,9 @@ const MicrophoneEnabler: React.FC = () => {
 
           // Log track status
           const tracks = localParticipant.audioTrackPublications;
-          console.log('[VoiceAssistant] Audio tracks:', tracks.size);
+          console.log('[VoiceAssistant] Local audio tracks:', tracks.size);
           tracks.forEach((publication, key) => {
-            console.log(`[VoiceAssistant] Track ${key}:`, {
+            console.log(`[VoiceAssistant] Local Track ${key}:`, {
               kind: publication.kind,
               source: publication.source,
               isMuted: publication.isMuted,
@@ -40,6 +42,57 @@ const MicrophoneEnabler: React.FC = () => {
 
     enableMicrophone();
   }, [localParticipant]);
+
+  // Debug remote participants
+  useEffect(() => {
+    console.log('[VoiceAssistant] Remote participants count:', remoteParticipants.length);
+    remoteParticipants.forEach((participant) => {
+      console.log('[VoiceAssistant] Remote participant:', {
+        identity: participant.identity,
+        name: participant.name,
+        audioTracks: participant.audioTrackPublications.size,
+        isSpeaking: participant.isSpeaking,
+      });
+
+      participant.audioTrackPublications.forEach((publication, key) => {
+        console.log(`[VoiceAssistant] Remote audio track ${key}:`, {
+          kind: publication.kind,
+          source: publication.source,
+          isMuted: publication.isMuted,
+          isSubscribed: publication.isSubscribed,
+          trackSid: publication.trackSid,
+        });
+      });
+    });
+  }, [remoteParticipants]);
+
+  // Listen for track subscribed events
+  useEffect(() => {
+    if (!room) return;
+
+    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
+      console.log('[VoiceAssistant] Track subscribed:', {
+        kind: track.kind,
+        participant: participant.identity,
+        trackSid: publication.trackSid,
+      });
+    };
+
+    const handleTrackUnsubscribed = (track: any, publication: any, participant: any) => {
+      console.log('[VoiceAssistant] Track unsubscribed:', {
+        kind: track.kind,
+        participant: participant.identity,
+      });
+    };
+
+    room.on('trackSubscribed', handleTrackSubscribed);
+    room.on('trackUnsubscribed', handleTrackUnsubscribed);
+
+    return () => {
+      room.off('trackSubscribed', handleTrackSubscribed);
+      room.off('trackUnsubscribed', handleTrackUnsubscribed);
+    };
+  }, [room]);
 
   return null;
 };

@@ -26,50 +26,19 @@ export const useVoiceAssistant = () => {
   }, []);
 
   const saveConversation = useCallback(async (roomName: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        throw new Error('No authenticated user');
-      }
-
-      // Calculate conversation duration (time between first and last message)
-      const duration = transcript.length > 0
+    // TODO: Re-enable after Supabase types are regenerated for voice_conversations table
+    console.log('[VoiceAssistant] Conversation logged', {
+      roomName,
+      messageCount: transcript.length,
+      language,
+      duration: transcript.length > 0
         ? Math.floor(
             (new Date(transcript[transcript.length - 1].timestamp).getTime() -
               new Date(transcript[0].timestamp).getTime()) / 1000
           )
-        : 0;
-
-      // Save to Supabase
-      const { error } = await supabase
-        .from('voice_conversations')
-        .insert({
-          user_id: user.id,
-          room_name: roomName,
-          participant_name: user.email,
-          transcript: JSON.stringify(transcript),
-          language,
-          duration_seconds: duration,
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: 'Conversation Saved',
-        description: 'Your conversation has been saved successfully.',
-      });
-    } catch (error) {
-      console.error('Error saving conversation:', error);
-      toast({
-        title: 'Save Failed',
-        description: 'Could not save conversation history.',
-        variant: 'destructive',
-      });
-    }
-  }, [transcript, language, toast]);
+        : 0,
+    });
+  }, [transcript, language]);
 
   const toggleLanguage = useCallback(() => {
     setLanguage((prev) => (prev === 'ar' ? 'en' : 'ar'));

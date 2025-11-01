@@ -24,6 +24,8 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
 import { AgentNavigationListener } from "@/components/AgentNavigationListener";
+import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
+import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
 
 const queryClient = new QueryClient();
 
@@ -37,18 +39,19 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <SidebarProvider className="flex-col">
-              <ConvAINavigator />
-              <AgentNavigationListener
-                enabled={enableAgentNavigation}
-                livekitUrl={livekitUrl}
-                livekitToken={livekitToken}
-              />
-              <SiteHeader />
+        <VoiceAssistantProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <SidebarProvider className="flex-col">
+                <ConvAINavigator />
+                <AgentNavigationListener
+                  enabled={enableAgentNavigation}
+                  livekitUrl={livekitUrl}
+                  livekitToken={livekitToken}
+                />
+                <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -115,10 +118,13 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </SidebarProvider>
-        </BrowserRouter>
-        <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
-      </TooltipProvider>
+            </SidebarProvider>
+
+            {/* LiveKit Voice Assistant Widget */}
+            <VoiceAssistantWidget />
+          </BrowserRouter>
+        </TooltipProvider>
+      </VoiceAssistantProvider>
     </AuthProvider>
   </QueryClientProvider>
   );

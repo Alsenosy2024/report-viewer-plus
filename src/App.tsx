@@ -23,16 +23,19 @@ import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ConvAINavigator } from "@/components/ConvAINavigator";
+import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
+import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <VoiceAssistantProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <SidebarProvider className="flex-col">
             <ConvAINavigator />
             <SiteHeader />
@@ -103,9 +106,13 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SidebarProvider>
+
+          {/* LiveKit Voice Assistant Widget */}
+          <VoiceAssistantWidget />
         </BrowserRouter>
         <div dangerouslySetInnerHTML={{ __html: '<elevenlabs-convai agent-id="agent_2401k5v85f8beantem3febzmgj81"></elevenlabs-convai>' }} />
       </TooltipProvider>
+      </VoiceAssistantProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

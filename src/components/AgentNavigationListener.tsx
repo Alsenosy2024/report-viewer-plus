@@ -65,12 +65,23 @@ export const AgentNavigationListener = () => {
       // Parse the URL
       const url = new URL(urlString);
 
-      // Security: Only allow navigation to same origin
-      if (url.origin !== window.location.origin) {
-        console.warn(`[Agent Navigation] Blocked navigation to different origin: ${url.origin}`);
+      // Extract base domains for comparison (e.g., "lovable.app" from "preview--report-viewer-plus.lovable.app")
+      const incomingDomain = url.hostname.split('.').slice(-2).join('.');
+      const currentDomain = window.location.hostname.split('.').slice(-2).join('.');
+
+      console.log('[Agent Navigation] URL validation:', {
+        incomingUrl: url.origin,
+        currentOrigin: window.location.origin,
+        incomingDomain,
+        currentDomain
+      });
+
+      // Security: Only allow navigation to same base domain
+      if (incomingDomain !== currentDomain) {
+        console.warn(`[Agent Navigation] Blocked navigation to different domain: ${url.origin}`);
         toast({
           title: "Navigation Blocked",
-          description: "Can only navigate within the same application",
+          description: "Can only navigate within the same application domain",
           variant: "destructive"
         });
         return;

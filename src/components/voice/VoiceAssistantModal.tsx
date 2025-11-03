@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, PhoneOff, Mic, MicOff } from "lucide-react";
 import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer, useRoomContext } from "@livekit/components-react";
+import { Track } from "livekit-client";
 import { useLiveKitToken } from "@/hooks/useLiveKitToken";
 import { useVoiceAssistantContext } from "@/contexts/VoiceAssistantContext";
 import { AgentNavigationListener } from "@/components/AgentNavigationListener";
@@ -85,7 +86,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
   const { localParticipant } = useLocalParticipant();
   const room = useRoomContext();
   const [isMuted, setIsMuted] = useState(false);
-  const [audioTrackRef, setAudioTrackRef] = useState<MediaStreamTrack | null>(null);
+  const [audioTrackRef, setAudioTrackRef] = useState<any | null>(null);
 
   // Monitor microphone publishing
   useEffect(() => {
@@ -93,7 +94,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
 
     const checkMicStatus = () => {
       const isEnabled = localParticipant.isMicrophoneEnabled;
-      const micPublication = localParticipant.getTrackPublication("audio");
+      const micPublication = localParticipant.getTrackPublication(Track.Source.Microphone);
       const hasTrack = !!micPublication?.track;
       const isTrackMuted = micPublication?.isMuted ?? false;
 
@@ -153,7 +154,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
     localParticipant.on("trackUnpublished", handleTrackUnpublished);
 
     // Subscribe to mute events if publication already exists
-    const micPub = localParticipant.getTrackPublication("audio");
+    const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
     if (micPub) {
       setIsMuted(micPub.isMuted);
       if (micPub.track) {
@@ -176,10 +177,10 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       localParticipant.off("trackUnpublished", handleTrackUnpublished);
       room.off("connected", checkMicStatus);
       // Clean up mute listeners from existing publication
-      const existingPub = localParticipant.getTrackPublication("audio");
+      const existingPub = localParticipant.getTrackPublication(Track.Source.Microphone);
       if (existingPub) {
-        existingPub.off("muted", handleTrackMuted);
-        existingPub.off("unmuted", handleTrackMuted);
+        existingPub.off("muted", () => handleTrackMuted(existingPub));
+        existingPub.off("unmuted", () => handleTrackMuted(existingPub));
       }
       clearInterval(interval);
     };
@@ -195,13 +196,13 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
     console.log("[VoiceAssistant] Toggling mute state from", currentMuted, "to", newMutedState);
 
     // Mute/unmute the actual MediaStreamTrack directly (this stops audio at the source)
-    if (audioTrackRef) {
-      audioTrackRef.enabled = !newMutedState; // enabled=false means muted
+    if (audioTrackRef?.mediaStreamTrack) {
+      audioTrackRef.mediaStreamTrack.enabled = !newMutedState; // enabled=false means muted
       console.log(
         "[VoiceAssistant] ✅✅✅ Direct track mute:",
         newMutedState ? "MUTED (track.enabled=false)" : "UNMUTED (track.enabled=true)",
         "Actual track.enabled:",
-        audioTrackRef.enabled,
+        audioTrackRef.mediaStreamTrack.enabled,
       );
     } else {
       console.warn("[VoiceAssistant] ⚠️ No audio track reference found for direct muting");
@@ -209,9 +210,9 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       if (localParticipant) {
         const allPubs = Array.from(localParticipant.trackPublications.values());
         const audioPub = allPubs.find((p) => p.kind === "audio");
-        if (audioPub?.track) {
+        if (audioPub?.track?.mediaStreamTrack) {
           console.log("[VoiceAssistant] Found audio track via publications, using it");
-          audioPub.track.enabled = !newMutedState;
+          audioPub.track.mediaStreamTrack.enabled = !newMutedState;
           setAudioTrackRef(audioPub.track);
         }
       }
@@ -226,30 +227,18 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
     }
 
     // Also try to mute through publication if it exists (tries multiple methods)
-    const micPubByKind = localParticipant.getTrackPublication("audio");
-    const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
+    const micPubByKind = localParticipant.getTrackPublication(Track.Source.Microphone);
     const allPubs = Array.from(localParticipant.trackPublications.values());
-    const audioPub = micPubByKind || micPubBySource || allPubs.find((p) => p.kind === "audio");
+    const audioPub = micPubByKind || allPubs.find((p) => p.kind === "audio");
 
     if (audioPub) {
       try {
-        console.log(
-          "[VoiceAssistant] Found publication via:",
-          micPubByKind ? "kind" : micPubBySource ? "source" : "search",
-        );
+        console.log("[VoiceAssistant] Found publication");
 
-        // Try to mute through publication if method exists
-        if (typeof audioPub.setMuted === "function") {
-          await audioPub.setMuted(newMutedState);
-          const actualState = audioPub.isMuted;
-          setIsMuted(actualState);
-          console.log("[VoiceAssistant] ✅✅✅ Publication mute:", actualState ? "MUTED (RED)" : "UNMUTED (BLUE)");
-        } else if (audioPub.track) {
-          // Fallback: mute the track directly through publication
-          audioPub.track.enabled = !newMutedState;
-          console.log("[VoiceAssistant] ✅ Muted via publication.track.enabled:", !newMutedState);
-        } else {
-          console.log("[VoiceAssistant] Publication found but no setMuted method or track, using direct mute only");
+        // Fallback: mute the track directly through publication
+        if (audioPub.track?.mediaStreamTrack) {
+          audioPub.track.mediaStreamTrack.enabled = !newMutedState;
+          console.log("[VoiceAssistant] ✅ Muted via publication.track.mediaStreamTrack.enabled:", !newMutedState);
         }
       } catch (error) {
         console.error("[VoiceAssistant] ❌ Error muting publication:", error);
@@ -323,21 +312,19 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
             // Wait a bit and verify publication is available via getTrackPublication
             setTimeout(() => {
               // Try multiple ways to find the publication
-              const micPubByKind = localParticipant.getTrackPublication("audio");
-              const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
+              const micPubByKind = localParticipant.getTrackPublication(Track.Source.Microphone);
               const allPublications = Array.from(localParticipant.trackPublications.values());
               const audioPublications = allPublications.filter((p) => p.kind === "audio");
 
               console.log("[VoiceAssistant] Verification check:", {
                 byKind: !!micPubByKind,
-                bySource: !!micPubBySource,
                 totalPublications: allPublications.length,
                 audioPublications: audioPublications.length,
                 audioPubTrackSids: audioPublications.map((p) => p.trackSid),
               });
 
               // Use the publication we got from publishTrack or find it
-              const finalPub = publication || micPubByKind || micPubBySource || audioPublications[0];
+              const finalPub = publication || micPubByKind || audioPublications[0];
 
               if (finalPub && finalPub.track) {
                 console.log("[VoiceAssistant] ✅✅✅ ALL GOOD! Microphone is live and published!", {
@@ -410,7 +397,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, 
 
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState<string>("voice-assistant");
+  const [roomName, setRoomName] = useState<string>("");
 
   useEffect(() => {
     if (open && !token) {
@@ -419,7 +406,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, 
   }, [open]);
 
   const handleConnect = async () => {
-    const result = await getToken(roomName);
+    const result = await getToken();
     if (result) {
       setToken(result.token);
       setLivekitUrl(result.url);

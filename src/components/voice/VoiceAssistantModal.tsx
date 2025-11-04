@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, PhoneOff, Mic, MicOff } from "lucide-react";
 import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer, useRoomContext } from "@livekit/components-react";
+import { Track, LocalAudioTrack } from "livekit-client";
 import { useLiveKitToken } from "@/hooks/useLiveKitToken";
 import { useVoiceAssistantContext } from "@/contexts/VoiceAssistantContext";
 import { AgentNavigationListener } from "@/components/AgentNavigationListener";
@@ -93,7 +94,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
 
     const checkMicStatus = () => {
       const isEnabled = localParticipant.isMicrophoneEnabled;
-      const micPublication = localParticipant.getTrackPublication("audio");
+      const micPublication = localParticipant.getTrackPublication(Track.Source.Microphone);
       const hasTrack = !!micPublication?.track;
       const isTrackMuted = micPublication?.isMuted ?? false;
 
@@ -153,14 +154,12 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
     localParticipant.on("trackUnpublished", handleTrackUnpublished);
 
     // Subscribe to mute events if publication already exists
-    const micPub = localParticipant.getTrackPublication("audio");
+    const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
     if (micPub) {
       setIsMuted(micPub.isMuted);
-      if (micPub.track) {
-        setAudioTrackRef(micPub.track);
+      if (micPub.track && micPub.track instanceof LocalAudioTrack) {
+        setAudioTrackRef(micPub.track.mediaStreamTrack);
       }
-      micPub.on("muted", () => handleTrackMuted(micPub));
-      micPub.on("unmuted", () => handleTrackMuted(micPub));
     }
 
     room.on("connected", () => {
@@ -175,12 +174,6 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       localParticipant.off("trackPublished", handleTrackPublished);
       localParticipant.off("trackUnpublished", handleTrackUnpublished);
       room.off("connected", checkMicStatus);
-      // Clean up mute listeners from existing publication
-      const existingPub = localParticipant.getTrackPublication("audio");
-      if (existingPub) {
-        existingPub.off("muted", handleTrackMuted);
-        existingPub.off("unmuted", handleTrackMuted);
-      }
       clearInterval(interval);
     };
   }, [localParticipant, room]);
@@ -208,11 +201,12 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       // Try to find the track from publications
       if (localParticipant) {
         const allPubs = Array.from(localParticipant.trackPublications.values());
-        const audioPub = allPubs.find((p) => p.kind === "audio");
-        if (audioPub?.track) {
+        const audioPub = allPubs.find((p) => p.kind === Track.Kind.Audio);
+        if (audioPub?.track && audioPub.track instanceof LocalAudioTrack) {
           console.log("[VoiceAssistant] Found audio track via publications, using it");
-          audioPub.track.enabled = !newMutedState;
-          setAudioTrackRef(audioPub.track);
+          const mediaTrack = audioPub.track.mediaStreamTrack;
+          mediaTrack.enabled = !newMutedState;
+          setAudioTrackRef(mediaTrack);
         }
       }
     }
@@ -225,38 +219,15 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       return;
     }
 
-    // Also try to mute through publication if it exists (tries multiple methods)
-    const micPubByKind = localParticipant.getTrackPublication("audio");
-    const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
-    const allPubs = Array.from(localParticipant.trackPublications.values());
-    const audioPub = micPubByKind || micPubBySource || allPubs.find((p) => p.kind === "audio");
-
-    if (audioPub) {
+    // Also update through LiveKit if publication exists
+    const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
+    if (micPub?.track && micPub.track instanceof LocalAudioTrack) {
       try {
-        console.log(
-          "[VoiceAssistant] Found publication via:",
-          micPubByKind ? "kind" : micPubBySource ? "source" : "search",
-        );
-
-        // Try to mute through publication if method exists
-        if (typeof audioPub.setMuted === "function") {
-          await audioPub.setMuted(newMutedState);
-          const actualState = audioPub.isMuted;
-          setIsMuted(actualState);
-          console.log("[VoiceAssistant] ✅✅✅ Publication mute:", actualState ? "MUTED (RED)" : "UNMUTED (BLUE)");
-        } else if (audioPub.track) {
-          // Fallback: mute the track directly through publication
-          audioPub.track.enabled = !newMutedState;
-          console.log("[VoiceAssistant] ✅ Muted via publication.track.enabled:", !newMutedState);
-        } else {
-          console.log("[VoiceAssistant] Publication found but no setMuted method or track, using direct mute only");
-        }
+        await localParticipant.setMicrophoneEnabled(!newMutedState);
+        console.log("[VoiceAssistant] ✅ Microphone state updated via setMicrophoneEnabled");
       } catch (error) {
-        console.error("[VoiceAssistant] ❌ Error muting publication:", error);
-        // Direct track mute already worked, so this is not critical
+        console.error("[VoiceAssistant] ❌ Error updating microphone state:", error);
       }
-    } else {
-      console.log("[VoiceAssistant] No publication found, direct track mute is sufficient");
     }
   };
 
@@ -310,45 +281,18 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
               track: !!publication.track,
             });
 
-            // Store reference to the audio track for muting (direct from MediaStreamTrack)
+            // Store reference to the MediaStreamTrack for muting
             setAudioTrackRef(audioTrack);
-            console.log("[VoiceAssistant] ✅ Audio track reference stored for muting (direct track)");
+            console.log("[VoiceAssistant] ✅ Audio track reference stored for muting");
 
-            // Also store track from publication if available
-            if (publication.track) {
-              setAudioTrackRef(publication.track);
-              console.log("[VoiceAssistant] ✅ Publication track reference also stored");
-            }
-
-            // Wait a bit and verify publication is available via getTrackPublication
+            // Verify publication
             setTimeout(() => {
-              // Try multiple ways to find the publication
-              const micPubByKind = localParticipant.getTrackPublication("audio");
-              const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
-              const allPublications = Array.from(localParticipant.trackPublications.values());
-              const audioPublications = allPublications.filter((p) => p.kind === "audio");
-
-              console.log("[VoiceAssistant] Verification check:", {
-                byKind: !!micPubByKind,
-                bySource: !!micPubBySource,
-                totalPublications: allPublications.length,
-                audioPublications: audioPublications.length,
-                audioPubTrackSids: audioPublications.map((p) => p.trackSid),
-              });
-
-              // Use the publication we got from publishTrack or find it
-              const finalPub = publication || micPubByKind || micPubBySource || audioPublications[0];
-
-              if (finalPub && finalPub.track) {
-                console.log("[VoiceAssistant] ✅✅✅ ALL GOOD! Microphone is live and published!", {
-                  trackSid: finalPub.trackSid,
-                  hasTrack: !!finalPub.track,
+              const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
+              if (micPub?.track) {
+                console.log("[VoiceAssistant] ✅✅✅ Microphone verified and published!", {
+                  trackSid: micPub.trackSid,
+                  hasTrack: !!micPub.track,
                 });
-                setAudioTrackRef(finalPub.track);
-              } else {
-                console.warn(
-                  "[VoiceAssistant] ⚠️ Publication not found via getTrackPublication, but we have direct reference",
-                );
               }
             }, 1000);
           }

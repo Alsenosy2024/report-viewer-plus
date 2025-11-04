@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useRoomContext, useDataChannel } from "@livekit/components-react";
@@ -25,6 +25,7 @@ export const AgentNavigationListener = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const room = useRoomContext();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Helper function to navigate to a URL string (defined first)
   const navigateToUrlFromString = (urlString: string) => {
@@ -39,7 +40,15 @@ export const AgentNavigationListener = () => {
       }
 
       console.log(`[Agent Navigation] Navigating to: ${pathname}`);
-      navigate(pathname);
+      
+      // Show navigation animation
+      setIsNavigating(true);
+      
+      // Navigate after a brief delay for animation
+      setTimeout(() => {
+        navigate(pathname);
+        setTimeout(() => setIsNavigating(false), 500);
+      }, 300);
 
       const pageNames: Record<string, string> = {
         "/": "Home",
@@ -242,7 +251,8 @@ export const AgentNavigationListener = () => {
       // Subscribe to data channel events if available
       if (room.engine) {
         console.log("[Agent Navigation] Room engine available, setting up data channel listener");
-        room.engine.on("data_received", handleDataReceived);
+        // Note: data_received may not be in official types but exists in runtime
+        (room.engine as any).on("data_received", handleDataReceived);
       }
 
       // FALLBACK: Monitor agent transcription/responses for navigation commands
@@ -314,7 +324,7 @@ export const AgentNavigationListener = () => {
             handleMetadataChange(p);
           }
           // Listen for metadata changes on this participant
-          p.on("metadataChanged", () => {
+          (p as any).on("metadataChanged", () => {
             console.log("[Agent Navigation] 📢 Metadata changed event fired for:", p.identity);
             handleMetadataChange(p);
           });
@@ -383,15 +393,15 @@ export const AgentNavigationListener = () => {
       console.log("[Agent Navigation] Setting up transcription fallback listener");
 
       // Try multiple ways to listen to agent speech/transcription
-      room.on("transcriptionReceived", handleTranscription);
-      room.on("transcription", handleTranscription);
+      (room as any).on("transcriptionReceived", handleTranscription);
+      (room as any).on("transcription", handleTranscription);
 
       // Also listen to remote participants for any text/data
       room.remoteParticipants.forEach((participant) => {
         if (participant.identity.includes("agent")) {
           console.log("[Agent Navigation] Setting up listener for agent participant:", participant.identity);
-          participant.on("transcriptionReceived", handleTranscription);
-          participant.on("transcription", handleTranscription);
+          (participant as any).on("transcriptionReceived", handleTranscription);
+          (participant as any).on("transcription", handleTranscription);
         }
       });
 
@@ -402,8 +412,8 @@ export const AgentNavigationListener = () => {
         room.off("dataReceived", handleDataReceived);
         room.off("participantConnected", handleParticipantConnected);
         room.off("participantMetadataChanged", handleMetadataChange);
-        room.off("transcriptionReceived", handleTranscription);
-        room.off("transcription", handleTranscription);
+        (room as any).off("transcriptionReceived", handleTranscription);
+        (room as any).off("transcription", handleTranscription);
 
         // Clear polling interval
         if ((room as any)._navMetadataInterval) {
@@ -413,12 +423,12 @@ export const AgentNavigationListener = () => {
         room.remoteParticipants.forEach((participant) => {
           participant.off("dataReceived", handleDataReceived);
           participant.off(RoomEvent.DataReceived, handleDataReceived);
-          participant.off("transcriptionReceived", handleTranscription);
-          participant.off("transcription", handleTranscription);
-          participant.off("metadataChanged", handleMetadataChange);
+          (participant as any).off("transcriptionReceived", handleTranscription);
+          (participant as any).off("transcription", handleTranscription);
+          (participant as any).off("metadataChanged", handleMetadataChange);
         });
         if (room.engine) {
-          room.engine.off("data_received", handleDataReceived);
+          (room.engine as any).off("data_received", handleDataReceived);
         }
       };
 
@@ -445,28 +455,52 @@ export const AgentNavigationListener = () => {
     return setupListener();
   }, [room, navigate, toast]);
 
-  // Expose test function for debugging
-  useEffect(() => {
-    // Make navigateToUrl available globally for testing
-    (window as any).testNavigation = (path: string) => {
-      console.log("[Agent Navigation] 🧪 Manual navigation test:", path);
-      const navigate = require("react-router-dom").useNavigate();
-      // This won't work directly, but we can test via the room
-      console.log('[Agent Navigation] Use: window.testNav("/whatsapp-reports")');
-    };
-
-    // Better: direct navigation test
-    (window as any).testNav = (path: string) => {
-      console.log("[Agent Navigation] 🧪 Testing direct navigation to:", path);
-      navigate(path);
-      toast({
-        title: "Test Navigation",
-        description: `Navigated to ${path}`,
-      });
-    };
-
-    console.log('[Agent Navigation] Test functions available: window.testNav("/path")');
-  }, [navigate, toast]);
-
-  return null; // This is a listener component with no UI
+  // Navigation overlay with smooth animation
+  return (
+    <>
+      {isNavigating && (
+        <div className="fixed inset-0 z-[999] pointer-events-none">
+          {/* Background overlay with fade */}
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-fade-in" />
+          
+          {/* Navigation indicator */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary via-accent to-primary animate-spin-slow blur-xl opacity-60" 
+                   style={{ width: '120px', height: '120px', margin: '-10px' }} />
+              
+              {/* Inner circle */}
+              <div className="relative w-24 h-24 rounded-full bg-card border-2 border-primary/30 shadow-glow flex items-center justify-center animate-scale-in">
+                {/* Animated pulse */}
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                
+                {/* Icon */}
+                <svg 
+                  className="w-12 h-12 text-primary animate-bounce-subtle" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom text */}
+          <div className="absolute bottom-32 left-0 right-0 text-center">
+            <p className="text-lg font-medium text-foreground animate-fade-in">
+              Voice Navigation Active
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };

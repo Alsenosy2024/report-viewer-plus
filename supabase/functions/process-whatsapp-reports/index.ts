@@ -38,16 +38,26 @@ serve(async (req) => {
       throw new Error('Report not found');
     }
 
-    // Process with OpenAI GPT-5 (Responses API)
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    // Process with OpenAI GPT-5 (Chat Completions API)
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5',
-        input: `أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ.\n\n**مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط. لا تستخدم أي لغة أخرى.**\n\nلكل تقرير، قدم التحليل باللغة العربية مع: \n1. الملخص التنفيذي \n2. مقاييس الأداء \n3. الاتجاهات والأنماط \n4. التوصيات القابلة للتنفيذ \n5. تقييم المخاطر \n6. اقتراحات البيانات المرئية \n\nقم بتنسيق إجابتك كـ JSON منظم وفق المخطط التالي (بالعربية):\n{\n  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",\n  "performanceMetrics": [{"metric":"اسم المقياس","value":"قيمة","trend":"positive|negative|neutral","description":"وصف"}],\n  "trendsAndPatterns": [{"title":"عنوان","description":"وصف","impact":"high|medium|low"}],\n  "recommendations": [{"priority":"high|medium|low","action":"إجراء","expectedImpact":"تأثير","timeframe":"إطار زمني"}],\n  "riskAssessment": {"level":"high|medium|low","factors":["عامل"],"mitigation":"خطة"},\n  "visualSuggestions": [{"chartType":"نوع الرسم","dataPoints":"نقاط البيانات","purpose":"الغرض"}]\n}\n\nيرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
+        model: 'gpt-5-2025-08-07',
+        messages: [
+          {
+            role: 'system',
+            content: 'أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ. **مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط.**'
+          },
+          {
+            role: 'user',
+            content: `لكل تقرير، قدم التحليل باللغة العربية مع: \n1. الملخص التنفيذي \n2. مقاييس الأداء \n3. الاتجاهات والأنماط \n4. التوصيات القابلة للتنفيذ \n5. تقييم المخاطر \n6. اقتراحات البيانات المرئية \n\nقم بتنسيق إجابتك كـ JSON منظم وفق المخطط التالي (بالعربية):\n{\n  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",\n  "performanceMetrics": [{"metric":"اسم المقياس","value":"قيمة","trend":"positive|negative|neutral","description":"وصف"}],\n  "trendsAndPatterns": [{"title":"عنوان","description":"وصف","impact":"high|medium|low"}],\n  "recommendations": [{"priority":"high|medium|low","action":"إجراء","expectedImpact":"تأثير","timeframe":"إطار زمني"}],\n  "riskAssessment": {"level":"high|medium|low","factors":["عامل"],"mitigation":"خطة"},\n  "visualSuggestions": [{"chartType":"نوع الرسم","dataPoints":"نقاط البيانات","purpose":"الغرض"}]\n}\n\nيرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
+          }
+        ],
+        response_format: { type: 'json_object' }
       }),
     });
 

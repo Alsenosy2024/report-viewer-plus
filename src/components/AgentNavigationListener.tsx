@@ -217,9 +217,19 @@ export const AgentNavigationListener = () => {
         roomState: room.state,
       });
 
-      // Subscribe to data messages
+      // Subscribe to data messages - PRIMARY method
       console.log("[Agent Navigation] Subscribing to DataReceived events");
       room.on(RoomEvent.DataReceived, handleDataReceived);
+
+      // Also try alternative event names (in case API changed)
+      room.on("dataReceived", handleDataReceived);
+
+      // Listen for remote participant data
+      room.remoteParticipants.forEach((participant) => {
+        console.log("[Agent Navigation] Found remote participant:", participant.identity);
+        participant.on("dataReceived", handleDataReceived);
+        participant.on(RoomEvent.DataReceived, handleDataReceived);
+      });
 
       // Listen for new participants joining
       const handleParticipantConnected = (participant: any) => {

@@ -314,11 +314,7 @@ export const AgentNavigationListener = () => {
             if (p.metadata) {
               handleMetadataChange(p);
             }
-            // Listen for metadata changes on this participant
-            p.on('metadataChanged', () => {
-              console.log('[Agent Navigation] 📢 Metadata changed event fired for:', p.identity);
-              handleMetadataChange(p);
-            });
+            // Note: Participant metadata change events rely on polling
           }
         };
         

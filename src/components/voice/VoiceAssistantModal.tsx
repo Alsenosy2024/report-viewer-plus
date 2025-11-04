@@ -119,14 +119,6 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
 
     checkMicStatus();
     
-    // Listen for mute state changes on the publication
-    const handleTrackMuted = (publication: any) => {
-      if (publication.kind === 'audio') {
-        setIsMuted(publication.isMuted);
-        console.log('[VoiceAssistant] Microphone mute state changed:', publication.isMuted);
-      }
-    };
-    
     // Listen for track published events
     const handleTrackPublished = (publication: any) => {
       if (publication.kind === 'audio') {
@@ -140,17 +132,12 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
         if (publication.track) {
           setAudioTrackRef(publication.track);
         }
-        publication.on('muted', () => handleTrackMuted(publication));
-        publication.on('unmuted', () => handleTrackMuted(publication));
       }
     };
 
     const handleTrackUnpublished = (publication: any) => {
       if (publication.kind === 'audio') {
         console.warn('[VoiceAssistant] ❌ Microphone track unpublished');
-        // Remove mute listeners
-        publication.off('muted', handleTrackMuted);
-        publication.off('unmuted', handleTrackMuted);
       }
     };
 

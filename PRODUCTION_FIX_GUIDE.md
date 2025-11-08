@@ -57,13 +57,11 @@ If it shows `report-viewer-plus`, that's correct for Lovable.
 ### 3. Verify File Structure
 
 Lovable expects:
-
 - `package.json` in root OR in configured build directory
 - `vite.config.ts` in same location
 - `src/` folder with React code
 
 Current structure:
-
 ```
 ailegent/
 ├── report-viewer-plus/    ← Files are here now
@@ -85,7 +83,6 @@ ailegent/
 ### Step 2: Configure Build Directory
 
 If available, set:
-
 - **Root Directory**: `report-viewer-plus`
 - **Build Command**: `npm run build` (should auto-detect)
 - **Output Directory**: `dist` (Vite default)
@@ -101,27 +98,23 @@ If available, set:
 ### Error: "Cannot find package.json"
 
 **Solution**: Lovable is looking in root, but files are in `report-viewer-plus/`
-
 - Set build directory to `report-viewer-plus` in Lovable settings
 
 ### Error: "Module resolution failed"
 
 **Solution**: Path aliases might be broken
-
 - Check `vite.config.ts` - paths should be relative to `report-viewer-plus/`
 - Verify `tsconfig.json` paths are correct
 
 ### Error: "Build succeeded but site is blank"
 
 **Solution**: Output directory might be wrong
-
 - Check if `dist` folder is in `report-viewer-plus/dist`
 - Update Lovable output directory setting
 
 ### Lovable doesn't detect new commits
 
-**Solution**:
-
+**Solution**: 
 1. Check if GitHub webhook is connected
 2. Try manual deploy from Lovable dashboard
 3. Verify repository connection in Lovable settings
@@ -158,21 +151,20 @@ After applying fixes, verify:
 If none of the above works:
 
 1. **Check Lovable Support**: Contact Lovable support with:
-
    - Your project ID: `fe7f70d3-e9ae-433a-be6a-a95b146a9889`
    - Error message from build logs
    - Repository structure change explanation
 
 2. **Check Build Logs**: Share the exact error from Lovable build logs
 
-3. **Temporary Workaround**:
+3. **Temporary Workaround**: 
    - Keep frontend in separate repo temporarily
    - Sync manually until Lovable supports subdirectories
 
 ---
 
-**Next Steps**:
-
+**Next Steps**: 
 1. Try Option 1 first (configure build directory)
 2. If that doesn't work, check Lovable build logs
 3. Share the specific error message for further assistance
+

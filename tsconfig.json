@@ -1,13 +1,13 @@
 {
   "files": [],
   "references": [
-    { "path": "./report-viewer-plus/tsconfig.app.json" },
-    { "path": "./report-viewer-plus/tsconfig.node.json" }
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./report-viewer-plus/src/*"]
+      "@/*": ["./src/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,

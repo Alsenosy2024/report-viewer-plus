@@ -174,20 +174,11 @@
 
 @layer base {
   * {
-<<<<<<< HEAD
-    border-color: hsl(var(--border));
-  }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-=======
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
->>>>>>> d281f306ef1af80a348cdb9074ff2733b0c393c7
   }
 }
 

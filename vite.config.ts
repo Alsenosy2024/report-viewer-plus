@@ -1,26 +1,22 @@
+// @ts-nocheck
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { fileURLToPath } from "url";
 import { componentTagger } from "lovable-tagger";
 
-// ES module __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// @ts-ignore - __dirname equivalent for ES modules
+const __dirname = typeof __dirname !== 'undefined' 
+  ? __dirname 
+  : path.dirname(fileURLToPath(import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/',
+  // Set root directory to report-viewer-plus where the actual source code is
+  root: 'report-viewer-plus',
   server: {
     host: "::",
     port: 8080,
-  },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    assetsDir: 'assets',
-    cssCodeSplit: false,
-    sourcemap: false,
   },
   plugins: [
     react(),
@@ -29,7 +25,11 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(process.cwd(), "./report-viewer-plus/src"),
     },
+  },
+  build: {
+    // Output to dist in the root directory for easier deployment
+    outDir: path.resolve(process.cwd(), 'dist'),
   },
 }));

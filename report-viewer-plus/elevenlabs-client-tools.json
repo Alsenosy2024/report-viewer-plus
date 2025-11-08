@@ -1,0 +1,342 @@
+[
+  {
+    "type": "client",
+    "name": "open_dashboard",
+    "description": "Navigate to the main dashboard overview page. Use this when the user wants to see their dashboard, overview, main page, or general analytics.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_whatsapp_reports",
+    "description": "Navigate to WhatsApp analytics and reports page. Use when the user wants to see WhatsApp data, messaging analytics, chat reports, or WhatsApp metrics.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_productivity_reports",
+    "description": "Navigate to productivity reports and metrics page. Use when the user wants to see productivity data, performance metrics, efficiency reports, or team productivity.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_ads_reports",
+    "description": "Navigate to advertising analytics and ads reports page. Use when the user wants to see ad performance, advertising metrics, campaign data, or ad analytics.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_mail_reports",
+    "description": "Navigate to email and mail analytics reports page. Use when the user wants to see email metrics, mail analytics, inbox reports, or email performance data.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "open_admin_settings",
+    "description": "Navigate to admin settings and configuration page. Use when the user wants to access settings, admin panel, configuration, or management controls. Admin access required.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "open_bots",
+    "description": "Navigate to bot management and controls page. Use when the user wants to manage bots, configure bot settings, view bot status, or access bot controls.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_social_posts",
+    "description": "Navigate to social media posts and content page. Use when the user wants to see social posts, social media content, published posts, or social media management.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_content_ideas",
+    "description": "Navigate to content ideas and suggestions page. Use when the user wants to see content ideas, get inspiration, view content suggestions, or browse content recommendations.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "show_courses_prices",
+    "description": "Navigate to courses and pricing information page. Use when the user wants to see courses, view pricing, check course catalog, or browse course offerings.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "go_home",
+    "description": "Navigate to the home page or landing page. Use when the user wants to go home, return to start, or go to the main landing page.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "go_back",
+    "description": "Navigate to the previous page in browser history. Use when the user wants to go back, return to previous page, or navigate backwards.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "go_forward",
+    "description": "Navigate to the next page in browser history. Use when the user wants to go forward, return to next page, or navigate forwards after going back.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "refresh_page",
+    "description": "Reload or refresh the current page. Use when the user wants to refresh, reload, update the page, or get latest data.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "toggle_sidebar",
+    "description": "Toggle the sidebar menu visibility (open/close). Use when the user wants to toggle the menu, switch sidebar state, or show/hide navigation.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "open_sidebar",
+    "description": "Open the sidebar navigation menu. Use when the user wants to open the menu, show the sidebar, or display navigation options.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "close_sidebar",
+    "description": "Close the sidebar navigation menu. Use when the user wants to close the menu, hide the sidebar, or dismiss navigation options.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "sign_out",
+    "description": "Sign out or log out the current user from the application. Use when the user wants to sign out, log out, logout, or end their session.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "where_am_i",
+    "description": "Get information about the current page location. Use when the user asks where they are, what page they're on, current location, or wants to know their position in the app.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  },
+  {
+    "type": "client",
+    "name": "help",
+    "description": "Display all available voice commands and help information. Use when the user asks for help, wants to know available commands, or asks what they can do.",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": true,
+    "response_timeout_secs": 3,
+    "parameters": [],
+    "dynamic_variables": {
+      "dynamic_variable_placeholders": {}
+    }
+  }
+]

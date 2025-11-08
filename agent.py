@@ -43,8 +43,55 @@ except ImportError:
     MCP_AVAILABLE = False
 
 # Load environment variables from .env or .env.local
-load_dotenv(".env.local")
-load_dotenv()
+# Try multiple paths to ensure we find the .env file
+import pathlib
+env_paths = [
+    pathlib.Path(".env.local"),
+    pathlib.Path(".env"),
+    pathlib.Path(__file__).parent / ".env.local",
+    pathlib.Path(__file__).parent / ".env",
+]
+for env_path in env_paths:
+    if env_path.exists():
+        logger.info(f"Loading environment from: {env_path}")
+        load_dotenv(env_path, override=True)
+        break
+else:
+    # If no .env file found, try default load_dotenv() which searches current directory and parent directories
+    logger.warning("No .env file found in expected locations, trying default search")
+    load_dotenv(override=True)
+
+# Verify critical environment variables are loaded
+if not os.getenv("LIVEKIT_API_KEY"):
+    logger.error("LIVEKIT_API_KEY not found in environment variables!")
+    logger.error("Please ensure .env file exists with LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and LIVEKIT_URL")
+else:
+    logger.info("✅ Environment variables loaded successfully")
+
+# Verify OpenAI API key is set and valid
+openai_key = os.getenv("OPENAI_API_KEY", "")
+if not openai_key or openai_key == "your_openai_api_key_here":
+    logger.error("=" * 80)
+    logger.error("❌❌❌ CRITICAL: OPENAI_API_KEY IS NOT SET! ❌❌❌")
+    logger.error("=" * 80)
+    logger.error("The agent cannot work without a valid OpenAI API key.")
+    logger.error("")
+    logger.error("Please update your .env file:")
+    logger.error("  1. Open the .env file in the root directory")
+    logger.error("  2. Find: OPENAI_API_KEY=your_openai_api_key_here")
+    logger.error("  3. Replace with your actual API key from: https://platform.openai.com/account/api-keys")
+    logger.error("  4. Restart the agent")
+    logger.error("")
+    logger.error("Example:")
+    logger.error("  OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    logger.error("=" * 80)
+    # Don't exit - let it fail gracefully so user can see the error
+else:
+    # Check if key looks valid (starts with sk-)
+    if not openai_key.startswith("sk-"):
+        logger.warning("⚠️ OPENAI_API_KEY doesn't start with 'sk-' - it may be invalid")
+    else:
+        logger.info(f"✅ OpenAI API key is set (starts with: {openai_key[:7]}...)")
 
 # Frontend base URL for navigation (from environment)
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "https://report-viewer-plus.lovable.app")
@@ -100,6 +147,21 @@ class VoiceAssistant(Agent):
             
             logger.info(f"🔍 Normalized pathname: '{url}' -> '{pathname}'")
             
+            # CRITICAL: Validate pathname and url are valid strings (no None, no invalid chars)
+            if not isinstance(pathname, str) or len(pathname) == 0:
+                logger.error(f"❌ Invalid pathname: {pathname}")
+                return False
+            
+            if not isinstance(url, str) or len(url) == 0:
+                logger.error(f"❌ Invalid URL: {url}")
+                return False
+            
+            # CRITICAL: Ensure pathname doesn't contain invalid characters that could cause ParseIntError
+            # Remove any non-printable characters
+            import re
+            pathname = re.sub(r'[^\x20-\x7E\u0600-\u06FF/]', '', pathname)  # Allow ASCII, Arabic, and /
+            url = re.sub(r'[^\x20-\x7E\u0600-\u06FF/:.]', '', url)  # Allow ASCII, Arabic, /, :, .
+            
             # Send both full URL and pathname for compatibility
             message = {
                 "type": "agent-navigation-url",
@@ -109,6 +171,15 @@ class VoiceAssistant(Agent):
             
             message_json = json.dumps(message)
             message_bytes = message_json.encode('utf-8')
+            
+            # CRITICAL: Validate message bytes before sending
+            if len(message_bytes) == 0:
+                logger.error("❌ Navigation message bytes is empty, cannot send")
+                return False
+            
+            if len(message_bytes) > 64 * 1024:  # 64KB max for data channel
+                logger.error(f"❌ Navigation message too large: {len(message_bytes)} bytes (max 64KB)")
+                return False
             
             logger.info(f"Preparing to send navigation: {url} -> {pathname}")
             logger.info(f"Message JSON: {message_json}")
@@ -174,53 +245,55 @@ class VoiceAssistant(Agent):
             logger.info(f"   Room state: {room.state if hasattr(room, 'state') else 'unknown'}")
             logger.info(f"   Local participant identity: {room.local_participant.identity if hasattr(room.local_participant, 'identity') else 'unknown'}")
             
-            # Send multiple times to ensure delivery (with small delays)
-            max_attempts = 3
-            sent_count = 0
-            for attempt in range(max_attempts):
+            # Wait a moment to ensure room is fully ready (especially if function was called immediately after connection)
+            import asyncio
+            await asyncio.sleep(0.1)  # 100ms delay to ensure room is ready
+            
+            # Send data channel message - simplified to avoid panics
+            # Check room state before sending
+            if not hasattr(room, 'state') or room.state != 'connected':
+                logger.warning(f"⚠️ Room not connected, state: {getattr(room, 'state', 'unknown')}")
+            
+            # Check if local participant exists
+            if not hasattr(room, 'local_participant') or not room.local_participant:
+                logger.error("❌ No local participant available!")
+                sent = False
+            else:
+                # Try sending with topic first (most reliable)
                 try:
-                    # Method 1: Try with topic "agent-navigation" (matches useDataChannel hook)
-                    import inspect
-                    sig = inspect.signature(room.local_participant.publish_data)
-                    logger.info(f"   publish_data signature: {sig}")
+                    logger.info(f"   Attempting to send with topic 'agent-navigation'")
+                    # CRITICAL: Validate topic is a valid string (not None, not empty, no invalid chars)
+                    topic_name = "agent-navigation"
+                    if not isinstance(topic_name, str) or len(topic_name) == 0:
+                        logger.error(f"❌ Invalid topic name: {topic_name}")
+                        raise ValueError("Invalid topic name")
                     
-                    if 'topic' in sig.parameters:
-                        logger.info(f"   ✅ Topic parameter supported, sending with topic 'agent-navigation'")
+                    # Use try/except to handle both topic and non-topic versions
+                    try:
+                        # Try with topic parameter
                         await room.local_participant.publish_data(
                             message_bytes,
                             reliable=True,
-                            topic="agent-navigation"  # This topic matches the useDataChannel hook
+                            topic=topic_name
                         )
-                        sent_count += 1
-                        logger.info(f"✅✅✅ Attempt {attempt + 1}/{max_attempts}: SUCCESSFULLY sent navigation URL via data channel with topic 'agent-navigation': {url} -> {pathname} ✅✅✅")
                         sent = True
-                    else:
-                        # Topic not supported, try without topic
-                        logger.info(f"   ⚠️ Topic parameter NOT supported, sending without topic")
+                        logger.info(f"✅✅✅ SUCCESSFULLY sent navigation URL via data channel with topic: {url} -> {pathname} ✅✅✅")
+                    except TypeError:
+                        # Topic parameter not supported, try without topic
+                        logger.info(f"   Topic parameter not supported, trying without topic")
                         await room.local_participant.publish_data(
                             message_bytes,
                             reliable=True
                         )
-                        sent_count += 1
-                        logger.info(f"✅✅✅ Attempt {attempt + 1}/{max_attempts}: SUCCESSFULLY sent navigation URL via data channel (no topic): {url} -> {pathname} ✅✅✅")
                         sent = True
-                    
-                    # Small delay between attempts (except last)
-                    if attempt < max_attempts - 1:
-                        import asyncio
-                        await asyncio.sleep(0.2)  # 200ms delay between sends
-                        
+                        logger.info(f"✅✅✅ SUCCESSFULLY sent navigation URL via data channel (no topic): {url} -> {pathname} ✅✅✅")
                 except Exception as e:
-                    logger.error(f"❌❌❌ Attempt {attempt + 1}/{max_attempts} FAILED: {e} ❌❌❌")
+                    logger.error(f"❌❌❌ FAILED to send data channel message: {e} ❌❌❌")
                     import traceback
                     logger.error(f"Traceback: {traceback.format_exc()}")
-                    if attempt < max_attempts - 1:
-                        import asyncio
-                        await asyncio.sleep(0.2)  # Wait before retry
-                    else:
-                        logger.error(f"❌❌❌ All {max_attempts} attempts failed to send data channel message ❌❌❌")
+                    sent = False
             
-            logger.info(f"📊 FINAL RESULT: Sent {sent_count}/{max_attempts} data channel messages successfully")
+            logger.info(f"📊 FINAL RESULT: Data channel send {'SUCCESS' if sent else 'FAILED'}")
             
             # Log remote participants for debugging
             if len(room.remote_participants) == 0:
@@ -236,14 +309,37 @@ class VoiceAssistant(Agent):
             try:
                 # Set agent's metadata with navigation command
                 # Frontend will listen for metadata changes
-                metadata = json.dumps({
+                metadata_dict = {
                     "navigate": pathname,
                     "url": url,
                     "type": "navigation",
                     "pathname": pathname  # Explicit pathname for frontend
-                })
-                await room.local_participant.set_metadata(metadata)
-                logger.info(f"✅ Set metadata with navigation: {pathname}")
+                }
+                
+                # CRITICAL: Validate metadata before encoding
+                metadata_json = json.dumps(metadata_dict)
+                metadata_bytes = metadata_json.encode('utf-8')
+                
+                # CRITICAL: Validate metadata size (metadata has smaller limit than data channel)
+                if len(metadata_bytes) > 1024:  # 1KB max for metadata
+                    logger.warning(f"⚠️ Metadata too large: {len(metadata_bytes)} bytes, truncating")
+                    # Truncate pathname if needed
+                    max_pathname_len = 200
+                    if len(pathname) > max_pathname_len:
+                        metadata_dict["pathname"] = pathname[:max_pathname_len]
+                        metadata_dict["navigate"] = pathname[:max_pathname_len]
+                        metadata_json = json.dumps(metadata_dict)
+                        metadata_bytes = metadata_json.encode('utf-8')
+                
+                # CRITICAL: Validate metadata JSON is valid UTF-8
+                try:
+                    # Test decode to ensure it's valid
+                    _ = metadata_json.encode('utf-8').decode('utf-8')
+                except UnicodeEncodeError as e:
+                    logger.error(f"❌ Invalid UTF-8 in metadata: {e}, skipping metadata send")
+                else:
+                    await room.local_participant.set_metadata(metadata_json)
+                    logger.info(f"✅ Set metadata with navigation: {pathname}")
             except Exception as e:
                 logger.error(f"Failed to set metadata: {e}")
                 import traceback
@@ -277,10 +373,45 @@ class VoiceAssistant(Agent):
         logger.info("🎯🎯🎯 open_dashboard FUNCTION CALLED! 🎯🎯🎯")
         # Send relative path to avoid origin issues
         url = f"{FRONTEND_BASE_URL}/dashboard"
+        response_text = "NAVIGATE:/dashboard جاري فتح الداشبورد... Opening the dashboard..."
         logger.info(f"Calling _send_navigation_url with: {url}")
         result = await self._send_navigation_url(context, url)
         logger.info(f"_send_navigation_url returned: {result}")
-        return "NAVIGATE:/dashboard جاري فتح الداشبورد... Opening the dashboard..."
+        
+        # ALSO send response text via data channel so frontend can capture it in transcript
+        # Use metadata instead to avoid data channel panics
+        try:
+            room = self._room
+            if room and hasattr(room, 'local_participant') and room.local_participant:
+                # Send via metadata (more reliable, less likely to panic)
+                try:
+                    response_metadata_dict = {
+                        "type": "agent-response",
+                        "response": response_text,
+                        "text": response_text
+                    }
+                    
+                    # CRITICAL: Validate metadata size before encoding
+                    response_metadata_json = json.dumps(response_metadata_dict)
+                    response_metadata_bytes = response_metadata_json.encode('utf-8')
+                    
+                    # CRITICAL: Truncate if too large (metadata has 1KB limit)
+                    if len(response_metadata_bytes) > 1024:
+                        logger.warning(f"⚠️ Response metadata too large: {len(response_metadata_bytes)} bytes, truncating")
+                        max_text_len = 400
+                        truncated_text = response_text[:max_text_len] + "..." if len(response_text) > max_text_len else response_text
+                        response_metadata_dict["response"] = truncated_text
+                        response_metadata_dict["text"] = truncated_text
+                        response_metadata_json = json.dumps(response_metadata_dict)
+                    
+                    await room.local_participant.set_metadata(response_metadata_json)
+                    logger.info(f"✅✅✅ Sent agent response text via metadata ✅✅✅")
+                except Exception as e:
+                    logger.warning(f"Could not send response text via metadata: {e}")
+        except Exception as e:
+            logger.warning(f"Error sending response text: {e}")
+        
+        return response_text
 
     @function_tool
     async def show_whatsapp_reports(self, context: RunContext):
@@ -489,6 +620,15 @@ class VoiceAssistant(Agent):
             message_json = json.dumps(message)
             message_bytes = message_json.encode('utf-8')
             
+            # CRITICAL: Validate message bytes before sending
+            if len(message_bytes) == 0:
+                logger.error("❌ DOM action message bytes is empty, cannot send")
+                return False
+            
+            if len(message_bytes) > 64 * 1024:  # 64KB max for data channel
+                logger.error(f"❌ DOM action message too large: {len(message_bytes)} bytes (max 64KB)")
+                return False
+            
             logger.info(f"📤 Sending DOM action: {action_type} on {target}")
             
             room = self._room
@@ -497,10 +637,16 @@ class VoiceAssistant(Agent):
                 return False
             
             try:
+                # CRITICAL: Validate topic is a valid string
+                topic_name = "dom-action"
+                if not isinstance(topic_name, str) or len(topic_name) == 0:
+                    logger.error(f"❌ Invalid topic name: {topic_name}")
+                    return False
+                
                 await room.local_participant.publish_data(
                     message_bytes,
                     reliable=True,
-                    topic="dom-action"
+                    topic=topic_name
                 )
                 logger.info(f"✅ Sent DOM action via data channel: {action_type}")
                 return True
@@ -773,43 +919,272 @@ async def entrypoint(ctx: JobContext):
         if track.kind == "audio" and publication.source == 2:  # SOURCE_MICROPHONE = 2
             logger.info(f"🎤✅✅✅ USER MICROPHONE TRACK SUBSCRIBED! Agent is receiving audio! ✅✅✅")
 
+    # Track if handler should be active (disable during disconnection to prevent panics)
+    _data_received_handler_active = True
+    
     # Listen for data messages from frontend (like page content)
     @ctx.room.on("data_received")
-    def _on_data_received(data: bytes, participant, kind=None, topic=None):
+    def _on_data_received(*args, **kwargs):
         """Handle data messages from frontend (like page content)"""
+        # CRITICAL: Check if handler is disabled (during disconnection)
+        if not _on_data_received._data_received_handler_active:
+            logger.debug("data_received handler is disabled (disconnecting), ignoring")
+            return
+        
+        # CRITICAL: Wrap entire handler in try-except to catch any FFI-level issues
         try:
-            if topic == "page-content":
-                page_data = json.loads(data.decode('utf-8'))
-                content = page_data.get('content', {})
-                logger.info(f"📄 Received page content: {content.get('pathname', 'unknown')}")
-                logger.info(f"   Buttons: {len(content.get('elements', {}).get('buttons', []))}")
-                logger.info(f"   Inputs: {len(content.get('elements', {}).get('inputs', []))}")
-                logger.info(f"   Links: {len(content.get('elements', {}).get('links', []))}")
-                logger.info(f"   Cards: {len(content.get('elements', {}).get('cards', []))}")
-                # Store page content for agent to use
-                if hasattr(ctx.room, '_page_content'):
-                    ctx.room._page_content = content
+            # CRITICAL: Check if room exists and is valid before processing
+            if not ctx.room:
+                logger.debug("Room is None, ignoring data_received event")
+                return
+            
+            # CRITICAL: Check room connection status safely (Room might not have 'state' attribute)
+            try:
+                # Try to check if room has participants as a proxy for connection status
+                # If room is disconnected, accessing remote_participants might fail or be empty
+                if hasattr(ctx.room, 'remote_participants'):
+                    # Room exists and has remote_participants attribute - likely connected
+                    pass
                 else:
-                    setattr(ctx.room, '_page_content', content)
-                
-                # Log available buttons and cards for debugging
-                buttons = content.get('elements', {}).get('buttons', [])
-                cards = content.get('elements', {}).get('cards', [])
-                if buttons:
-                    logger.info(f"📋 Available buttons on page:")
-                    for btn in buttons[:10]:  # Log first 10 buttons
-                        logger.info(f"   - '{btn.get('text', '')}' (id: {btn.get('id', 'none')})")
-                if cards:
-                    logger.info(f"📋 Available report cards on page:")
-                    for card in cards[:5]:  # Log first 5 cards
-                        logger.info(f"   - Date: '{card.get('date', 'none')}' Text: '{card.get('text', '')[:50]}'")
+                    logger.debug("Room doesn't have remote_participants attribute, might be disconnected")
+                    return
+            except Exception as e:
+                logger.debug(f"Error checking room status: {e}, ignoring data_received event")
+                return
+            
+            # Handle different call signatures - LiveKit might call with different args
+            # The first argument might be a DataPacket object or raw bytes
+            first_arg = args[0] if args else kwargs.get('data')
+            
+            # CRITICAL: Validate first_arg exists
+            if first_arg is None:
+                logger.debug("data_received called with None data, ignoring")
+                return
+            
+            # CRITICAL: Validate first_arg is a valid object before accessing attributes
+            try:
+                # Try to get type name safely
+                arg_type = type(first_arg).__name__
+            except Exception:
+                logger.debug("Cannot determine type of first_arg, ignoring")
+                return
+            
+            # Extract data from DataPacket if that's what we received
+            # DataPacket has .value attribute containing bytes
+            data = None
+            participant = None
+            kind = None
+            topic = None
+            
+            # CRITICAL: Use try-except around ALL attribute access to prevent panics
+            try:
+                if hasattr(first_arg, 'value'):
+                    # It's a DataPacket object - extract the bytes from .value
+                    # CRITICAL: Access .value in a way that won't trigger FFI panics
+                    try:
+                        data = first_arg.value
+                    except Exception as e:
+                        logger.debug(f"Cannot access DataPacket.value: {e}, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data IMMEDIATELY before any other access
+                    if data is None:
+                        logger.debug("DataPacket.value is None, ignoring")
+                        return
+                    if not isinstance(data, bytes):
+                        logger.debug(f"DataPacket.value is not bytes: {type(data)}, ignoring")
+                        return
+                    try:
+                        if len(data) == 0:
+                            logger.debug("DataPacket.value is empty, ignoring")
+                            return
+                    except Exception as e:
+                        logger.debug(f"Cannot get length of data: {e}, ignoring")
+                        return
+                    
+                    # Only access other attributes AFTER validating data
+                    try:
+                        participant = first_arg.participant if hasattr(first_arg, 'participant') else None
+                        kind = first_arg.kind if hasattr(first_arg, 'kind') else None
+                        topic = first_arg.topic if hasattr(first_arg, 'topic') else None
+                    except (AttributeError, TypeError) as e:
+                        logger.debug(f"Error accessing DataPacket attributes: {e}, using defaults")
+                        # Continue with None values for participant/kind/topic
+                elif hasattr(first_arg, 'data'):
+                    # Alternative: DataPacket might have .data attribute
+                    try:
+                        data = first_arg.data
+                    except Exception as e:
+                        logger.debug(f"Cannot access DataPacket.data: {e}, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data IMMEDIATELY before any other access
+                    if data is None:
+                        logger.debug("DataPacket.data is None, ignoring")
+                        return
+                    if not isinstance(data, bytes):
+                        logger.debug(f"DataPacket.data is not bytes: {type(data)}, ignoring")
+                        return
+                    try:
+                        if len(data) == 0:
+                            logger.debug("DataPacket.data is empty, ignoring")
+                            return
+                    except Exception as e:
+                        logger.debug(f"Cannot get length of data: {e}, ignoring")
+                        return
+                    
+                    # Only access other attributes AFTER validating data
+                    try:
+                        participant = first_arg.participant if hasattr(first_arg, 'participant') else None
+                        kind = first_arg.kind if hasattr(first_arg, 'kind') else None
+                        topic = first_arg.topic if hasattr(first_arg, 'topic') else None
+                    except (AttributeError, TypeError) as e:
+                        logger.debug(f"Error accessing DataPacket attributes: {e}, using defaults")
+                        # Continue with None values for participant/kind/topic
+                elif isinstance(first_arg, bytes):
+                    # It's raw bytes - use directly
+                    data = first_arg
+                    participant = args[1] if len(args) > 1 else kwargs.get('participant')
+                    kind = args[2] if len(args) > 2 else kwargs.get('kind')
+                    topic = args[3] if len(args) > 3 else kwargs.get('topic')
+                else:
+                    # Try to get from kwargs
+                    data = kwargs.get('data')
+                    participant = kwargs.get('participant')
+                    kind = kwargs.get('kind')
+                    topic = kwargs.get('topic')
+                    
+                    if not isinstance(data, bytes):
+                        logger.debug(f"Unexpected data type in data_received: {arg_type}, ignoring")
+                        return
+            except Exception as e:
+                # CRITICAL: Catch ANY exception during data extraction to prevent panics
+                logger.warning(f"Error extracting data from DataPacket: {e}, ignoring")
+                import traceback
+                logger.debug(f"Traceback: {traceback.format_exc()}")
+                return
+            
+            # CRITICAL: Validate data exists and is bytes BEFORE any processing
+            if data is None:
+                logger.debug("Data is None after extraction, ignoring")
+                return
+            
+            if not isinstance(data, bytes):
+                logger.debug(f"Data is not bytes after extraction: {type(data)}, ignoring")
+                return
+            
+            # CRITICAL: Validate data length BEFORE any access (prevent index out of bounds)
+            try:
+                data_length = len(data)
+            except (TypeError, AttributeError) as e:
+                logger.warning(f"Cannot get data length: {e}, ignoring")
+                return
+            
+            if data_length == 0:
+                logger.debug("Received empty data packet, ignoring")
+                return
+            
+            # CRITICAL: Validate data length is reasonable (prevent buffer overflow)
+            if data_length > 10 * 1024 * 1024:  # 10MB max
+                logger.warning(f"Data packet too large: {data_length} bytes, ignoring")
+                return
+            
+            # CRITICAL: Additional safety check - ensure data is valid bytes
+            # Try to access first byte safely to validate it's a valid bytes object
+            try:
+                _ = data[0]  # Test access to first byte
+            except (IndexError, TypeError) as e:
+                logger.warning(f"Data is not a valid bytes object: {e}, ignoring")
+                return
+            
+            # Validate JSON before processing
+            if topic == "page-content":
+                try:
+                    # CRITICAL: Validate data is valid UTF-8 and JSON before processing
+                    # Use error handling for decode to prevent panics
+                    decoded_text = data.decode('utf-8', errors='replace')  # Use 'replace' to handle invalid bytes
+                    
+                    # CRITICAL: Validate JSON is valid before parsing
+                    try:
+                        page_data = json.loads(decoded_text)
+                    except json.JSONDecodeError as json_err:
+                        logger.warning(f"Invalid JSON in page-content data: {json_err}, ignoring")
+                        return
+                    
+                    content = page_data.get('content', {})
+                    logger.info(f"📄 Received page content: {content.get('pathname', 'unknown')}")
+                    logger.info(f"   Buttons: {len(content.get('elements', {}).get('buttons', []))}")
+                    logger.info(f"   Inputs: {len(content.get('elements', {}).get('inputs', []))}")
+                    logger.info(f"   Links: {len(content.get('elements', {}).get('links', []))}")
+                    logger.info(f"   Cards: {len(content.get('elements', {}).get('cards', []))}")
+                    # Store page content for agent to use
+                    if hasattr(ctx.room, '_page_content'):
+                        ctx.room._page_content = content
+                    else:
+                        setattr(ctx.room, '_page_content', content)
+                    
+                    # Log available buttons and cards for debugging
+                    buttons = content.get('elements', {}).get('buttons', [])
+                    cards = content.get('elements', {}).get('cards', [])
+                    if buttons:
+                        logger.info(f"📋 Available buttons on page:")
+                        for btn in buttons[:10]:  # Log first 10 buttons
+                            logger.info(f"   - '{btn.get('text', '')}' (id: {btn.get('id', 'none')})")
+                    if cards:
+                        logger.info(f"📋 Available report cards on page:")
+                        for card in cards[:5]:  # Log first 5 cards
+                            logger.info(f"   - Date: '{card.get('date', 'none')}' Text: '{card.get('text', '')[:50]}'")
+                except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                    logger.warning(f"Error decoding/parsing page-content data: {e}, ignoring")
+                except Exception as e:
+                    logger.error(f"Unexpected error processing page-content: {e}")
             elif topic == "dom-action-result":
-                result_data = json.loads(data.decode('utf-8'))
-                logger.info(f"✅ DOM action result: {result_data.get('result', 'unknown')}")
+                try:
+                    # CRITICAL: Validate data is valid UTF-8 and JSON before processing
+                    # Use error handling for decode to prevent panics
+                    decoded_text = data.decode('utf-8', errors='replace')  # Use 'replace' to handle invalid bytes
+                    
+                    # CRITICAL: Validate JSON is valid before parsing
+                    try:
+                        result_data = json.loads(decoded_text)
+                    except json.JSONDecodeError as json_err:
+                        logger.warning(f"Invalid JSON in dom-action-result data: {json_err}, ignoring")
+                        return
+                    
+                    logger.info(f"✅ DOM action result: {result_data.get('result', 'unknown')}")
+                except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                    logger.warning(f"Error decoding/parsing dom-action-result data: {e}, ignoring")
+                except Exception as e:
+                    logger.error(f"Unexpected error processing dom-action-result: {e}")
+            else:
+                # Unknown topic - log but don't process
+                logger.debug(f"Received data with unknown topic: {topic}, length: {len(data)} bytes")
         except Exception as e:
+            # CRITICAL: Catch all exceptions to prevent panics
             logger.error(f"Error handling data_received: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
+            # Don't re-raise - just log and continue
+    
+    # Store handler reference for disabling
+    _on_data_received._data_received_handler_active = True
+    
+    # Listen for disconnection to disable handler and prevent panics
+    @ctx.room.on("disconnected")
+    def _on_disconnected(reason=None):
+        """Handle room disconnection - disable data_received handler to prevent panics"""
+        logger.info(f"Room disconnected, reason: {reason}")
+        # Disable data_received handler to prevent panics during cleanup
+        _on_data_received._data_received_handler_active = False
+        logger.debug("data_received handler disabled due to disconnection")
+    
+    # Also listen for room closing
+    @ctx.room.on("room_closed")
+    def _on_room_closed():
+        """Handle room closing - disable data_received handler"""
+        logger.info("Room closed")
+        _on_data_received._data_received_handler_active = False
+        logger.debug("data_received handler disabled due to room closure")
 
     # Running in voice-only mode (Tavus disabled for audio compatibility)
     avatar = None
@@ -887,7 +1262,9 @@ async def entrypoint(ctx: JobContext):
     for pid, participant in ctx.room.remote_participants.items():
         logger.info(f"  - Participant: {participant.identity}")
         for pub_sid, publication in participant.track_publications.items():
-            logger.info(f"    Track: {publication.kind} (source: {publication.source}, muted: {publication.is_muted})")
+            # Check if is_muted attribute exists (it might not for RemoteTrackPublication)
+            muted_status = getattr(publication, 'is_muted', 'unknown')
+            logger.info(f"    Track: {publication.kind} (source: {publication.source}, muted: {muted_status})")
     
     logger.info("🔍 Waiting for user audio... Speak into your microphone and watch for 'USER STARTED SPEAKING' messages")
 

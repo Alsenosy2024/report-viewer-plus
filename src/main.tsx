@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+<<<<<<< HEAD
 import ErrorBoundary from './ErrorBoundary'
 
 // Add inline styles as fallback in case CSS doesn't load
@@ -46,3 +47,7 @@ try {
     </div>
   `;
 }
+=======
+
+createRoot(document.getElementById("root")!).render(<App />);
+>>>>>>> d281f306ef1af80a348cdb9074ff2733b0c393c7

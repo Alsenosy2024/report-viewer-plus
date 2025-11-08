@@ -244,6 +244,11 @@
     @apply animate-wiggle;
   }
   
+  /* Voice navigation specific */
+  .nav-overlay-enter {
+    @apply animate-fade-in;
+  }
+  
   /* Performance optimizations */
   .will-animate {
     will-change: transform, opacity, box-shadow;

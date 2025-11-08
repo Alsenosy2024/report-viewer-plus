@@ -38,43 +38,39 @@ serve(async (req) => {
       throw new Error('Report not found');
     }
 
-    // Process with OpenAI GPT-5
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Process with OpenAI GPT-5 (Responses API)
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
-        messages: [
-          {
-            role: 'system',
-            content: 'أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ.\n\n**مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط. لا تستخدم أي لغة أخرى.**\n\nلكل تقرير، قدم التحليل باللغة العربية مع: \n1. الملخص التنفيذي \n2. مقاييس الأداء \n3. الاتجاهات والأنماط \n4. التوصيات القابلة للتنفيذ \n5. تقييم المخاطر \n6. اقتراحات البيانات المرئية \n\nقم بتنسيق إجابتك كـ JSON منظم وفق المخطط التالي (بالعربية):\n{\n  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",\n  "performanceMetrics": [{"metric":"اسم المقياس","value":"قيمة","trend":"positive|negative|neutral","description":"وصف"}],\n  "trendsAndPatterns": [{"title":"عنوان","description":"وصف","impact":"high|medium|low"}],\n  "recommendations": [{"priority":"high|medium|low","action":"إجراء","expectedImpact":"تأثير","timeframe":"إطار زمني"}],\n  "riskAssessment": {"level":"high|medium|low","factors":["عامل"],"mitigation":"خطة"},\n  "visualSuggestions": [{"chartType":"نوع الرسم","dataPoints":"نقاط البيانات","purpose":"الغرض"}]\n}'
-          },
-          {
-            role: 'user',
-            content: `يرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
-          }
-        ],
-        max_completion_tokens: 4000
+        model: 'gpt-5',
+        input: `أنت محلل بيانات خبير متخصص في اتصالات واتساب التجارية. مهمتك هي تحليل تقارير واتساب وإنشاء رؤى جميلة ومنظمة وقابلة للتنفيذ.\n\n**مهم جداً: يجب أن تكون جميع الردود والتحليلات باللغة العربية فقط. لا تستخدم أي لغة أخرى.**\n\nلكل تقرير، قدم التحليل باللغة العربية مع: \n1. الملخص التنفيذي \n2. مقاييس الأداء \n3. الاتجاهات والأنماط \n4. التوصيات القابلة للتنفيذ \n5. تقييم المخاطر \n6. اقتراحات البيانات المرئية \n\nقم بتنسيق إجابتك كـ JSON منظم وفق المخطط التالي (بالعربية):\n{\n  "executiveSummary": "ملخص تنفيذي مفصل باللغة العربية",\n  "performanceMetrics": [{"metric":"اسم المقياس","value":"قيمة","trend":"positive|negative|neutral","description":"وصف"}],\n  "trendsAndPatterns": [{"title":"عنوان","description":"وصف","impact":"high|medium|low"}],\n  "recommendations": [{"priority":"high|medium|low","action":"إجراء","expectedImpact":"تأثير","timeframe":"إطار زمني"}],\n  "riskAssessment": {"level":"high|medium|low","factors":["عامل"],"mitigation":"خطة"},\n  "visualSuggestions": [{"chartType":"نوع الرسم","dataPoints":"نقاط البيانات","purpose":"الغرض"}]\n}\n\nيرجى تحليل تقرير واتساب هذا وتقديم رؤى منظمة باللغة العربية:\n\n${report.content}`
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const analysisContent = data.choices?.[0]?.message?.content || '';
-    
-    if (!analysisContent) {
-      console.error('No content in OpenAI response:', JSON.stringify(data));
-      throw new Error('No content received from OpenAI');
+    let analysisContent: string = '';
+    if (data.output_text) {
+      analysisContent = data.output_text;
+    } else if (Array.isArray(data.output)) {
+      analysisContent = data.output.map((item: any) => {
+        if (Array.isArray(item?.content)) {
+          return item.content.map((c: any) => c?.text ?? '').join('');
+        }
+        return item?.content?.[0]?.text ?? '';
+      }).join('');
+    } else if (data.choices?.[0]?.message?.content) {
+      analysisContent = data.choices[0].message.content;
+    } else {
+      analysisContent = typeof data === 'string' ? data : JSON.stringify(data);
     }
-
     let parsedAnalysis;
     try {
       // Try to extract JSON from the response
@@ -94,7 +90,6 @@ serve(async (req) => {
       }
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw content:', analysisContent);
       parsedAnalysis = {
         executiveSummary: analysisContent.substring(0, 500),
         performanceMetrics: [],

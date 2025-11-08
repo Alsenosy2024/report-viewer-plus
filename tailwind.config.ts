@@ -175,10 +175,6 @@ export default {
 					'0%': { transform: 'scale(1)' },
 					'50%': { transform: 'scale(1.05)' },
 					'100%': { transform: 'scale(1.02)' }
-				},
-				'spin-slow': {
-					'0%': { transform: 'rotate(0deg)' },
-					'100%': { transform: 'rotate(360deg)' }
 				}
 			},
 			animation: {
@@ -196,7 +192,6 @@ export default {
 				'wiggle': 'wiggle 0.5s ease-in-out',
 				'float': 'float 3s ease-in-out infinite',
 				'magnetic': 'magnetic 0.3s ease-out',
-				'spin-slow': 'spin-slow 3s linear infinite',
 				'enter': 'fade-in 0.3s ease-out, scale-in 0.2s ease-out',
 				'exit': 'fade-out 0.3s ease-out, scale-out 0.2s ease-out'
 			}

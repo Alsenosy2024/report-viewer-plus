@@ -1,13 +1,13 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useRoomContext, useDataChannel } from "@livekit/components-react";
-import { RoomEvent } from "livekit-client";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useRoomContext, useDataChannel } from '@livekit/components-react';
+import { RoomEvent } from 'livekit-client';
 
 interface NavigationMessage {
-  type: "agent-navigation-url";
+  type: 'agent-navigation-url';
   url: string;
-  pathname?: string; // Optional: direct pathname from agent
+  pathname?: string;  // Optional: direct pathname from agent
 }
 
 /**
@@ -23,496 +23,425 @@ interface NavigationMessage {
  */
 export const AgentNavigationListener = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const room = useRoomContext();
-
-  // Track navigation state to prevent duplicates and race conditions
-  const lastNavigationRef = useRef<{ pathname: string; timestamp: number } | null>(null);
-  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const NAVIGATION_DEBOUNCE_MS = 500; // Prevent rapid navigation attempts
-
-  console.log("[Agent Navigation] Component rendered", {
-    hasRoom: !!room,
-    roomState: room?.state,
-    currentPath: location.pathname,
-    participants: room?.remoteParticipants.size,
-    participantIdentities: room ? Array.from(room.remoteParticipants.values()).map((p) => p.identity) : [],
-  });
-
-  // Helper function to normalize pathname (remove trailing slashes, etc.)
-  const normalizePathname = useCallback((pathname: string): string => {
-    // Remove trailing slash except for root
-    let normalized = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
-    // Ensure it starts with /
-    if (!normalized.startsWith("/")) {
-      normalized = "/" + normalized;
-    }
-    return normalized;
-  }, []);
-
+  
   // Helper function to navigate to a URL string (defined first)
-  const navigateToUrlFromString = useCallback(
-    (urlString: string) => {
-      try {
-        let pathname: string;
-
-        if (urlString.startsWith("http://") || urlString.startsWith("https://")) {
-          const url = new URL(urlString);
-          pathname = url.pathname;
-        } else {
-          pathname = urlString.startsWith("/") ? urlString : `/${urlString}`;
-        }
-
-        // Normalize pathname
-        pathname = normalizePathname(pathname);
-        const currentPath = normalizePathname(location.pathname);
-
-        // Check if already on target page
-        if (pathname === currentPath) {
-          console.log(`[Agent Navigation] Already on target page: ${pathname}, skipping navigation`);
-          toast({
-            title: "Already Here",
-            description: `You're already on ${pathname}`,
-          });
-          return;
-        }
-
-        // Check if this is a duplicate navigation (same path within debounce window)
-        const now = Date.now();
-        if (
-          lastNavigationRef.current &&
-          lastNavigationRef.current.pathname === pathname &&
-          now - lastNavigationRef.current.timestamp < NAVIGATION_DEBOUNCE_MS
-        ) {
-          console.log(`[Agent Navigation] Duplicate navigation detected for ${pathname}, ignoring`);
-          return;
-        }
-
-        // Clear any pending navigation timeout
-        if (navigationTimeoutRef.current) {
-          clearTimeout(navigationTimeoutRef.current);
-        }
-
-        // Update last navigation
-        lastNavigationRef.current = { pathname, timestamp: now };
-
-        // Debounce navigation to prevent rapid changes
-        navigationTimeoutRef.current = setTimeout(() => {
-          console.log(`[Agent Navigation] ✅ Executing navigation to: ${pathname} (from: ${currentPath})`);
-          navigate(pathname);
-
-          const pageNames: Record<string, string> = {
-            "/": "Home",
-            "/dashboard": "Dashboard",
-            "/whatsapp-reports": "WhatsApp Reports",
-            "/productivity-reports": "Productivity Reports",
-            "/ads-reports": "Ads Reports",
-            "/mail-reports": "Mail Reports",
-            "/admin/settings": "Admin Settings",
-            "/bots": "Bot Controls",
-            "/social-posts": "Social Posts",
-            "/content-ideas": "Content Ideas",
-            "/meeting-summary": "Meeting Summary",
-            "/courses-prices": "Courses & Prices",
-            "/awaiting-approval": "Awaiting Approval",
-          };
-
-          const pageName = pageNames[pathname] || pathname;
-          toast({
-            title: "Voice Agent Navigation",
-            description: `Opening ${pageName}`,
-          });
-        }, NAVIGATION_DEBOUNCE_MS);
-      } catch (error) {
-        console.error("[Agent Navigation] Navigation error:", error);
+  const navigateToUrlFromString = (urlString: string) => {
+    try {
+      let pathname: string;
+      
+      if (urlString.startsWith('http://') || urlString.startsWith('https://')) {
+        const url = new URL(urlString);
+        pathname = url.pathname;
+      } else {
+        pathname = urlString.startsWith('/') ? urlString : `/${urlString}`;
       }
-    },
-    [navigate, toast, location.pathname, normalizePathname],
-  );
+
+      console.log(`[Agent Navigation] Navigating to: ${pathname}`);
+      navigate(pathname);
+
+      const pageNames: Record<string, string> = {
+        '/': 'Home',
+        '/dashboard': 'Dashboard',
+        '/whatsapp-reports': 'WhatsApp Reports',
+        '/productivity-reports': 'Productivity Reports',
+        '/ads-reports': 'Ads Reports',
+        '/mail-reports': 'Mail Reports',
+        '/admin/settings': 'Admin Settings',
+        '/bots': 'Bot Controls',
+        '/social-posts': 'Social Posts',
+        '/content-ideas': 'Content Ideas',
+        '/meeting-summary': 'Meeting Summary',
+        '/courses-prices': 'Courses & Prices',
+        '/awaiting-approval': 'Awaiting Approval',
+      };
+
+      const pageName = pageNames[pathname] || pathname;
+      toast({
+        title: "Voice Agent Navigation",
+        description: `Opening ${pageName}`,
+      });
+    } catch (error) {
+      console.error('[Agent Navigation] Navigation error:', error);
+    }
+  };
 
   // Use useDataChannel hook (must be called unconditionally)
   // This is the recommended LiveKit method
-  console.log('[Agent Navigation] Setting up useDataChannel hook with topic "agent-navigation"');
-  const { message } = useDataChannel("agent-navigation", (msg) => {
-    console.log("[Agent Navigation] 📨📨📨 useDataChannel callback received message:", {
-      msg,
-      msgType: typeof msg,
-      msgKeys: msg ? Object.keys(msg as any) : [],
-      hasPayload: !!(msg as any)?.payload,
-      hasData: !!(msg as any)?.data,
-      msgString: typeof msg === "string" ? msg : JSON.stringify(msg),
-    });
-
+  const { message } = useDataChannel('agent-navigation', (msg) => {
+    console.log('[Agent Navigation] 📨 useDataChannel received message:', msg);
     try {
       // Handle both ReceivedDataMessage and raw messages
-      let rawData: any;
-
-      if (typeof msg === "string") {
-        console.log("[Agent Navigation] Message is string, parsing JSON...");
-        rawData = JSON.parse(msg);
-      } else if ((msg as any)?.payload) {
-        console.log("[Agent Navigation] Message has payload property");
-        const payload = (msg as any).payload;
-        rawData = typeof payload === "string" ? JSON.parse(payload) : payload;
-      } else if ((msg as any)?.data) {
-        console.log("[Agent Navigation] Message has data property");
-        const data = (msg as any).data;
-        rawData = typeof data === "string" ? JSON.parse(data) : data;
-      } else {
-        console.log("[Agent Navigation] Using message as-is");
-        rawData = msg;
-      }
-
-      console.log("[Agent Navigation] Parsed useDataChannel data:", rawData);
-
-      if (rawData.type === "agent-navigation-url" || rawData.pathname || rawData.navigate) {
-        const path = rawData.pathname || rawData.navigate || rawData.url;
-        console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel! 🎯🎯🎯", path);
+      const rawData = (msg as any)?.payload || (msg as any)?.data || msg;
+      const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      
+      if (data.type === 'agent-navigation-url' || data.pathname || data.navigate) {
+        const path = data.pathname || data.navigate || data.url;
+        console.log('[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel! 🎯🎯🎯', path);
         navigateToUrlFromString(path);
-      } else {
-        console.log("[Agent Navigation] Message does not contain navigation data:", rawData);
       }
     } catch (e) {
-      console.error("[Agent Navigation] ❌ Error parsing useDataChannel message:", e, msg);
-      console.error("[Agent Navigation] Error details:", {
-        error: e,
-        message: msg,
-        messageType: typeof msg,
-      });
+      console.error('[Agent Navigation] Error parsing useDataChannel message:', e, msg);
     }
   });
-
+  
   // Log when message changes (for debugging)
   useEffect(() => {
     if (message) {
-      console.log("[Agent Navigation] 📨 useDataChannel message state updated:", {
-        message,
-        messageType: typeof message,
-        messageKeys: message ? Object.keys(message as any) : [],
-      });
-
-      try {
-        // Try to parse and handle the message state
-        let rawData: any;
-        if (typeof message === "string") {
-          rawData = JSON.parse(message);
-        } else if ((message as any)?.payload) {
-          const payload = (message as any).payload;
-          rawData = typeof payload === "string" ? JSON.parse(payload) : payload;
-        } else if ((message as any)?.data) {
-          const data = (message as any).data;
-          rawData = typeof data === "string" ? JSON.parse(data) : data;
-        } else {
-          rawData = message;
-        }
-
-        if (rawData.type === "agent-navigation-url" || rawData.pathname || rawData.navigate) {
-          const path = rawData.pathname || rawData.navigate || rawData.url;
-          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel message state! 🎯🎯🎯", path);
-          navigateToUrlFromString(path);
-        }
-      } catch (e) {
-        console.error("[Agent Navigation] Error parsing useDataChannel message state:", e, message);
-      }
+      console.log('[Agent Navigation] useDataChannel message updated:', message);
     }
-  }, [message, navigateToUrlFromString]);
+  }, [message]);
 
   useEffect(() => {
     if (!room) {
-      console.log("[Agent Navigation] No room context available yet");
+      console.log('[Agent Navigation] No room context available yet');
       return;
     }
 
-    // Define navigateToUrl inside useEffect - delegates to navigateToUrlFromString for consistency
-    // This ensures both useDataChannel and RoomEvent.DataReceived use the same navigation logic
+    // Define navigateToUrl inside useEffect to access navigate and toast
     const navigateToUrl = (urlString: string) => {
-      // Use the same debounced navigation function
-      navigateToUrlFromString(urlString);
+      try {
+        let pathname: string;
+        
+        // Handle both full URLs and relative paths
+        if (urlString.startsWith('http://') || urlString.startsWith('https://')) {
+          // Full URL - parse it
+          const url = new URL(urlString);
+          
+          // In development, allow localhost with different ports
+          const isLocalhost = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1';
+          const isSameHostname = url.hostname === window.location.hostname;
+          
+          // Security: Only allow same hostname (or localhost in dev)
+          if (!isSameHostname && !(isLocalhost && (url.hostname === 'localhost' || url.hostname === '127.0.0.1'))) {
+            console.warn(`[Agent Navigation] Blocked navigation to different hostname: ${url.hostname}`);
+            toast({
+              title: "Navigation Blocked",
+              description: "Can only navigate within the same application",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          pathname = url.pathname;
+        } else {
+          // Relative path - use as is
+          pathname = urlString.startsWith('/') ? urlString : `/${urlString}`;
+        }
+
+        console.log(`[Agent Navigation] Navigating to: ${pathname}`);
+
+        navigate(pathname);
+
+        // Show success toast with page name
+        const pageNames: Record<string, string> = {
+          '/': 'Home',
+          '/dashboard': 'Dashboard',
+          '/whatsapp-reports': 'WhatsApp Reports',
+          '/productivity-reports': 'Productivity Reports',
+          '/ads-reports': 'Ads Reports',
+          '/mail-reports': 'Mail Reports',
+          '/admin/settings': 'Admin Settings',
+          '/bots': 'Bot Controls',
+          '/social-posts': 'Social Posts',
+          '/content-ideas': 'Content Ideas',
+          '/meeting-summary': 'Meeting Summary',
+          '/courses-prices': 'Courses & Prices',
+          '/awaiting-approval': 'Awaiting Approval',
+        };
+
+        const pageName = pageNames[pathname] || pathname;
+        console.log(`[Agent Navigation] Successfully navigating to: ${pathname} (${pageName})`);
+        toast({
+          title: "Voice Agent Navigation",
+          description: `Opening ${pageName}`,
+        });
+      } catch (error) {
+        console.error('[Agent Navigation] Invalid URL:', urlString, error);
+        toast({
+          title: "Navigation Error",
+          description: `Failed to navigate: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: "destructive"
+        });
+      }
     };
 
-    // Handle data messages from the agent via RoomEvent.DataReceived
-    // Note: RoomEvent.DataReceived signature is: (payload: Uint8Array, participant?: RemoteParticipant, kind?: DataPacket_Kind, topic?: string)
-    const handleDataReceived = (payload: Uint8Array, participant?: any, kind?: any, topic?: string) => {
-      console.log("[Agent Navigation] ✅✅✅ DATA RECEIVED via RoomEvent! ✅✅✅", {
+    // Handle data messages from the agent
+    const handleDataReceived = (
+      payload: Uint8Array,
+      participant: any,
+      kind: any
+    ) => {
+      console.log('[Agent Navigation] ✅✅✅ DATA RECEIVED! ✅✅✅', {
         payloadLength: payload.length,
-        participant: participant?.identity || "unknown",
-        participantIdentity: participant?.identity,
+        participant: participant?.identity,
         kind: kind,
-        topic: topic,
-        payloadPreview: Array.from(payload.slice(0, 100)),
-        isFromAgent: participant?.identity?.includes("agent") || false,
+        payloadPreview: Array.from(payload.slice(0, 100))
       });
-
-      // Check if this is from the agent (should be, but verify)
-      if (participant && !participant.identity.includes("agent")) {
-        console.log("[Agent Navigation] Data received from non-agent participant, ignoring:", participant.identity);
-        return;
-      }
-
-      // Check if this is our navigation topic (if topic filtering is available)
-      // Note: topic might be undefined for RoomEvent.DataReceived, that's okay
-      if (topic && topic !== "agent-navigation") {
-        console.log("[Agent Navigation] Ignoring data with topic:", topic);
-        return;
-      }
 
       try {
         const decoder = new TextDecoder();
         const rawText = decoder.decode(payload);
-        console.log("[Agent Navigation] Decoded message text:", rawText);
-
+        console.log('[Agent Navigation] Decoded message:', rawText);
+        
         const message = JSON.parse(rawText) as NavigationMessage;
-        console.log("[Agent Navigation] Parsed message object:", message);
+        console.log('[Agent Navigation] Parsed message:', message);
 
-        if (message.type === "agent-navigation-url") {
-          console.log("[Agent Navigation] ✅ Navigation message recognized!", {
+        if (message.type === 'agent-navigation-url') {
+          console.log('[Agent Navigation] ✅ Navigation message recognized!', {
             url: message.url,
-            pathname: message.pathname,
+            pathname: message.pathname
           });
           // Prefer pathname if provided (avoids origin issues), otherwise parse URL
           const urlToNavigate = message.pathname || message.url;
-          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived! 🎯🎯🎯", urlToNavigate);
+          console.log('[Agent Navigation] Navigating to:', urlToNavigate);
           navigateToUrl(urlToNavigate);
-        } else if (message.pathname || (message as any).navigate) {
-          // Fallback: check for pathname or navigate field without type
-          const path = message.pathname || (message as any).navigate || message.url;
-          console.log("[Agent Navigation] ✅ Found navigation path in message:", path);
-          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived (fallback)! 🎯🎯🎯", path);
-          navigateToUrl(path);
         } else {
-          console.log("[Agent Navigation] ⚠️ Message type mismatch:", message.type, "Expected: agent-navigation-url");
-          console.log("[Agent Navigation] Message keys:", Object.keys(message));
+          console.log('[Agent Navigation] ⚠️ Message type mismatch:', message.type, 'Expected: agent-navigation-url');
         }
       } catch (error) {
-        console.error("[Agent Navigation] ❌ Error parsing data message:", error);
-        console.error("[Agent Navigation] Raw payload length:", payload.length);
+        console.error('[Agent Navigation] ❌ Error parsing data message:', error);
+        console.error('[Agent Navigation] Raw payload:', payload);
         // Try to log raw bytes for debugging
         try {
           const decoder = new TextDecoder();
           const text = decoder.decode(payload);
-          console.error("[Agent Navigation] Decoded text (error case):", text);
+          console.error('[Agent Navigation] Decoded text:', text);
         } catch (e) {
-          console.error("[Agent Navigation] Could not decode payload:", e);
+          console.error('[Agent Navigation] Could not decode payload');
         }
       }
     };
 
     const setupListener = () => {
-      console.log("[Agent Navigation] ✅ Setting up navigation listener", {
+      console.log('[Agent Navigation] ✅ Setting up navigation listener', {
         roomName: room.name,
         participants: room.remoteParticipants.size,
-        roomState: room.state,
+        roomState: room.state
       });
 
       // Subscribe to data messages - PRIMARY method
-      // IMPORTANT: RoomEvent.DataReceived fires for ALL data messages in the room
-      // The participant parameter in the callback tells us who sent it
-      // We do NOT need to listen on individual participants - that's not a valid API
-      console.log("[Agent Navigation] Subscribing to RoomEvent.DataReceived for room-level data");
+      console.log('[Agent Navigation] Subscribing to DataReceived events');
       room.on(RoomEvent.DataReceived, handleDataReceived);
 
-      // Log all remote participants for debugging
-      console.log("[Agent Navigation] Remote participants count:", room.remoteParticipants.size);
+      // Also try alternative event names (in case API changed)
+      room.on('dataReceived', handleDataReceived);
+      
+      // Listen for remote participant data
       room.remoteParticipants.forEach((participant) => {
-        console.log("[Agent Navigation]   - Remote participant:", participant.identity, {
-          isAgent: participant.identity.includes("agent"),
-          hasMetadata: !!participant.metadata,
-        });
+        console.log('[Agent Navigation] Found remote participant:', participant.identity);
+        participant.on('dataReceived', handleDataReceived);
+        participant.on(RoomEvent.DataReceived, handleDataReceived);
       });
 
       // Listen for new participants joining
       const handleParticipantConnected = (participant: any) => {
-        console.log("[Agent Navigation] Participant connected:", participant.identity);
+        console.log('[Agent Navigation] Participant connected:', participant.identity);
+        participant.on('dataReceived', handleDataReceived);
+        participant.on(RoomEvent.DataReceived, handleDataReceived);
+      };
+      room.on('participantConnected', handleParticipantConnected);
 
-        // Check agent metadata when participant connects
-        if (participant.identity.includes("agent")) {
-          console.log("[Agent Navigation] Agent participant connected - will check metadata");
-          setTimeout(() => {
-            if (participant.metadata) {
-              console.log("[Agent Navigation] Agent has metadata on connect:", participant.metadata);
-              handleMetadataChange(participant);
-            } else {
-              console.log("[Agent Navigation] Agent connected but no metadata yet");
-            }
-          }, 1000);
+      // Note: Direct engine event listeners removed as they're not in the TypeScript types
+
+      // FALLBACK: Monitor agent transcription/responses for navigation commands
+      // Parse "NAVIGATE:/path" from agent's spoken response
+      
+      // Listen for transcription events from the agent
+      const handleTranscription = (event: any) => {
+        const text = event?.transcription?.text || event?.text || '';
+        console.log('[Agent Navigation] Transcription received:', text);
+        
+        // Parse navigation command from agent response
+        const navMatch = text.match(/NAVIGATE:(\/[^\s]*)/);
+        if (navMatch) {
+          const path = navMatch[1];
+          console.log('[Agent Navigation] 🎯 Found navigation command in transcription:', path);
+          navigateToUrl(path);
         }
       };
-      room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
-
-      // Note: room.engine events are not part of the public API, using RoomEvent.DataReceived instead
-
-      // Note: Transcription events are not available in LiveKit RoomEvent API
-      // Navigation is handled via DataReceived events and metadata changes
 
       // Monitor participant metadata changes (PRIMARY METHOD)
       let lastCheckedMetadata: string | null = null;
-
+      
       const handleMetadataChange = (participant: any) => {
-        console.log("[Agent Navigation] Metadata changed event!", {
-          participant: participant?.identity,
-          metadata: participant?.metadata,
-          isAgent: participant?.identity?.includes("agent"),
-        });
-
-        if (participant?.identity?.includes("agent")) {
-          const metadata = participant.metadata;
-          if (metadata && metadata !== lastCheckedMetadata) {
-            lastCheckedMetadata = metadata;
-            console.log("[Agent Navigation] 🔍 Checking agent metadata:", metadata);
-
-            try {
-              const parsed = JSON.parse(metadata);
-              console.log("[Agent Navigation] Parsed metadata:", parsed);
-              if (parsed.navigate || parsed.path) {
-                const path = parsed.path || parsed.navigate;
-                console.log("[Agent Navigation] 🎯🎯🎯 FOUND NAVIGATION IN METADATA! 🎯🎯🎯", path);
-                navigateToUrl(path);
-                return;
-              }
-            } catch (e) {
-              // Not JSON, check if it's a plain NAVIGATE command
-              console.log("[Agent Navigation] Metadata is not JSON, checking for NAVIGATE pattern");
-              const navMatch = metadata.match(/NAVIGATE:(\/[^\s]*)/);
-              if (navMatch) {
-                console.log("[Agent Navigation] 🎯 Found navigation in metadata text:", navMatch[1]);
-                navigateToUrl(navMatch[1]);
-                return;
-              }
-            }
-          }
-        }
-      };
-
-      // Check metadata on participant connect and when new participants join
-      const checkAgentMetadata = (p: any) => {
-        if (p.identity.includes("agent")) {
-          console.log("[Agent Navigation] 🔍 Checking agent metadata:", {
-            identity: p.identity,
-            metadata: p.metadata,
-            metadataType: typeof p.metadata,
-            hasMetadata: !!p.metadata,
+          console.log('[Agent Navigation] Metadata changed event!', {
+            participant: participant?.identity,
+            metadata: participant?.metadata,
+            isAgent: participant?.identity?.includes('agent')
           });
-          if (p.metadata) {
-            handleMetadataChange(p);
+          
+          if (participant?.identity?.includes('agent')) {
+            const metadata = participant.metadata;
+            if (metadata && metadata !== lastCheckedMetadata) {
+              lastCheckedMetadata = metadata;
+              console.log('[Agent Navigation] 🔍 Checking agent metadata:', metadata);
+              
+              try {
+                const parsed = JSON.parse(metadata);
+                console.log('[Agent Navigation] Parsed metadata:', parsed);
+                if (parsed.navigate || parsed.path) {
+                  const path = parsed.path || parsed.navigate;
+                  console.log('[Agent Navigation] 🎯🎯🎯 FOUND NAVIGATION IN METADATA! 🎯🎯🎯', path);
+                  navigateToUrl(path);
+                  return;
+                }
+              } catch (e) {
+                // Not JSON, check if it's a plain NAVIGATE command
+                console.log('[Agent Navigation] Metadata is not JSON, checking for NAVIGATE pattern');
+                const navMatch = metadata.match(/NAVIGATE:(\/[^\s]*)/);
+                if (navMatch) {
+                  console.log('[Agent Navigation] 🎯 Found navigation in metadata text:', navMatch[1]);
+                  navigateToUrl(navMatch[1]);
+                  return;
+                }
+              }
+            }
           }
-          // Metadata changes are handled via RoomEvent.ParticipantMetadataChanged
-        }
-      };
-
-      // Check existing participants
-      room.remoteParticipants.forEach(checkAgentMetadata);
-
-      // Monitor metadata changes via RoomEvent
-      room.on(RoomEvent.ParticipantMetadataChanged, handleMetadataChange);
-
-      // Also check existing participants again after setup (in case metadata was set before listener)
-      setTimeout(() => {
-        room.remoteParticipants.forEach((participant) => {
-          if (participant.identity.includes("agent")) {
-            console.log("[Agent Navigation] 🔍 Delayed check - agent metadata:", {
-              identity: participant.identity,
-              metadata: participant.metadata,
+        };
+        
+        // Check metadata on participant connect and when new participants join
+        const checkAgentMetadata = (p: any) => {
+          if (p.identity.includes('agent')) {
+            console.log('[Agent Navigation] 🔍 Checking agent metadata:', {
+              identity: p.identity,
+              metadata: p.metadata,
+              metadataType: typeof p.metadata,
+              hasMetadata: !!p.metadata
             });
-            if (participant.metadata) {
-              handleMetadataChange(participant);
-            }
-          }
-        });
-      }, 2000);
-
-      // POLLING FALLBACK: Check metadata periodically (in case events don't fire)
-      let pollCount = 0;
-      const metadataCheckInterval = setInterval(() => {
-        pollCount++;
-        room.remoteParticipants.forEach((p) => {
-          if (p.identity.includes("agent")) {
-            const currentMetadata = p.metadata;
-            if (currentMetadata && currentMetadata !== lastCheckedMetadata) {
-              console.log("[Agent Navigation] 🔄 Polling detected metadata change!", {
-                pollCount,
-                oldMetadata: lastCheckedMetadata,
-                newMetadata: currentMetadata,
-                participant: p.identity,
-              });
+            if (p.metadata) {
               handleMetadataChange(p);
-            } else if (pollCount % 20 === 0) {
-              // Log every 10 seconds (20 * 500ms)
-              console.log("[Agent Navigation] Polling check (every 10s):", {
-                participant: p.identity,
-                hasMetadata: !!currentMetadata,
-                metadata: currentMetadata?.substring(0, 100), // First 100 chars
-                lastChecked: lastCheckedMetadata?.substring(0, 100),
-              });
             }
-
-            // DEBUG: Also log ALL metadata we see (even if same)
-            if (pollCount === 1 || pollCount % 10 === 0) {
-              console.log("[Agent Navigation] 🔍 Current agent metadata state:", {
-                participant: p.identity,
-                metadata: currentMetadata || "(null/empty)",
-                lastChecked: lastCheckedMetadata || "(null)",
-                areEqual: currentMetadata === lastCheckedMetadata,
-              });
-            }
+            // Note: Participant metadata change events rely on polling
           }
-        });
-      }, 500); // Check every 500ms
-
-      // Store interval for cleanup
-      (room as any)._navMetadataInterval = metadataCheckInterval;
-
-      // Note: Transcription events are not available in LiveKit RoomEvent API
-      // Navigation is handled via DataReceived events and metadata changes
+        };
+        
+        // Check existing participants
+        room.remoteParticipants.forEach(checkAgentMetadata);
+        
+        // Also check when new participants connect
+        const handleNewParticipant = (participant: any) => {
+          console.log('[Agent Navigation] New participant connected:', participant.identity);
+          if (participant.identity.includes('agent')) {
+            // Wait a bit for metadata to be set
+            setTimeout(() => {
+              checkAgentMetadata(participant);
+            }, 1000);
+          }
+        };
+        room.on('participantConnected', handleNewParticipant);
+        
+        room.on('participantMetadataChanged', handleMetadataChange);
+        
+        // POLLING FALLBACK: Check metadata periodically (in case events don't fire)
+        let pollCount = 0;
+        const metadataCheckInterval = setInterval(() => {
+          pollCount++;
+          room.remoteParticipants.forEach((p) => {
+            if (p.identity.includes('agent')) {
+              const currentMetadata = p.metadata;
+              if (currentMetadata && currentMetadata !== lastCheckedMetadata) {
+                console.log('[Agent Navigation] 🔄 Polling detected metadata change!', {
+                  pollCount,
+                  oldMetadata: lastCheckedMetadata,
+                  newMetadata: currentMetadata,
+                  participant: p.identity
+                });
+                handleMetadataChange(p);
+              } else if (pollCount % 20 === 0) { // Log every 10 seconds (20 * 500ms)
+                console.log('[Agent Navigation] Polling check (every 10s):', {
+                  participant: p.identity,
+                  hasMetadata: !!currentMetadata,
+                  metadata: currentMetadata?.substring(0, 100), // First 100 chars
+                  lastChecked: lastCheckedMetadata?.substring(0, 100)
+                });
+              }
+              
+              // DEBUG: Also log ALL metadata we see (even if same)
+              if (pollCount === 1 || pollCount % 10 === 0) {
+                console.log('[Agent Navigation] 🔍 Current agent metadata state:', {
+                  participant: p.identity,
+                  metadata: currentMetadata || '(null/empty)',
+                  lastChecked: lastCheckedMetadata || '(null)',
+                  areEqual: currentMetadata === lastCheckedMetadata
+                });
+              }
+            }
+          });
+        }, 500); // Check every 500ms
+        
+        // Store interval for cleanup
+        (room as any)._navMetadataInterval = metadataCheckInterval;
+        
+        // Note: Transcription listeners removed as they're not in LiveKit TypeScript types
+        // Navigation will work via DataReceived and useDataChannel events
 
       // Cleanup function
       const cleanup = () => {
-        console.log("[Agent Navigation] Cleaning up event listeners");
+        console.log('[Agent Navigation] Cleaning up event listeners');
         room.off(RoomEvent.DataReceived, handleDataReceived);
-        room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
-        room.off(RoomEvent.ParticipantMetadataChanged, handleMetadataChange);
-
+        room.off('dataReceived', handleDataReceived);
+        room.off('participantConnected', handleParticipantConnected);
+        room.off('participantMetadataChanged', handleMetadataChange);
+        
         // Clear polling interval
         if ((room as any)._navMetadataInterval) {
           clearInterval((room as any)._navMetadataInterval);
         }
-
-        // Note: We don't need to clean up participant listeners since we only listen on room
+        
+        room.remoteParticipants.forEach((participant) => {
+          participant.off('dataReceived', handleDataReceived);
+          participant.off(RoomEvent.DataReceived, handleDataReceived);
+        });
       };
-
+      
       return cleanup;
     };
 
     // Wait for room to be connected before setting up listener
-    if (room.state !== "connected") {
-      console.log("[Agent Navigation] Room not connected yet, state:", room.state);
-
+    if (room.state !== 'connected') {
+      console.log('[Agent Navigation] Room not connected yet, state:', room.state);
+      
       const handleConnected = () => {
-        console.log("[Agent Navigation] Room connected, setting up listener now");
+        console.log('[Agent Navigation] Room connected, setting up listener now');
         return setupListener();
       };
-
-      room.on("connected", handleConnected);
-
+      
+      room.on('connected', handleConnected);
+      
       return () => {
-        room.off("connected", handleConnected);
+        room.off('connected', handleConnected);
       };
     }
 
     // Room is already connected, setup listener immediately
     return setupListener();
-  }, [room, navigate, toast, navigateToUrlFromString]);
+  }, [room, navigate, toast]);
 
   // Expose test function for debugging
   useEffect(() => {
-    // Direct navigation test
-    (window as any).testNav = (path: string) => {
-      console.log("[Agent Navigation] 🧪 Testing direct navigation to:", path);
-      navigateToUrlFromString(path);
+    // Make navigateToUrl available globally for testing
+    (window as any).testNavigation = (path: string) => {
+      console.log('[Agent Navigation] 🧪 Manual navigation test:', path);
+      const navigate = require('react-router-dom').useNavigate();
+      // This won't work directly, but we can test via the room
+      console.log('[Agent Navigation] Use: window.testNav("/whatsapp-reports")');
     };
-
-    console.log('[Agent Navigation] Test function available: window.testNav("/whatsapp-reports")');
-  }, [navigateToUrlFromString]);
+    
+    // Better: direct navigation test
+    (window as any).testNav = (path: string) => {
+      console.log('[Agent Navigation] 🧪 Testing direct navigation to:', path);
+      navigate(path);
+      toast({
+        title: "Test Navigation",
+        description: `Navigated to ${path}`,
+      });
+    };
+    
+    console.log('[Agent Navigation] Test functions available: window.testNav("/path")');
+  }, [navigate, toast]);
 
   return null; // This is a listener component with no UI
 };

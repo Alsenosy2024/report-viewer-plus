@@ -34,8 +34,6 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <div className="flex flex-col gap-4">
-          <VoiceAssistantAvatar />
-          
           {isLoading ? (
             <div className="text-center text-muted-foreground">
               Connecting...
@@ -48,8 +46,11 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
               onConnected={() => setIsConnected(true)}
               onDisconnected={() => setIsConnected(false)}
             >
-              <AgentNavigationListener />
-              <ConversationHistory />
+              <div className="flex flex-col gap-4">
+                <VoiceAssistantAvatar />
+                <AgentNavigationListener />
+                <ConversationHistory />
+              </div>
             </LiveKitRoom>
           ) : (
             <div className="text-center text-destructive">

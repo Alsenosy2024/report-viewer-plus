@@ -6,7 +6,7 @@ import { RoomEvent } from 'livekit-client';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 
 interface NavigationMessage {
-  type: 'agent-navigation-url';
+  type: "agent-navigation-url";
   url: string;
   pathname?: string;  // Optional: direct pathname from agent
 }

@@ -1,6 +1,3 @@
-// @ts-nocheck
-// This config file delegates to report-viewer-plus subdirectory
-// TypeScript errors here are expected as dependencies are in report-viewer-plus/node_modules
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,24 +8,18 @@ import { componentTagger } from "lovable-tagger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// This config builds from report-viewer-plus subdirectory
-// The actual frontend code is in report-viewer-plus/
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  root: path.resolve(__dirname, './report-viewer-plus'),
   base: '/',
   server: {
     host: "::",
     port: 8080,
   },
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
-    emptyOutDir: true,
+    outDir: 'dist',
     assetsDir: 'assets',
     cssCodeSplit: false,
     sourcemap: false,
-    rollupOptions: {
-      input: path.resolve(__dirname, './report-viewer-plus/index.html'),
-    },
   },
   plugins: [
     react(),
@@ -37,8 +28,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./report-viewer-plus/src"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 }));
-

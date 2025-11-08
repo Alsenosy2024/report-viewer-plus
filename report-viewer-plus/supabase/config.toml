@@ -1,4 +1,0 @@
-project_id = "flojlnzqivsziumuebgy"
-
-[functions.post-status-callback]
-verify_jwt = false

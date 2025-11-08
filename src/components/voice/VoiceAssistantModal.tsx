@@ -1,509 +1,518 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, PhoneOff, Mic, MicOff } from "lucide-react";
-import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer, useRoomContext } from "@livekit/components-react";
-import { useLiveKitToken } from "@/hooks/useLiveKitToken";
-import { useVoiceAssistantContext } from "@/contexts/VoiceAssistantContext";
-import { AgentNavigationListener } from "@/components/AgentNavigationListener";
-import { cn } from "@/lib/utils";
-import "@livekit/components-styles";
+import { useEffect, useRef, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useRoomContext, useDataChannel } from "@livekit/components-react";
+import { RoomEvent } from "livekit-client";
 
-// Microphone enabler component (runs in background)
-const MicrophoneEnabler: React.FC = () => {
+interface NavigationMessage {
+  type: "agent-navigation-url";
+  url: string;
+  pathname?: string; // Optional: direct pathname from agent
+}
+
+/**
+ * Component that listens for navigation URLs from the LiveKit voice agent
+ * and executes them on the frontend.
+ *
+ * This component hooks into the existing LiveKit room connection created by
+ * the VoiceAssistantModal. No additional configuration needed - it will
+ * automatically start listening when the user connects to the voice assistant.
+ *
+ * The agent sends full URLs (e.g., "https://preview--report-viewer-plus.lovable.app/dashboard")
+ * and this component extracts the pathname and navigates using React Router.
+ */
+export const AgentNavigationListener = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const room = useRoomContext();
-  const { localParticipant } = useLocalParticipant();
-  const { setIsSpeaking } = useVoiceAssistantContext();
 
-  useEffect(() => {
-    if (!room || !localParticipant) return;
+  // Track navigation state to prevent duplicates and race conditions
+  const lastNavigationRef = useRef<{ pathname: string; timestamp: number } | null>(null);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const NAVIGATION_DEBOUNCE_MS = 500; // Prevent rapid navigation attempts
 
-    const handleConnected = () => {
-      console.log("[VoiceAssistant] Room connected in MicrophoneEnabler");
-    };
+  console.log("[Agent Navigation] Component rendered", {
+    hasRoom: !!room,
+    roomState: room?.state,
+    currentPath: location.pathname,
+    participants: room?.remoteParticipants.size,
+    participantIdentities: room ? Array.from(room.remoteParticipants.values()).map((p) => p.identity) : [],
+  });
 
-    room.on("connected", handleConnected);
-
-    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
-      console.log("[VoiceAssistant] Track subscribed:", {
-        kind: track.kind,
-        participant: participant.identity,
-        isLocal: participant === localParticipant,
-      });
-
-      if (track.kind === "audio" && participant !== localParticipant) {
-        const audioElement = track.attach();
-        audioElement.autoplay = true;
-        audioElement.playsInline = true;
-        document.body.appendChild(audioElement);
-        console.log("[VoiceAssistant] Audio element attached");
-      }
-    };
-
-    const handleTrackUnsubscribed = (track: any) => {
-      if (track.kind === "audio") {
-        track.detach().forEach((element: HTMLMediaElement) => {
-          element.remove();
-        });
-      }
-    };
-
-    const handleTrackPublished = (publication: any, participant: any) => {
-      if (publication.kind === "audio" && participant === localParticipant) {
-        console.log("[VoiceAssistant] ✅✅✅ LOCAL MICROPHONE TRACK PUBLISHED!", {
-          trackSid: publication.trackSid,
-          source: publication.source,
-          muted: publication.isMuted,
-        });
-      }
-    };
-
-    const handleParticipantMetadataChanged = (participant: any) => {
-      if (participant.isSpeaking !== undefined) {
-        setIsSpeaking(participant.isSpeaking);
-      }
-    };
-
-    room.on("trackSubscribed", handleTrackSubscribed);
-    room.on("trackUnsubscribed", handleTrackUnsubscribed);
-    room.on("trackPublished", handleTrackPublished);
-    room.on("participantMetadataChanged", handleParticipantMetadataChanged);
-
-    return () => {
-      room.off("connected", handleConnected);
-      room.off("trackSubscribed", handleTrackSubscribed);
-      room.off("trackUnsubscribed", handleTrackUnsubscribed);
-      room.off("trackPublished", handleTrackPublished);
-      room.off("participantMetadataChanged", handleParticipantMetadataChanged);
-    };
-  }, [room, localParticipant, setIsSpeaking]);
-
-  return null;
-};
-
-// Minimal voice controls component
-const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect }) => {
-  const { localParticipant } = useLocalParticipant();
-  const room = useRoomContext();
-  const [isMuted, setIsMuted] = useState(false);
-  const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
-
-  // Monitor microphone publishing
-  useEffect(() => {
-    if (!localParticipant || !room) return;
-
-    const checkMicStatus = () => {
-      const isEnabled = localParticipant.isMicrophoneEnabled;
-      const micPublication = localParticipant.getTrackPublication("microphone" as any);
-      const hasTrack = !!micPublication?.track;
-      const isTrackMuted = micPublication?.isMuted ?? false;
-
-      console.log("[VoiceAssistant] Mic Status Check:", {
-        enabled: isEnabled,
-        hasPublication: !!micPublication,
-        hasTrack,
-        isTrackMuted,
-        roomState: room.state,
-        participantIdentity: localParticipant.identity,
-      });
-
-      // Track mute state from publication
-      if (micPublication) {
-        setIsMuted(micPublication.isMuted);
-      }
-    };
-
-    checkMicStatus();
-
-    // Listen for mute state changes on the publication
-    const handleTrackMuted = (publication: any) => {
-      if (publication.kind === "audio") {
-        setIsMuted(publication.isMuted);
-        console.log("[VoiceAssistant] Microphone mute state changed:", publication.isMuted);
-      }
-    };
-
-    // Listen for track published events
-    const handleTrackPublished = (publication: any) => {
-      if (publication.kind === "audio") {
-        console.log("[VoiceAssistant] ✅✅✅ MICROPHONE TRACK PUBLISHED!", {
-          trackSid: publication.trackSid,
-          muted: publication.isMuted,
-          source: publication.source,
-        });
-        // Set up mute listeners when track is published
-        setIsMuted(publication.isMuted);
-        if (publication.track) {
-          setAudioTrackRef(publication.track);
-        }
-        (publication as any).on("muted", () => handleTrackMuted(publication));
-        (publication as any).on("unmuted", () => handleTrackMuted(publication));
-      }
-    };
-
-    const handleTrackUnpublished = (publication: any) => {
-      if (publication.kind === "audio") {
-        console.warn("[VoiceAssistant] ❌ Microphone track unpublished");
-        // Remove mute listeners
-        (publication as any).off("muted", handleTrackMuted);
-        (publication as any).off("unmuted", handleTrackMuted);
-      }
-    };
-
-    localParticipant.on("trackPublished", handleTrackPublished);
-    localParticipant.on("trackUnpublished", handleTrackUnpublished);
-
-    // Subscribe to mute events if publication already exists
-    const micPub = localParticipant.getTrackPublication("microphone" as any);
-    if (micPub) {
-      setIsMuted(micPub.isMuted);
-      if (micPub.track) {
-        setAudioTrackRef(micPub.track);
-      }
-      (micPub as any).on("muted", () => handleTrackMuted(micPub));
-      (micPub as any).on("unmuted", () => handleTrackMuted(micPub));
+  // Helper function to normalize pathname (remove trailing slashes, etc.)
+  const normalizePathname = useCallback((pathname: string): string => {
+    // Remove trailing slash except for root
+    let normalized = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
+    // Ensure it starts with /
+    if (!normalized.startsWith("/")) {
+      normalized = "/" + normalized;
     }
+    return normalized;
+  }, []);
 
-    room.on("connected", () => {
-      console.log("[VoiceAssistant] Room connected, checking mic...");
-      checkMicStatus();
+  // Helper function to navigate to a URL string (defined first)
+  const navigateToUrlFromString = useCallback(
+    (urlString: string) => {
+      try {
+        let pathname: string;
+
+        if (urlString.startsWith("http://") || urlString.startsWith("https://")) {
+          const url = new URL(urlString);
+          pathname = url.pathname;
+        } else {
+          pathname = urlString.startsWith("/") ? urlString : `/${urlString}`;
+        }
+
+        // Normalize pathname
+        pathname = normalizePathname(pathname);
+        const currentPath = normalizePathname(location.pathname);
+
+        // Check if already on target page
+        if (pathname === currentPath) {
+          console.log(`[Agent Navigation] Already on target page: ${pathname}, skipping navigation`);
+          toast({
+            title: "Already Here",
+            description: `You're already on ${pathname}`,
+          });
+          return;
+        }
+
+        // Check if this is a duplicate navigation (same path within debounce window)
+        const now = Date.now();
+        if (
+          lastNavigationRef.current &&
+          lastNavigationRef.current.pathname === pathname &&
+          now - lastNavigationRef.current.timestamp < NAVIGATION_DEBOUNCE_MS
+        ) {
+          console.log(`[Agent Navigation] Duplicate navigation detected for ${pathname}, ignoring`);
+          return;
+        }
+
+        // Clear any pending navigation timeout
+        if (navigationTimeoutRef.current) {
+          clearTimeout(navigationTimeoutRef.current);
+        }
+
+        // Update last navigation
+        lastNavigationRef.current = { pathname, timestamp: now };
+
+        // Debounce navigation to prevent rapid changes
+        navigationTimeoutRef.current = setTimeout(() => {
+          console.log(`[Agent Navigation] ✅ Executing navigation to: ${pathname} (from: ${currentPath})`);
+          navigate(pathname);
+
+          const pageNames: Record<string, string> = {
+            "/": "Home",
+            "/dashboard": "Dashboard",
+            "/whatsapp-reports": "WhatsApp Reports",
+            "/productivity-reports": "Productivity Reports",
+            "/ads-reports": "Ads Reports",
+            "/mail-reports": "Mail Reports",
+            "/admin/settings": "Admin Settings",
+            "/bots": "Bot Controls",
+            "/social-posts": "Social Posts",
+            "/content-ideas": "Content Ideas",
+            "/meeting-summary": "Meeting Summary",
+            "/courses-prices": "Courses & Prices",
+            "/awaiting-approval": "Awaiting Approval",
+          };
+
+          const pageName = pageNames[pathname] || pathname;
+          toast({
+            title: "Voice Agent Navigation",
+            description: `Opening ${pageName}`,
+          });
+        }, NAVIGATION_DEBOUNCE_MS);
+      } catch (error) {
+        console.error("[Agent Navigation] Navigation error:", error);
+      }
+    },
+    [navigate, toast, location.pathname, normalizePathname],
+  );
+
+  // Use useDataChannel hook (must be called unconditionally)
+  // This is the recommended LiveKit method
+  console.log('[Agent Navigation] Setting up useDataChannel hook with topic "agent-navigation"');
+  const { message } = useDataChannel("agent-navigation", (msg) => {
+    console.log("[Agent Navigation] 📨📨📨 useDataChannel callback received message:", {
+      msg,
+      msgType: typeof msg,
+      msgKeys: msg ? Object.keys(msg as any) : [],
+      hasPayload: !!(msg as any)?.payload,
+      hasData: !!(msg as any)?.data,
+      msgString: typeof msg === "string" ? msg : JSON.stringify(msg),
     });
 
-    // Periodic check
-    const interval = setInterval(checkMicStatus, 2000);
+    try {
+      // Handle both ReceivedDataMessage and raw messages
+      let rawData: any;
 
-    return () => {
-      localParticipant.off("trackPublished", handleTrackPublished);
-      localParticipant.off("trackUnpublished", handleTrackUnpublished);
-      room.off("connected", checkMicStatus);
-      // Clean up mute listeners from existing publication
-      const existingPub = localParticipant.getTrackPublication("microphone" as any);
-      if (existingPub) {
-        (existingPub as any).off("muted", handleTrackMuted);
-        (existingPub as any).off("unmuted", handleTrackMuted);
+      if (typeof msg === "string") {
+        console.log("[Agent Navigation] Message is string, parsing JSON...");
+        rawData = JSON.parse(msg);
+      } else if ((msg as any)?.payload) {
+        console.log("[Agent Navigation] Message has payload property");
+        const payload = (msg as any).payload;
+        rawData = typeof payload === "string" ? JSON.parse(payload) : payload;
+      } else if ((msg as any)?.data) {
+        console.log("[Agent Navigation] Message has data property");
+        const data = (msg as any).data;
+        rawData = typeof data === "string" ? JSON.parse(data) : data;
+      } else {
+        console.log("[Agent Navigation] Using message as-is");
+        rawData = msg;
       }
-      clearInterval(interval);
-    };
-  }, [localParticipant, room]);
 
-  const toggleMute = async () => {
-    console.log("[VoiceAssistant] 🔴 MUTE BUTTON CLICKED!");
+      console.log("[Agent Navigation] Parsed useDataChannel data:", rawData);
 
-    // Get current state
-    const currentMuted = isMuted;
-    const newMutedState = !currentMuted;
-
-    console.log("[VoiceAssistant] Toggling mute state from", currentMuted, "to", newMutedState);
-
-    // Mute/unmute the actual MediaStreamTrack directly (this stops audio at the source)
-    if (audioTrackRef) {
-      const mediaStreamTrack = (audioTrackRef as any).mediaStreamTrack || audioTrackRef;
-      if (mediaStreamTrack && 'enabled' in mediaStreamTrack) {
-        mediaStreamTrack.enabled = !newMutedState; // enabled=false means muted
-        console.log(
-          "[VoiceAssistant] ✅✅✅ Direct track mute:",
-          newMutedState ? "MUTED (track.enabled=false)" : "UNMUTED (track.enabled=true)",
-          "Actual track.enabled:",
-          mediaStreamTrack.enabled,
-        );
+      if (rawData.type === "agent-navigation-url" || rawData.pathname || rawData.navigate) {
+        const path = rawData.pathname || rawData.navigate || rawData.url;
+        console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel! 🎯🎯🎯", path);
+        navigateToUrlFromString(path);
+      } else {
+        console.log("[Agent Navigation] Message does not contain navigation data:", rawData);
       }
-    } else {
-      console.warn("[VoiceAssistant] ⚠️ No audio track reference found for direct muting");
-      // Try to find the track from publications
-      if (localParticipant) {
-        const allPubs = Array.from(localParticipant.trackPublications.values());
-        const audioPub = allPubs.find((p) => p.kind === "audio");
-        if (audioPub?.track) {
-          console.log("[VoiceAssistant] Found audio track via publications, using it");
-          const mediaStreamTrack = (audioPub.track as any).mediaStreamTrack || audioPub.track;
-          if (mediaStreamTrack && 'enabled' in mediaStreamTrack) {
-            mediaStreamTrack.enabled = !newMutedState;
-            setAudioTrackRef(audioPub.track);
-          }
+    } catch (e) {
+      console.error("[Agent Navigation] ❌ Error parsing useDataChannel message:", e, msg);
+      console.error("[Agent Navigation] Error details:", {
+        error: e,
+        message: msg,
+        messageType: typeof msg,
+      });
+    }
+  });
+
+  // Log when message changes (for debugging)
+  useEffect(() => {
+    if (message) {
+      console.log("[Agent Navigation] 📨 useDataChannel message state updated:", {
+        message,
+        messageType: typeof message,
+        messageKeys: message ? Object.keys(message as any) : [],
+      });
+
+      try {
+        // Try to parse and handle the message state
+        let rawData: any;
+        if (typeof message === "string") {
+          rawData = JSON.parse(message);
+        } else if ((message as any)?.payload) {
+          const payload = (message as any).payload;
+          rawData = typeof payload === "string" ? JSON.parse(payload) : payload;
+        } else if ((message as any)?.data) {
+          const data = (message as any).data;
+          rawData = typeof data === "string" ? JSON.parse(data) : data;
+        } else {
+          rawData = message;
         }
+
+        if (rawData.type === "agent-navigation-url" || rawData.pathname || rawData.navigate) {
+          const path = rawData.pathname || rawData.navigate || rawData.url;
+          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel message state! 🎯🎯🎯", path);
+          navigateToUrlFromString(path);
+        }
+      } catch (e) {
+        console.error("[Agent Navigation] Error parsing useDataChannel message state:", e, message);
       }
     }
+  }, [message, navigateToUrlFromString]);
 
-    // Update visual state
-    setIsMuted(newMutedState);
-
-    if (!localParticipant) {
-      console.warn("[VoiceAssistant] No local participant");
+  useEffect(() => {
+    if (!room) {
+      console.log("[Agent Navigation] No room context available yet");
       return;
     }
 
-    // Also try to mute through publication if it exists (tries multiple methods)
-    const micPubByKind = localParticipant.getTrackPublication("microphone" as any);
-    const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
-    const allPubs = Array.from(localParticipant.trackPublications.values());
-    const audioPub = micPubByKind || micPubBySource || allPubs.find((p) => p.kind === "audio");
+    // Define navigateToUrl inside useEffect - delegates to navigateToUrlFromString for consistency
+    // This ensures both useDataChannel and RoomEvent.DataReceived use the same navigation logic
+    const navigateToUrl = (urlString: string) => {
+      // Use the same debounced navigation function
+      navigateToUrlFromString(urlString);
+    };
 
-    if (audioPub) {
+    // Handle data messages from the agent via RoomEvent.DataReceived
+    // Note: RoomEvent.DataReceived signature is: (payload: Uint8Array, participant?: RemoteParticipant, kind?: DataPacket_Kind, topic?: string)
+    const handleDataReceived = (payload: Uint8Array, participant?: any, kind?: any, topic?: string) => {
+      console.log("[Agent Navigation] ✅✅✅ DATA RECEIVED via RoomEvent! ✅✅✅", {
+        payloadLength: payload.length,
+        participant: participant?.identity || "unknown",
+        participantIdentity: participant?.identity,
+        kind: kind,
+        topic: topic,
+        payloadPreview: Array.from(payload.slice(0, 100)),
+        isFromAgent: participant?.identity?.includes("agent") || false,
+      });
+
+      // Check if this is from the agent (should be, but verify)
+      if (participant && !participant.identity.includes("agent")) {
+        console.log("[Agent Navigation] Data received from non-agent participant, ignoring:", participant.identity);
+        return;
+      }
+
+      // Check if this is our navigation topic (if topic filtering is available)
+      // Note: topic might be undefined for RoomEvent.DataReceived, that's okay
+      if (topic && topic !== "agent-navigation") {
+        console.log("[Agent Navigation] Ignoring data with topic:", topic);
+        return;
+      }
+
       try {
-        console.log(
-          "[VoiceAssistant] Found publication via:",
-          micPubByKind ? "kind" : micPubBySource ? "source" : "search",
-        );
+        const decoder = new TextDecoder();
+        const rawText = decoder.decode(payload);
+        console.log("[Agent Navigation] Decoded message text:", rawText);
 
-        // Mute the track directly through publication
-        if (audioPub.track) {
-          const mediaStreamTrack = (audioPub.track as any).mediaStreamTrack || audioPub.track;
-          if (mediaStreamTrack && 'enabled' in mediaStreamTrack) {
-            mediaStreamTrack.enabled = !newMutedState;
-            console.log("[VoiceAssistant] ✅ Muted via publication.track.enabled:", !newMutedState);
-          }
+        const message = JSON.parse(rawText) as NavigationMessage;
+        console.log("[Agent Navigation] Parsed message object:", message);
+
+        if (message.type === "agent-navigation-url") {
+          console.log("[Agent Navigation] ✅ Navigation message recognized!", {
+            url: message.url,
+            pathname: message.pathname,
+          });
+          // Prefer pathname if provided (avoids origin issues), otherwise parse URL
+          const urlToNavigate = message.pathname || message.url;
+          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived! 🎯🎯🎯", urlToNavigate);
+          navigateToUrl(urlToNavigate);
+        } else if (message.pathname || (message as any).navigate) {
+          // Fallback: check for pathname or navigate field without type
+          const path = message.pathname || (message as any).navigate || message.url;
+          console.log("[Agent Navigation] ✅ Found navigation path in message:", path);
+          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived (fallback)! 🎯🎯🎯", path);
+          navigateToUrl(path);
         } else {
-          console.log("[VoiceAssistant] Publication found but no track, using direct mute only");
+          console.log("[Agent Navigation] ⚠️ Message type mismatch:", message.type, "Expected: agent-navigation-url");
+          console.log("[Agent Navigation] Message keys:", Object.keys(message));
         }
       } catch (error) {
-        console.error("[VoiceAssistant] ❌ Error muting publication:", error);
-        // Direct track mute already worked, so this is not critical
-      }
-    } else {
-      console.log("[VoiceAssistant] No publication found, direct track mute is sufficient");
-    }
-  };
-
-  // Enable microphone on mount and when room connects
-  useEffect(() => {
-    if (localParticipant && room?.state === "connected") {
-      const enableMicrophone = async () => {
+        console.error("[Agent Navigation] ❌ Error parsing data message:", error);
+        console.error("[Agent Navigation] Raw payload length:", payload.length);
+        // Try to log raw bytes for debugging
         try {
-          console.log("[VoiceAssistant] Room connected, enabling microphone...");
+          const decoder = new TextDecoder();
+          const text = decoder.decode(payload);
+          console.error("[Agent Navigation] Decoded text (error case):", text);
+        } catch (e) {
+          console.error("[Agent Navigation] Could not decode payload:", e);
+        }
+      }
+    };
 
-          // Check if we have microphone permissions
-          try {
-            const permissions = await navigator.permissions.query({ name: "microphone" as PermissionName });
-            console.log("[VoiceAssistant] Microphone permission status:", permissions.state);
+    const setupListener = () => {
+      console.log("[Agent Navigation] ✅ Setting up navigation listener", {
+        roomName: room.name,
+        participants: room.remoteParticipants.size,
+        roomState: room.state,
+      });
 
-            if (permissions.state === "denied") {
-              console.error("[VoiceAssistant] ❌ Microphone permission denied by user");
-              alert("Please allow microphone access to use the voice assistant");
-              return;
+      // Subscribe to data messages - PRIMARY method
+      // IMPORTANT: RoomEvent.DataReceived fires for ALL data messages in the room
+      // The participant parameter in the callback tells us who sent it
+      // We do NOT need to listen on individual participants - that's not a valid API
+      console.log("[Agent Navigation] Subscribing to RoomEvent.DataReceived for room-level data");
+      room.on(RoomEvent.DataReceived, handleDataReceived);
+
+      // Log all remote participants for debugging
+      console.log("[Agent Navigation] Remote participants count:", room.remoteParticipants.size);
+      room.remoteParticipants.forEach((participant) => {
+        console.log("[Agent Navigation]   - Remote participant:", participant.identity, {
+          isAgent: participant.identity.includes("agent"),
+          hasMetadata: !!participant.metadata,
+        });
+      });
+
+      // Listen for new participants joining
+      const handleParticipantConnected = (participant: any) => {
+        console.log("[Agent Navigation] Participant connected:", participant.identity);
+
+        // Check agent metadata when participant connects
+        if (participant.identity.includes("agent")) {
+          console.log("[Agent Navigation] Agent participant connected - will check metadata");
+          setTimeout(() => {
+            if (participant.metadata) {
+              console.log("[Agent Navigation] Agent has metadata on connect:", participant.metadata);
+              handleMetadataChange(participant);
+            } else {
+              console.log("[Agent Navigation] Agent connected but no metadata yet");
             }
-          } catch (e) {
-            console.log("[VoiceAssistant] Could not check permissions (may not be supported):", e);
-          }
+          }, 1000);
+        }
+      };
+      room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
 
-          // Manually get and publish microphone since audio={false}
-          console.log("[VoiceAssistant] Manually requesting microphone...");
+      // Note: room.engine events are not part of the public API, using RoomEvent.DataReceived instead
 
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-          });
+      // Note: Transcription events are not available in LiveKit RoomEvent API
+      // Navigation is handled via DataReceived events and metadata changes
 
-          console.log("[VoiceAssistant] ✅ Got microphone stream:", stream.getAudioTracks());
+      // Monitor participant metadata changes (PRIMARY METHOD)
+      let lastCheckedMetadata: string | null = null;
 
-          const audioTrack = stream.getAudioTracks()[0];
-          if (audioTrack) {
-            console.log("[VoiceAssistant] Publishing microphone track...");
+      const handleMetadataChange = (participant: any) => {
+        console.log("[Agent Navigation] Metadata changed event!", {
+          participant: participant?.identity,
+          metadata: participant?.metadata,
+          isAgent: participant?.identity?.includes("agent"),
+        });
 
-            const publication = await localParticipant.publishTrack(audioTrack, {
-              name: "microphone",
-            } as any);
+        if (participant?.identity?.includes("agent")) {
+          const metadata = participant.metadata;
+          if (metadata && metadata !== lastCheckedMetadata) {
+            lastCheckedMetadata = metadata;
+            console.log("[Agent Navigation] 🔍 Checking agent metadata:", metadata);
 
-            console.log("[VoiceAssistant] ✅✅✅ MICROPHONE TRACK PUBLISHED!", {
-              trackSid: publication.trackSid,
-              kind: publication.kind,
-              source: publication.source,
-              track: !!publication.track,
-            });
-
-            // Store reference to the audio track for muting (direct from MediaStreamTrack)
-            setAudioTrackRef(audioTrack);
-            console.log("[VoiceAssistant] ✅ Audio track reference stored for muting (direct track)");
-
-            // Also store track from publication if available
-            if (publication.track) {
-              setAudioTrackRef(publication.track);
-              console.log("[VoiceAssistant] ✅ Publication track reference also stored");
-            }
-
-            // Wait a bit and verify publication is available via getTrackPublication
-            setTimeout(() => {
-              // Try multiple ways to find the publication
-              const micPubByKind = localParticipant.getTrackPublication("microphone" as any);
-              const micPubBySource = localParticipant.getTrackPublication("microphone" as any);
-              const allPublications = Array.from(localParticipant.trackPublications.values());
-              const audioPublications = allPublications.filter((p) => p.kind === "audio");
-
-              console.log("[VoiceAssistant] Verification check:", {
-                byKind: !!micPubByKind,
-                bySource: !!micPubBySource,
-                totalPublications: allPublications.length,
-                audioPublications: audioPublications.length,
-                audioPubTrackSids: audioPublications.map((p) => p.trackSid),
-              });
-
-              // Use the publication we got from publishTrack or find it
-              const finalPub = publication || micPubByKind || micPubBySource || audioPublications[0];
-
-              if (finalPub && finalPub.track) {
-                console.log("[VoiceAssistant] ✅✅✅ ALL GOOD! Microphone is live and published!", {
-                  trackSid: finalPub.trackSid,
-                  hasTrack: !!finalPub.track,
-                });
-                setAudioTrackRef(finalPub.track);
-              } else {
-                console.warn(
-                  "[VoiceAssistant] ⚠️ Publication not found via getTrackPublication, but we have direct reference",
-                );
+            try {
+              const parsed = JSON.parse(metadata);
+              console.log("[Agent Navigation] Parsed metadata:", parsed);
+              if (parsed.navigate || parsed.path) {
+                const path = parsed.path || parsed.navigate;
+                console.log("[Agent Navigation] 🎯🎯🎯 FOUND NAVIGATION IN METADATA! 🎯🎯🎯", path);
+                navigateToUrl(path);
+                return;
               }
-            }, 1000);
+            } catch (e) {
+              // Not JSON, check if it's a plain NAVIGATE command
+              console.log("[Agent Navigation] Metadata is not JSON, checking for NAVIGATE pattern");
+              const navMatch = metadata.match(/NAVIGATE:(\/[^\s]*)/);
+              if (navMatch) {
+                console.log("[Agent Navigation] 🎯 Found navigation in metadata text:", navMatch[1]);
+                navigateToUrl(navMatch[1]);
+                return;
+              }
+            }
           }
-        } catch (error) {
-          console.error("[VoiceAssistant] ❌ Error enabling microphone:", error);
-          alert("Error enabling microphone: " + (error instanceof Error ? error.message : "Unknown error"));
         }
       };
 
-      enableMicrophone();
+      // Check metadata on participant connect and when new participants join
+      const checkAgentMetadata = (p: any) => {
+        if (p.identity.includes("agent")) {
+          console.log("[Agent Navigation] 🔍 Checking agent metadata:", {
+            identity: p.identity,
+            metadata: p.metadata,
+            metadataType: typeof p.metadata,
+            hasMetadata: !!p.metadata,
+          });
+          if (p.metadata) {
+            handleMetadataChange(p);
+          }
+          // Metadata changes are handled via RoomEvent.ParticipantMetadataChanged
+        }
+      };
+
+      // Check existing participants
+      room.remoteParticipants.forEach(checkAgentMetadata);
+
+      // Monitor metadata changes via RoomEvent
+      room.on(RoomEvent.ParticipantMetadataChanged, handleMetadataChange);
+
+      // Also check existing participants again after setup (in case metadata was set before listener)
+      setTimeout(() => {
+        room.remoteParticipants.forEach((participant) => {
+          if (participant.identity.includes("agent")) {
+            console.log("[Agent Navigation] 🔍 Delayed check - agent metadata:", {
+              identity: participant.identity,
+              metadata: participant.metadata,
+            });
+            if (participant.metadata) {
+              handleMetadataChange(participant);
+            }
+          }
+        });
+      }, 2000);
+
+      // POLLING FALLBACK: Check metadata periodically (in case events don't fire)
+      let pollCount = 0;
+      const metadataCheckInterval = setInterval(() => {
+        pollCount++;
+        room.remoteParticipants.forEach((p) => {
+          if (p.identity.includes("agent")) {
+            const currentMetadata = p.metadata;
+            if (currentMetadata && currentMetadata !== lastCheckedMetadata) {
+              console.log("[Agent Navigation] 🔄 Polling detected metadata change!", {
+                pollCount,
+                oldMetadata: lastCheckedMetadata,
+                newMetadata: currentMetadata,
+                participant: p.identity,
+              });
+              handleMetadataChange(p);
+            } else if (pollCount % 20 === 0) {
+              // Log every 10 seconds (20 * 500ms)
+              console.log("[Agent Navigation] Polling check (every 10s):", {
+                participant: p.identity,
+                hasMetadata: !!currentMetadata,
+                metadata: currentMetadata?.substring(0, 100), // First 100 chars
+                lastChecked: lastCheckedMetadata?.substring(0, 100),
+              });
+            }
+
+            // DEBUG: Also log ALL metadata we see (even if same)
+            if (pollCount === 1 || pollCount % 10 === 0) {
+              console.log("[Agent Navigation] 🔍 Current agent metadata state:", {
+                participant: p.identity,
+                metadata: currentMetadata || "(null/empty)",
+                lastChecked: lastCheckedMetadata || "(null)",
+                areEqual: currentMetadata === lastCheckedMetadata,
+              });
+            }
+          }
+        });
+      }, 500); // Check every 500ms
+
+      // Store interval for cleanup
+      (room as any)._navMetadataInterval = metadataCheckInterval;
+
+      // Note: Transcription events are not available in LiveKit RoomEvent API
+      // Navigation is handled via DataReceived events and metadata changes
+
+      // Cleanup function
+      const cleanup = () => {
+        console.log("[Agent Navigation] Cleaning up event listeners");
+        room.off(RoomEvent.DataReceived, handleDataReceived);
+        room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+        room.off(RoomEvent.ParticipantMetadataChanged, handleMetadataChange);
+
+        // Clear polling interval
+        if ((room as any)._navMetadataInterval) {
+          clearInterval((room as any)._navMetadataInterval);
+        }
+
+        // Note: We don't need to clean up participant listeners since we only listen on room
+      };
+
+      return cleanup;
+    };
+
+    // Wait for room to be connected before setting up listener
+    if (room.state !== "connected") {
+      console.log("[Agent Navigation] Room not connected yet, state:", room.state);
+
+      const handleConnected = () => {
+        console.log("[Agent Navigation] Room connected, setting up listener now");
+        return setupListener();
+      };
+
+      room.on("connected", handleConnected);
+
+      return () => {
+        room.off("connected", handleConnected);
+      };
     }
-  }, [localParticipant, room?.state]);
 
-  return (
-    <div className="flex items-center gap-2">
-      {/* Mute/Unmute Button */}
-      <Button
-        size="icon"
-        variant={isMuted ? "destructive" : "default"}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleMute();
-        }}
-        className={cn(
-          "w-12 h-12 rounded-full transition-all duration-200 hover:scale-105",
-          isMuted
-            ? "bg-red-500 hover:bg-red-600 text-white border-2 border-red-600"
-            : "bg-primary hover:bg-primary/90 text-white",
-        )}
-        aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
-        type="button"
-      >
-        {isMuted ? <MicOff className="w-5 h-5 text-white stroke-2" /> : <Mic className="w-5 h-5 text-white" />}
-      </Button>
+    // Room is already connected, setup listener immediately
+    return setupListener();
+  }, [room, navigate, toast, navigateToUrlFromString]);
 
-      {/* End Call Button */}
-      <Button
-        size="icon"
-        variant="secondary"
-        onClick={onDisconnect}
-        className="w-12 h-12 rounded-full bg-secondary hover:bg-secondary/90 transition-all duration-200 hover:scale-105"
-        aria-label="End call"
-      >
-        <PhoneOff className="w-5 h-5" />
-      </Button>
-    </div>
-  );
-};
-
-interface VoiceAssistantModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, onOpenChange }) => {
-  const { getToken, isLoading: tokenLoading } = useLiveKitToken();
-  const { isConnected, setIsConnected, saveConversation, clearTranscript } = useVoiceAssistantContext();
-
-  const [token, setToken] = useState<string | null>(null);
-  const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState<string>("voice-assistant");
-
+  // Expose test function for debugging
   useEffect(() => {
-    if (open && !token) {
-      handleConnect();
-    }
-  }, [open]);
+    // Direct navigation test
+    (window as any).testNav = (path: string) => {
+      console.log("[Agent Navigation] 🧪 Testing direct navigation to:", path);
+      navigateToUrlFromString(path);
+    };
 
-  const handleConnect = async () => {
-    const result = await getToken(roomName);
-    if (result) {
-      setToken(result.token);
-      setLivekitUrl(result.url);
-      setRoomName(result.roomName);
-    }
-  };
+    console.log('[Agent Navigation] Test function available: window.testNav("/whatsapp-reports")');
+  }, [navigateToUrlFromString]);
 
-  const handleDisconnect = async () => {
-    if (isConnected) {
-      await saveConversation(roomName);
-    }
-    setToken(null);
-    setLivekitUrl(null);
-    setIsConnected(false);
-    clearTranscript();
-    onOpenChange(false);
-  };
-
-  if (!open) return null;
-
-  return (
-    <div
-      className={cn(
-        "fixed bottom-20 right-6 z-50 transition-all duration-300",
-        "bg-background/95 backdrop-blur-xl rounded-full shadow-glow",
-        "border border-primary/20 p-3",
-      )}
-    >
-      {tokenLoading || !token || !livekitUrl ? (
-        // Loading State
-        <div className="flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : (
-        <LiveKitRoom
-          serverUrl={livekitUrl}
-          token={token}
-          connect={true}
-          audio={false}
-          video={false}
-          options={{
-            publishDefaults: {
-              audioPreset: { maxBitrate: 32000 },
-              dtx: true,
-              red: true,
-            },
-            audioCaptureDefaults: {
-              autoGainControl: true,
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          }}
-          onConnected={() => {
-            console.log("[VoiceAssistant] ✅✅✅ Connected to LiveKit room!");
-            setIsConnected(true);
-          }}
-          onDisconnected={() => {
-            console.log("[VoiceAssistant] Disconnected from LiveKit room");
-            setIsConnected(false);
-          }}
-          onError={(error) => {
-            console.error("[VoiceAssistant] ❌ LiveKit error:", error);
-          }}
-        >
-          <MicrophoneEnabler />
-          <AgentNavigationListener />
-          <RoomAudioRenderer />
-
-          {/* Minimal Controls with Status Indicator */}
-          <div className="relative">
-            {/* Connection Status Indicator */}
-            <div
-              className={cn(
-                "absolute -top-1 -left-1 w-3 h-3 rounded-full transition-all duration-300",
-                isConnected ? "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-400",
-              )}
-            />
-
-            <VoiceControls onDisconnect={handleDisconnect} />
-          </div>
-        </LiveKitRoom>
-      )}
-    </div>
-  );
+  return null; // This is a listener component with no UI
 };

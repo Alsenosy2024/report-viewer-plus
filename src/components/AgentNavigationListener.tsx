@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useRoomContext, useDataChannel } from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
+import { useVoiceAssistantContext } from "@/contexts/VoiceAssistantContext";
 
 interface NavigationMessage {
   type: "agent-navigation-url";
@@ -26,11 +27,14 @@ export const AgentNavigationListener = () => {
   const location = useLocation();
   const { toast } = useToast();
   const room = useRoomContext();
+  const { transcript } = useVoiceAssistantContext();
 
   // Track navigation state to prevent duplicates and race conditions
   const lastNavigationRef = useRef<{ pathname: string; timestamp: number } | null>(null);
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const NAVIGATION_DEBOUNCE_MS = 500; // Prevent rapid navigation attempts
+  const pendingNavigationRef = useRef<string | null>(null);
+  const NAVIGATION_DEBOUNCE_MS = 0; // No debounce - execute immediately
+  const DUPLICATE_WINDOW_MS = 2000; // Window for duplicate detection (2 seconds)
 
   console.log("[Agent Navigation] Component rendered", {
     hasRoom: !!room,
@@ -78,52 +82,87 @@ export const AgentNavigationListener = () => {
           return;
         }
 
-        // Check if this is a duplicate navigation (same path within debounce window)
+        // Check if this is a duplicate navigation (same path within duplicate window)
         const now = Date.now();
         if (
           lastNavigationRef.current &&
           lastNavigationRef.current.pathname === pathname &&
-          now - lastNavigationRef.current.timestamp < NAVIGATION_DEBOUNCE_MS
+          now - lastNavigationRef.current.timestamp < DUPLICATE_WINDOW_MS
         ) {
-          console.log(`[Agent Navigation] Duplicate navigation detected for ${pathname}, ignoring`);
+          console.log(`[Agent Navigation] Duplicate navigation detected for ${pathname} (within ${DUPLICATE_WINDOW_MS}ms), ignoring`);
           return;
         }
 
-        // Clear any pending navigation timeout
+        // If there's a pending navigation to a different path, cancel it
+        if (navigationTimeoutRef.current && pendingNavigationRef.current !== pathname) {
+          console.log(`[Agent Navigation] Cancelling pending navigation to ${pendingNavigationRef.current}, new navigation to ${pathname}`);
+          clearTimeout(navigationTimeoutRef.current);
+          navigationTimeoutRef.current = null;
+        }
+
+        // Store pending navigation
+        pendingNavigationRef.current = pathname;
+
+        // Update last navigation timestamp
+        lastNavigationRef.current = { pathname, timestamp: now };
+
+        // Clear any existing timeout
         if (navigationTimeoutRef.current) {
           clearTimeout(navigationTimeoutRef.current);
         }
 
-        // Update last navigation
-        lastNavigationRef.current = { pathname, timestamp: now };
+        // Execute navigation immediately (no debounce)
+        const executeNavigation = () => {
+          // Double-check we're not already on this page (race condition protection)
+          const currentPathCheck = normalizePathname(window.location.pathname);
+          if (pathname === currentPathCheck) {
+            console.log(`[Agent Navigation] Already navigated to ${pathname}, skipping`);
+            pendingNavigationRef.current = null;
+            return;
+          }
 
-        // Debounce navigation to prevent rapid changes
-        navigationTimeoutRef.current = setTimeout(() => {
-          console.log(`[Agent Navigation] ✅ Executing navigation to: ${pathname} (from: ${currentPath})`);
-          navigate(pathname);
+          console.log(`[Agent Navigation] ✅✅✅ EXECUTING NAVIGATION NOW to: ${pathname} (from: ${currentPath})`);
+          
+          // Execute navigation immediately
+          try {
+            navigate(pathname);
+            pendingNavigationRef.current = null;
 
-          const pageNames: Record<string, string> = {
-            "/": "Home",
-            "/dashboard": "Dashboard",
-            "/whatsapp-reports": "WhatsApp Reports",
-            "/productivity-reports": "Productivity Reports",
-            "/ads-reports": "Ads Reports",
-            "/mail-reports": "Mail Reports",
-            "/admin/settings": "Admin Settings",
-            "/bots": "Bot Controls",
-            "/social-posts": "Social Posts",
-            "/content-ideas": "Content Ideas",
-            "/meeting-summary": "Meeting Summary",
-            "/courses-prices": "Courses & Prices",
-            "/awaiting-approval": "Awaiting Approval",
-          };
+            const pageNames: Record<string, string> = {
+              "/": "Home",
+              "/dashboard": "Dashboard",
+              "/whatsapp-reports": "WhatsApp Reports",
+              "/productivity-reports": "Productivity Reports",
+              "/ads-reports": "Ads Reports",
+              "/mail-reports": "Mail Reports",
+              "/admin/settings": "Admin Settings",
+              "/bots": "Bot Controls",
+              "/social-posts": "Social Posts",
+              "/content-ideas": "Content Ideas",
+              "/meeting-summary": "Meeting Summary",
+              "/courses-prices": "Courses & Prices",
+              "/awaiting-approval": "Awaiting Approval",
+            };
 
-          const pageName = pageNames[pathname] || pathname;
-          toast({
-            title: "Voice Agent Navigation",
-            description: `Opening ${pageName}`,
-          });
-        }, NAVIGATION_DEBOUNCE_MS);
+            const pageName = pageNames[pathname] || pathname;
+            toast({
+              title: "Voice Agent Navigation",
+              description: `Opening ${pageName}`,
+            });
+            
+            console.log(`[Agent Navigation] ✅✅✅ NAVIGATION COMPLETE: ${pathname} ✅✅✅`);
+          } catch (error) {
+            console.error(`[Agent Navigation] ❌ Navigation error:`, error);
+            pendingNavigationRef.current = null;
+          }
+        };
+
+        // Execute immediately (no timeout if debounce is 0)
+        if (NAVIGATION_DEBOUNCE_MS > 0) {
+          navigationTimeoutRef.current = setTimeout(executeNavigation, NAVIGATION_DEBOUNCE_MS);
+        } else {
+          executeNavigation();
+        }
       } catch (error) {
         console.error("[Agent Navigation] Navigation error:", error);
       }
@@ -134,6 +173,9 @@ export const AgentNavigationListener = () => {
   // Use useDataChannel hook (must be called unconditionally)
   // This is the recommended LiveKit method
   console.log('[Agent Navigation] Setting up useDataChannel hook with topic "agent-navigation"');
+  console.log('[Agent Navigation] Room state:', room?.state);
+  console.log('[Agent Navigation] Room name:', room?.name);
+  
   const { message } = useDataChannel("agent-navigation", (msg) => {
     console.log("[Agent Navigation] 📨📨📨 useDataChannel callback received message:", {
       msg,
@@ -143,6 +185,7 @@ export const AgentNavigationListener = () => {
       hasData: !!(msg as any)?.data,
       msgString: typeof msg === "string" ? msg : JSON.stringify(msg),
     });
+    console.log("[Agent Navigation] 🔍🔍🔍 RAW MESSAGE RECEIVED 🔍🔍🔍", msg);
 
     try {
       // Handle both ReceivedDataMessage and raw messages
@@ -165,13 +208,38 @@ export const AgentNavigationListener = () => {
       }
 
       console.log("[Agent Navigation] Parsed useDataChannel data:", rawData);
+      console.log("[Agent Navigation] 🔍🔍🔍 PARSED DATA STRUCTURE 🔍🔍🔍", JSON.stringify(rawData, null, 2));
 
-      if (rawData.type === "agent-navigation-url" || rawData.pathname || rawData.navigate) {
-        const path = rawData.pathname || rawData.navigate || rawData.url;
+      // Extract navigation path - check multiple possible fields
+      let path: string | null = null;
+      if (rawData.pathname) {
+        path = rawData.pathname;
+        console.log("[Agent Navigation] ✅ Found pathname:", path);
+      } else if (rawData.navigate) {
+        path = rawData.navigate;
+        console.log("[Agent Navigation] ✅ Found navigate:", path);
+      } else if (rawData.url) {
+        path = rawData.url;
+        console.log("[Agent Navigation] ✅ Found url:", path);
+      } else if (rawData.type === "agent-navigation-url" && rawData.url) {
+        path = rawData.url;
+        console.log("[Agent Navigation] ✅ Found url from type check:", path);
+      }
+
+      if (path) {
         console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATION FROM useDataChannel! 🎯🎯🎯", path);
+        console.log("[Agent Navigation] Calling navigateToUrlFromString with:", path);
+        // Execute navigation immediately (debouncing is handled in navigateToUrlFromString)
         navigateToUrlFromString(path);
       } else {
-        console.log("[Agent Navigation] Message does not contain navigation data:", rawData);
+        console.error("[Agent Navigation] ❌❌❌ NO NAVIGATION PATH FOUND! ❌❌❌", {
+          rawData,
+          hasPathname: !!rawData.pathname,
+          hasNavigate: !!rawData.navigate,
+          hasUrl: !!rawData.url,
+          type: rawData.type,
+          allKeys: Object.keys(rawData),
+        });
       }
     } catch (e) {
       console.error("[Agent Navigation] ❌ Error parsing useDataChannel message:", e, msg);
@@ -244,17 +312,16 @@ export const AgentNavigationListener = () => {
         isFromAgent: participant?.identity?.includes("agent") || false,
       });
 
-      // Check if this is from the agent (should be, but verify)
-      if (participant && !participant.identity.includes("agent")) {
-        console.log("[Agent Navigation] Data received from non-agent participant, ignoring:", participant.identity);
-        return;
-      }
-
-      // Check if this is our navigation topic (if topic filtering is available)
-      // Note: topic might be undefined for RoomEvent.DataReceived, that's okay
-      if (topic && topic !== "agent-navigation") {
+      // Don't filter by participant - accept data from anyone (agent might send via different participant)
+      // Only filter by topic if it's explicitly set and not our topic
+      if (topic && topic !== "agent-navigation" && topic !== "page-content" && topic !== "dom-action-result") {
         console.log("[Agent Navigation] Ignoring data with topic:", topic);
         return;
+      }
+      
+      // Log participant info but don't filter
+      if (participant) {
+        console.log("[Agent Navigation] Data from participant:", participant.identity, "isAgent:", participant.identity.includes("agent"));
       }
 
       try {
@@ -265,24 +332,32 @@ export const AgentNavigationListener = () => {
         const message = JSON.parse(rawText) as NavigationMessage;
         console.log("[Agent Navigation] Parsed message object:", message);
 
+        // Extract navigation path - check multiple possible fields
+        let path: string | null = null;
         if (message.type === "agent-navigation-url") {
           console.log("[Agent Navigation] ✅ Navigation message recognized!", {
             url: message.url,
             pathname: message.pathname,
           });
           // Prefer pathname if provided (avoids origin issues), otherwise parse URL
-          const urlToNavigate = message.pathname || message.url;
-          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived! 🎯🎯🎯", urlToNavigate);
-          navigateToUrl(urlToNavigate);
-        } else if (message.pathname || (message as any).navigate) {
-          // Fallback: check for pathname or navigate field without type
-          const path = message.pathname || (message as any).navigate || message.url;
-          console.log("[Agent Navigation] ✅ Found navigation path in message:", path);
-          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived (fallback)! 🎯🎯🎯", path);
+          path = message.pathname || message.url;
+        } else if (message.pathname) {
+          path = message.pathname;
+        } else if ((message as any).navigate) {
+          path = (message as any).navigate;
+        } else if (message.url) {
+          path = message.url;
+        }
+
+        if (path) {
+          console.log("[Agent Navigation] 🎯🎯🎯 NAVIGATING FROM RoomEvent.DataReceived! 🎯🎯🎯", path);
           navigateToUrl(path);
         } else {
-          console.log("[Agent Navigation] ⚠️ Message type mismatch:", message.type, "Expected: agent-navigation-url");
-          console.log("[Agent Navigation] Message keys:", Object.keys(message));
+          console.log("[Agent Navigation] ⚠️ Message does not contain navigation path:", {
+            type: message.type,
+            keys: Object.keys(message),
+            message: message,
+          });
         }
       } catch (error) {
         console.error("[Agent Navigation] ❌ Error parsing data message:", error);
@@ -503,6 +578,28 @@ export const AgentNavigationListener = () => {
     return setupListener();
   }, [room, navigate, toast, navigateToUrlFromString]);
 
+  // FALLBACK: Listen to transcript for NAVIGATE: patterns (in case data channel fails)
+  const lastProcessedTranscriptRef = useRef<number>(0);
+  useEffect(() => {
+    // Check latest transcript messages for NAVIGATE: patterns
+    if (transcript.length > lastProcessedTranscriptRef.current) {
+      const newMessages = transcript.slice(lastProcessedTranscriptRef.current);
+      for (const message of newMessages) {
+        if (message.role === 'assistant') {
+          // Look for NAVIGATE: pattern in agent's response
+          const navMatch = message.content.match(/NAVIGATE:(\/[^\s]*)/);
+          if (navMatch) {
+            const path = navMatch[1];
+            console.log("[Agent Navigation] 🎯🎯🎯 FOUND NAVIGATE PATTERN IN TRANSCRIPT! 🎯🎯🎯", path);
+            console.log("[Agent Navigation] Full message:", message.content);
+            navigateToUrlFromString(path);
+          }
+        }
+      }
+      lastProcessedTranscriptRef.current = transcript.length;
+    }
+  }, [transcript, navigateToUrlFromString]);
+
   // Expose test function for debugging
   useEffect(() => {
     // Direct navigation test
@@ -510,8 +607,22 @@ export const AgentNavigationListener = () => {
       console.log("[Agent Navigation] 🧪 Testing direct navigation to:", path);
       navigateToUrlFromString(path);
     };
+    
+    // Test function to simulate receiving a navigation message
+    (window as any).testNavMessage = (pathname: string) => {
+      console.log("[Agent Navigation] 🧪 Testing navigation message with pathname:", pathname);
+      const testMessage = {
+        type: "agent-navigation-url",
+        url: `https://example.com${pathname}`,
+        pathname: pathname
+      };
+      console.log("[Agent Navigation] Simulating message:", testMessage);
+      navigateToUrlFromString(pathname);
+    };
 
-    console.log('[Agent Navigation] Test function available: window.testNav("/whatsapp-reports")');
+    console.log('[Agent Navigation] Test functions available:');
+    console.log('  window.testNav("/dashboard") - Test direct navigation');
+    console.log('  window.testNavMessage("/dashboard") - Test navigation message');
   }, [navigateToUrlFromString]);
 
   return null; // This is a listener component with no UI

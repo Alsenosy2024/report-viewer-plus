@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, PhoneOff, Mic, MicOff } from "lucide-react";
 import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer, useRoomContext } from "@livekit/components-react";
@@ -7,6 +7,22 @@ import { useVoiceAssistantContext } from "@/contexts/VoiceAssistantContext";
 import { AgentNavigationListener } from "@/components/AgentNavigationListener";
 import { cn } from "@/lib/utils";
 import "@livekit/components-styles";
+
+// Suppress harmless WebSocket errors that occur during disconnection
+// These are race conditions in LiveKit's internal code and don't affect functionality
+// Only override if not already overridden (to avoid multiple overrides)
+if (!(console.error as any).__livekitSuppressed) {
+  const originalConsoleError = console.error;
+  (console.error as any) = (...args: any[]) => {
+    const message = args[0]?.toString() || "";
+    // Suppress WebSocket closing errors that are harmless race conditions
+    if (message.includes("WebSocket is already in CLOSING or CLOSED state")) {
+      return; // Silently ignore these harmless errors
+    }
+    originalConsoleError.apply(console, args);
+  };
+  (console.error as any).__livekitSuppressed = true;
+}
 
 // Microphone enabler component (runs in background)
 const MicrophoneEnabler: React.FC = () => {
@@ -413,32 +429,65 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, 
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string>("voice-assistant");
+  const [shouldConnect, setShouldConnect] = useState<boolean>(false);
 
   useEffect(() => {
-    if (open && !token) {
+    if (open && !token && !tokenLoading) {
       handleConnect();
     }
-  }, [open]);
+  }, [open, token, tokenLoading]);
 
-  const handleConnect = async () => {
-    const result = await getToken(roomName);
+  const handleConnect = useCallback(async () => {
+    // Generate a new unique room name for each connection attempt
+    const newRoomName = `voice-assistant-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    console.log("[VoiceAssistant] Connecting with new room name:", newRoomName);
+    
+    const result = await getToken(newRoomName);
     if (result) {
       setToken(result.token);
       setLivekitUrl(result.url);
       setRoomName(result.roomName);
+      setShouldConnect(true);
+      console.log("[VoiceAssistant] ✅ Token and URL received for room:", result.roomName);
+    } else {
+      console.error("[VoiceAssistant] ❌ Failed to get token");
     }
-  };
+  }, [getToken]);
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = useCallback(async () => {
+    console.log("[VoiceAssistant] 🔌 Disconnecting...");
+    
+    // Set shouldConnect to false first - this will trigger LiveKit to disconnect gracefully
+    setShouldConnect(false);
+    
+    // Wait a bit for LiveKit to handle the disconnection
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    
     if (isConnected) {
       await saveConversation(roomName);
     }
+    
+    // Reset all connection state
     setToken(null);
     setLivekitUrl(null);
     setIsConnected(false);
     clearTranscript();
+    
+    // Generate new room name for next connection
+    const newRoomName = `voice-assistant-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    setRoomName(newRoomName);
+    console.log("[VoiceAssistant] ✅ Disconnected, new room name ready:", newRoomName);
+    
     onOpenChange(false);
-  };
+  }, [isConnected, roomName, saveConversation, clearTranscript, onOpenChange]);
+
+  // Cleanup when modal closes
+  useEffect(() => {
+    if (!open && shouldConnect) {
+      console.log("[VoiceAssistant] Modal closed, disconnecting...");
+      handleDisconnect();
+    }
+  }, [open, shouldConnect, handleDisconnect]);
 
   if (!open) return null;
 
@@ -457,9 +506,10 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, 
         </div>
       ) : (
         <LiveKitRoom
+          key={`room-${roomName}`} // Force remount when room name changes
           serverUrl={livekitUrl}
           token={token}
-          connect={true}
+          connect={shouldConnect}
           audio={false}
           video={false}
           options={{
@@ -481,9 +531,14 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({ open, 
           onDisconnected={() => {
             console.log("[VoiceAssistant] Disconnected from LiveKit room");
             setIsConnected(false);
+            setShouldConnect(false);
           }}
           onError={(error) => {
-            console.error("[VoiceAssistant] ❌ LiveKit error:", error);
+            // Suppress WebSocket closing errors (they're harmless race conditions)
+            const errorMessage = error?.toString() || "";
+            if (!errorMessage.includes("WebSocket is already in CLOSING or CLOSED state")) {
+              console.error("[VoiceAssistant] ❌ LiveKit error:", error);
+            }
           }}
         >
           <MicrophoneEnabler />

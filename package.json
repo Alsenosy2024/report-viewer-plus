@@ -1,0 +1,22 @@
+{
+  "name": "ailegent",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "cd report-viewer-plus && npm run dev",
+    "build": "cd report-viewer-plus && npm install && npm run build",
+    "preview": "cd report-viewer-plus && npm run preview",
+    "lint": "cd report-viewer-plus && npm run lint"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "lovable-tagger": "^1.1.11",
+    "vite": "^5.4.21"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

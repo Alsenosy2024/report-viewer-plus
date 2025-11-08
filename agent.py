@@ -785,30 +785,79 @@ async def entrypoint(ctx: JobContext):
     Main entry point for the voice agent
     Called when a new room connection is established
     """
+    # CRITICAL: Log immediately when entrypoint is called
+    logger.info("=" * 80)
+    logger.info("🚀🚀🚀 ENTRYPOINT CALLED - NEW ROOM CONNECTION! 🚀🚀🚀")
+    logger.info("=" * 80)
+    
+    try:
+        room_name = ctx.room.name if ctx.room else "UNKNOWN"
+        logger.info(f"Room name: {room_name}")
+    except Exception as e:
+        logger.error(f"Error getting room name: {e}")
+        room_name = "UNKNOWN"
+    
     # Add contextual information to all log entries
     ctx.log_context_fields = {
-        "room": ctx.room.name,
+        "room": room_name,
     }
 
-    logger.info(f"Starting voice agent for room: {ctx.room.name}")
+    logger.info(f"Starting voice agent for room: {room_name}")
 
     # Use OpenAI Realtime API - handles STT, LLM, and TTS together
     # This is the simplest and most reliable solution for Arabic
     logger.info("Using OpenAI Realtime API for complete Arabic voice support")
+    
+    # CRITICAL: Verify OpenAI API key before creating session
+    openai_key = os.getenv("OPENAI_API_KEY", "")
+    if not openai_key or openai_key == "your_openai_api_key_here":
+        logger.error("=" * 80)
+        logger.error("❌❌❌ CRITICAL: OPENAI_API_KEY IS NOT SET! ❌❌❌")
+        logger.error("Cannot start agent session without valid OpenAI API key")
+        logger.error("=" * 80)
+        raise ValueError("OPENAI_API_KEY is not set or invalid")
+    
+    logger.info(f"✅ OpenAI API key verified (starts with: {openai_key[:7]}...)")
 
-    session = AgentSession(
-        # OpenAI Realtime API handles everything: STT, LLM, TTS
-        llm=openai.realtime.RealtimeModel(
-            model="gpt-realtime-mini",  # Latest mini voice model - 70% cheaper than previous realtime models
-            voice="alloy",  # Professional, neutral voice - Options: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar
-        ),
-    )
+    logger.info("📦 Creating AgentSession with OpenAI Realtime API...")
+    try:
+        session = AgentSession(
+            # OpenAI Realtime API handles everything: STT, LLM, TTS
+            llm=openai.realtime.RealtimeModel(
+                model="gpt-realtime-mini",  # Latest mini voice model - 70% cheaper than previous realtime models
+                voice="alloy",  # Professional, neutral voice - Options: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar
+            ),
+        )
+        logger.info("✅ AgentSession created successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to create AgentSession: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
 
     room_input_options = RoomInputOptions()
     
-    # Ensure we accept microphone input
-    # Default should be SOURCE_MICROPHONE, but let's be explicit
-    logger.info(f"Room input options - accepted sources: {room_input_options.accepted_sources if hasattr(room_input_options, 'accepted_sources') else 'default'}")
+    # CRITICAL: Explicitly configure to accept microphone audio input
+    # This ensures the agent receives audio from the user's microphone
+    try:
+        # Try to set accepted sources explicitly to include microphone
+        # SOURCE_MICROPHONE = 2 in LiveKit
+        from livekit import rtc
+        if hasattr(rtc, 'TrackSource'):
+            room_input_options.accepted_sources = [rtc.TrackSource.SOURCE_MICROPHONE]
+            logger.info(f"✅ Explicitly set accepted sources to microphone: {room_input_options.accepted_sources}")
+        elif hasattr(room_input_options, 'accepted_sources'):
+            # Try using numeric value (SOURCE_MICROPHONE = 2)
+            room_input_options.accepted_sources = [2]  # SOURCE_MICROPHONE
+            logger.info(f"✅ Set accepted sources to microphone (numeric): {room_input_options.accepted_sources}")
+        else:
+            logger.info("RoomInputOptions doesn't have accepted_sources attribute - using defaults (should accept microphone)")
+    except Exception as e:
+        logger.warning(f"Could not explicitly set accepted_sources: {e}, using defaults")
+        logger.info("Default RoomInputOptions should accept microphone input")
+    
+    # Log the configuration
+    logger.info(f"Room input options configured - accepted sources: {getattr(room_input_options, 'accepted_sources', 'default (should include microphone)')}")
 
     # Set up metrics collection to monitor performance
     usage_collector = metrics.UsageCollector()
@@ -911,6 +960,12 @@ async def entrypoint(ctx: JobContext):
         # Critical: Check if this is user's microphone audio
         if publication.kind == "audio" and publication.source == 2:  # SOURCE_MICROPHONE = 2
             logger.info(f"🎤✅ USER MICROPHONE TRACK PUBLISHED! Agent should receive audio now")
+            logger.info(f"   Track SID: {publication.track_sid if hasattr(publication, 'track_sid') else 'N/A'}")
+            logger.info(f"   Track muted: {publication.is_muted if hasattr(publication, 'is_muted') else 'N/A'}")
+            
+            # CRITICAL: Check if track is muted
+            if hasattr(publication, 'is_muted') and publication.is_muted:
+                logger.warning("⚠️⚠️⚠️ WARNING: Microphone track is MUTED when published! Agent won't receive audio!")
 
     @ctx.room.on("track_subscribed")
     def _on_track_subscribed(track, publication, participant):
@@ -918,6 +973,15 @@ async def entrypoint(ctx: JobContext):
         # Critical: Check if this is user's microphone audio
         if track.kind == "audio" and publication.source == 2:  # SOURCE_MICROPHONE = 2
             logger.info(f"🎤✅✅✅ USER MICROPHONE TRACK SUBSCRIBED! Agent is receiving audio! ✅✅✅")
+            logger.info(f"   Track SID: {publication.track_sid if hasattr(publication, 'track_sid') else 'N/A'}")
+            logger.info(f"   Track enabled: {track.is_enabled if hasattr(track, 'is_enabled') else 'N/A'}")
+            logger.info(f"   Track muted: {publication.is_muted if hasattr(publication, 'is_muted') else 'N/A'}")
+            
+            # CRITICAL: Verify the track is actually enabled and not muted
+            if hasattr(track, 'is_enabled') and not track.is_enabled:
+                logger.warning("⚠️⚠️⚠️ WARNING: Microphone track is DISABLED! Agent won't receive audio!")
+            if hasattr(publication, 'is_muted') and publication.is_muted:
+                logger.warning("⚠️⚠️⚠️ WARNING: Microphone track is MUTED! Agent won't receive audio!")
 
     # Track if handler should be active (disable during disconnection to prevent panics)
     _data_received_handler_active = True
@@ -994,12 +1058,31 @@ async def entrypoint(ctx: JobContext):
                     if not isinstance(data, bytes):
                         logger.debug(f"DataPacket.value is not bytes: {type(data)}, ignoring")
                         return
+                    # CRITICAL: Validate data length BEFORE accessing any bytes
                     try:
-                        if len(data) == 0:
-                            logger.debug("DataPacket.value is empty, ignoring")
-                            return
+                        data_len = len(data)
                     except Exception as e:
-                        logger.debug(f"Cannot get length of data: {e}, ignoring")
+                        logger.debug(f"Cannot get data length: {e}, ignoring")
+                        return
+                    
+                    if data_len == 0:
+                        logger.debug("DataPacket.value is empty, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data length is reasonable (not corrupted)
+                    if data_len > 1024 * 1024:  # 1MB max
+                        logger.debug(f"DataPacket.value too large: {data_len} bytes, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate we can safely access the first byte (prevents "byte index X is out of bounds")
+                    try:
+                        # Try to access first byte to ensure buffer is valid
+                        _ = data[0]
+                    except (IndexError, TypeError) as e:
+                        logger.debug(f"Cannot access first byte of data: {e}, ignoring")
+                        return
+                    except Exception as e:
+                        logger.debug(f"Unexpected error accessing data[0]: {e}, ignoring")
                         return
                     
                     # Only access other attributes AFTER validating data
@@ -1025,12 +1108,31 @@ async def entrypoint(ctx: JobContext):
                     if not isinstance(data, bytes):
                         logger.debug(f"DataPacket.data is not bytes: {type(data)}, ignoring")
                         return
+                    # CRITICAL: Validate data length BEFORE accessing any bytes
                     try:
-                        if len(data) == 0:
-                            logger.debug("DataPacket.data is empty, ignoring")
-                            return
+                        data_len = len(data)
                     except Exception as e:
-                        logger.debug(f"Cannot get length of data: {e}, ignoring")
+                        logger.debug(f"Cannot get data length: {e}, ignoring")
+                        return
+                    
+                    if data_len == 0:
+                        logger.debug("DataPacket.data is empty, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data length is reasonable (not corrupted)
+                    if data_len > 1024 * 1024:  # 1MB max
+                        logger.debug(f"DataPacket.data too large: {data_len} bytes, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate we can safely access the first byte (prevents "byte index X is out of bounds")
+                    try:
+                        # Try to access first byte to ensure buffer is valid
+                        _ = data[0]
+                    except (IndexError, TypeError) as e:
+                        logger.debug(f"Cannot access first byte of data: {e}, ignoring")
+                        return
+                    except Exception as e:
+                        logger.debug(f"Unexpected error accessing data[0]: {e}, ignoring")
                         return
                     
                     # Only access other attributes AFTER validating data
@@ -1044,6 +1146,39 @@ async def entrypoint(ctx: JobContext):
                 elif isinstance(first_arg, bytes):
                     # It's raw bytes - use directly
                     data = first_arg
+                    
+                    # CRITICAL: Validate raw bytes BEFORE using
+                    if not isinstance(data, bytes):
+                        logger.debug(f"first_arg is not bytes: {type(data)}, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data length BEFORE accessing any bytes
+                    try:
+                        data_len = len(data)
+                    except Exception as e:
+                        logger.debug(f"Cannot get data length: {e}, ignoring")
+                        return
+                    
+                    if data_len == 0:
+                        logger.debug("Raw bytes data is empty, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate data length is reasonable (not corrupted)
+                    if data_len > 1024 * 1024:  # 1MB max
+                        logger.debug(f"Raw bytes data too large: {data_len} bytes, ignoring")
+                        return
+                    
+                    # CRITICAL: Validate we can safely access the first byte (prevents "byte index X is out of bounds")
+                    try:
+                        # Try to access first byte to ensure buffer is valid
+                        _ = data[0]
+                    except (IndexError, TypeError) as e:
+                        logger.debug(f"Cannot access first byte of raw bytes: {e}, ignoring")
+                        return
+                    except Exception as e:
+                        logger.debug(f"Unexpected error accessing raw bytes[0]: {e}, ignoring")
+                        return
+                    
                     participant = args[1] if len(args) > 1 else kwargs.get('participant')
                     kind = args[2] if len(args) > 2 else kwargs.get('kind')
                     topic = args[3] if len(args) > 3 else kwargs.get('topic')
@@ -1230,10 +1365,22 @@ async def entrypoint(ctx: JobContext):
     else:
         logger.info("No MCP_SERVER_URL configured - agent running without external tools")
 
-    # Start the agent session in voice-only mode
+    # CRITICAL: Connect to the room FIRST before starting the session
+    logger.info("🔌 Connecting to LiveKit room...")
+    try:
+        await ctx.connect()
+        logger.info(f"✅ Connected to room: {ctx.room.name}")
+    except Exception as e:
+        logger.error(f"❌ Failed to connect to room: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
+
+    # Start the agent session AFTER connecting to the room
     # audio_enabled=True allows agent to receive and respond with audio
     from livekit.agents import RoomOutputOptions
 
+    logger.info("🚀 Starting agent session...")
     try:
         await session.start(
             agent=agent,
@@ -1245,17 +1392,40 @@ async def entrypoint(ctx: JobContext):
         )
         logger.info("✅ Voice agent session started successfully - ready for input!")
         logger.info(f"Session room: {session.room.name if hasattr(session, 'room') else 'N/A'}")
+        
+        # CRITICAL: Verify audio input is configured
+        logger.info("=" * 80)
+        logger.info("🔍 VERIFYING AUDIO INPUT CONFIGURATION...")
+        logger.info("=" * 80)
+        logger.info(f"Room input options: {room_input_options}")
+        logger.info(f"Room input accepted sources: {getattr(room_input_options, 'accepted_sources', 'default')}")
+        
+        # Check for remote participants (users)
+        logger.info(f"Remote participants count: {len(ctx.room.remote_participants)}")
+        for pid, participant in ctx.room.remote_participants.items():
+            logger.info(f"  👤 Participant: {participant.identity}")
+            logger.info(f"     Tracks published: {len(participant.track_publications)}")
+            for pub_sid, publication in participant.track_publications.items():
+                muted_status = getattr(publication, 'is_muted', 'unknown')
+                logger.info(f"     📢 Track: {publication.kind} (source: {publication.source}, muted: {muted_status})")
+                if publication.kind == "audio" and publication.source == 2:  # SOURCE_MICROPHONE
+                    logger.info(f"     🎤✅ FOUND USER MICROPHONE TRACK!")
+                    if hasattr(publication, 'is_muted') and publication.is_muted:
+                        logger.warning(f"     ⚠️⚠️⚠️ WARNING: Microphone is MUTED! Agent won't receive audio!")
+                    # Check if track is subscribed
+                    if hasattr(publication, 'track') and publication.track:
+                        logger.info(f"     ✅ Track is subscribed - agent should receive audio")
+                    else:
+                        logger.warning(f"     ⚠️ Track is NOT subscribed - agent won't receive audio!")
+        
+        logger.info("=" * 80)
     except Exception as e:
         logger.error(f"❌ Failed to start session: {e}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise
+    
     logger.info("In console: Type your message in Arabic and press Enter")
-
-    # Connect to the room
-    await ctx.connect()
-
-    logger.info(f"Connected to room: {ctx.room.name}")
     
     # Log all participants and their tracks for debugging
     logger.info(f"Current participants in room: {len(ctx.room.remote_participants)}")
@@ -1271,6 +1441,13 @@ async def entrypoint(ctx: JobContext):
 
 if __name__ == "__main__":
     # Run the agent worker
+    logger.info("=" * 80)
+    logger.info("🤖 Starting LiveKit Voice Agent Worker")
+    logger.info("=" * 80)
+    logger.info("The worker will wait for room connections...")
+    logger.info("When a user opens the voice assistant, this worker will handle the connection")
+    logger.info("=" * 80)
+    
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,

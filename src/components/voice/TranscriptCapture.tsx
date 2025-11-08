@@ -1,23 +1,60 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRoomContext, useRemoteParticipant } from '@livekit/components-react';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { RoomEvent } from 'livekit-client';
 
 /**
  * Component that captures agent responses and adds them to the transcript
- * This ensures the transcript is populated so navigation patterns can be detected
- * 
- * CRITICAL: Does NOT add navigation messages - those are handled by AgentNavigationListener
+ * CRITICAL: This component must NOT interfere with navigation or mic state
+ * - Early returns for navigation messages BEFORE any processing
+ * - Deferred transcript updates to prevent blocking navigation
+ * - Minimal processing overhead
  */
 export const TranscriptCapture = () => {
   const room = useRoomContext();
   const { addMessage } = useVoiceAssistantContext();
-  const processedMessagesRef = useRef<Set<string>>(new Set()); // Track processed messages to prevent duplicates
+  // Track processed messages to prevent duplicates
+  const processedMessagesRef = useRef<Set<string>>(new Set());
+  // Queue for deferred message processing to avoid blocking navigation
+  const messageQueueRef = useRef<Array<{ role: 'assistant'; content: string }>>([]);
+  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Process queued messages asynchronously to avoid blocking
+  const processMessageQueue = useCallback(() => {
+    if (messageQueueRef.current.length === 0) return;
+    
+    const messages = [...messageQueueRef.current];
+    messageQueueRef.current = [];
+    
+    // Process messages in next tick to avoid blocking
+    setTimeout(() => {
+      messages.forEach(msg => {
+        addMessage(msg.role, msg.content);
+      });
+    }, 0);
+  }, [addMessage]);
 
   useEffect(() => {
     if (!room) return;
 
-    console.log('[TranscriptCapture] Setting up transcript capture');
+    // Helper to check if message contains navigation command (FAST check)
+    const containsNavigation = (text: string): boolean => {
+      return text.includes('NAVIGATE:') || /NAVIGATE:\/[^\s]*/.test(text);
+    };
+
+    // Helper to extract non-navigation text from response
+    const extractNonNavigationText = (text: string): string | null => {
+      const navMatch = text.match(/NAVIGATE:\/[^\s]*\s*(.*)/);
+      if (navMatch && navMatch[1]) {
+        return navMatch[1].trim();
+      }
+      return null;
+    };
+
+    // Helper to create message hash for deduplication
+    const createMessageHash = (text: string): string => {
+      return text.substring(0, 200).replace(/\s+/g, '').toLowerCase();
+    };
 
     // Listen for data received events - agent might send responses via data channel
     const handleDataReceived = (
@@ -26,82 +63,108 @@ export const TranscriptCapture = () => {
       kind?: any,
       topic?: string
     ) => {
-      console.log('[TranscriptCapture] 📨 Data received:', {
-        participant: participant?.identity,
-        topic: topic || '(no topic)',
-        payloadLength: payload.length,
-        isFromAgent: participant?.identity?.includes('agent') || false
-      });
-      
-      // CRITICAL: Skip navigation messages - they're handled by AgentNavigationListener
+      // CRITICAL: Early return for navigation messages BEFORE any processing
       if (topic === 'agent-navigation') {
-        console.log('[TranscriptCapture] ⏭️ Skipping navigation message - handled by AgentNavigationListener');
-        return;
+        return; // Skip immediately, no logging, no processing
       }
       
-      // Accept data from agent participant OR if topic is agent-response
-      if ((participant && participant.identity.includes('agent')) || topic === 'agent-response') {
-        try {
-          const decoder = new TextDecoder();
-          const text = decoder.decode(payload);
-          console.log('[TranscriptCapture] Decoded text:', text.substring(0, 200));
-          
-          // CRITICAL: Skip if this message contains navigation commands
-          if (text.includes('NAVIGATE:') || text.includes('agent-navigation-url')) {
-            console.log('[TranscriptCapture] ⏭️ Skipping message with navigation command - handled by AgentNavigationListener');
-            return;
-          }
-          
-          // Create a hash of the message to prevent duplicates
-          const messageHash = `${participant?.identity || 'unknown'}-${text.substring(0, 100)}`;
-          if (processedMessagesRef.current.has(messageHash)) {
-            console.log('[TranscriptCapture] ⏭️ Skipping duplicate message');
-            return;
-          }
-          processedMessagesRef.current.add(messageHash);
-          
-          // Clean up old hashes (keep only last 50)
-          if (processedMessagesRef.current.size > 50) {
-            const firstHash = Array.from(processedMessagesRef.current)[0];
-            processedMessagesRef.current.delete(firstHash);
-          }
-          
-          try {
-            const data = JSON.parse(text);
-            console.log('[TranscriptCapture] Parsed JSON:', data);
-            
-            // CRITICAL: Skip navigation messages
-            if (data.type === 'agent-navigation-url' || data.navigate || data.pathname) {
-              console.log('[TranscriptCapture] ⏭️ Skipping navigation message in JSON - handled by AgentNavigationListener');
-              return;
-            }
-            
-            // If it's a response message, add to transcript
-            if (data.type === 'agent-response' || data.response || data.text) {
-              const responseText = data.response || data.text || text;
-              // CRITICAL: Don't add if it contains navigation commands
-              if (responseText.includes('NAVIGATE:')) {
-                console.log('[TranscriptCapture] ⏭️ Skipping response with navigation command');
-                return;
-              }
-              console.log('[TranscriptCapture] 📝📝📝 CAPTURED AGENT RESPONSE! 📝📝📝', responseText);
-              addMessage('assistant', responseText);
-            }
-          } catch (e) {
-            // Not JSON, might be plain text response
-            if (text.length > 10 && !text.startsWith('{')) {
-              // CRITICAL: Don't add if it contains navigation commands
-              if (text.includes('NAVIGATE:')) {
-                console.log('[TranscriptCapture] ⏭️ Skipping text with navigation command');
-                return;
-              }
-              console.log('[TranscriptCapture] 📝 Captured agent text response (not JSON):', text);
-              addMessage('assistant', text);
-            }
-          }
-        } catch (e2) {
-          console.error('[TranscriptCapture] Error decoding payload:', e2);
+      // CRITICAL: Only process agent messages
+      if (!participant || !participant.identity?.includes('agent')) {
+        if (topic !== 'agent-response') {
+          return; // Skip non-agent messages unless explicitly agent-response topic
         }
+      }
+      
+      try {
+        const decoder = new TextDecoder();
+        const text = decoder.decode(payload);
+        
+        // CRITICAL: Fast navigation check BEFORE any other processing
+        if (containsNavigation(text)) {
+          // Check if there's non-navigation text to extract
+          const nonNavText = extractNonNavigationText(text);
+          if (nonNavText) {
+            // Queue the non-navigation text for deferred processing
+            const responseHash = createMessageHash(nonNavText);
+            if (!processedMessagesRef.current.has(responseHash)) {
+              messageQueueRef.current.push({ role: 'assistant', content: nonNavText });
+              processedMessagesRef.current.add(responseHash);
+              
+              // Process queue asynchronously
+              if (processingTimeoutRef.current) {
+                clearTimeout(processingTimeoutRef.current);
+              }
+              processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+            }
+          }
+          return; // Skip navigation messages immediately
+        }
+        
+        // Check for duplicates BEFORE parsing JSON
+        const messageHash = createMessageHash(text);
+        if (processedMessagesRef.current.has(messageHash)) {
+          return; // Skip duplicates immediately
+        }
+        
+        try {
+          const data = JSON.parse(text);
+          
+          // CRITICAL: Fast navigation check in JSON
+          if (data.type === 'agent-navigation-url' || data.pathname || data.navigate) {
+            return; // Skip navigation JSON immediately
+          }
+          
+          // If it's a response message, process it
+          if (data.type === 'agent-response' || data.response || data.text) {
+            const responseText = data.response || data.text || text;
+            
+            // Check for navigation in response text
+            if (containsNavigation(responseText)) {
+              const nonNavText = extractNonNavigationText(responseText);
+              if (nonNavText) {
+                const responseHash = createMessageHash(nonNavText);
+                if (!processedMessagesRef.current.has(responseHash)) {
+                  messageQueueRef.current.push({ role: 'assistant', content: nonNavText });
+                  processedMessagesRef.current.add(responseHash);
+                  
+                  if (processingTimeoutRef.current) {
+                    clearTimeout(processingTimeoutRef.current);
+                  }
+                  processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+                }
+              }
+              return; // Skip navigation responses immediately
+            }
+            
+            // Queue non-navigation response for deferred processing
+            const responseHash = createMessageHash(responseText);
+            if (!processedMessagesRef.current.has(responseHash)) {
+              messageQueueRef.current.push({ role: 'assistant', content: responseText });
+              processedMessagesRef.current.add(responseHash);
+              
+              if (processingTimeoutRef.current) {
+                clearTimeout(processingTimeoutRef.current);
+              }
+              processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+            }
+          }
+        } catch (e) {
+          // Not JSON, might be plain text response
+          if (text.length > 10 && !text.startsWith('{')) {
+            const textHash = createMessageHash(text);
+            if (!processedMessagesRef.current.has(textHash)) {
+              messageQueueRef.current.push({ role: 'assistant', content: text });
+              processedMessagesRef.current.add(textHash);
+              
+              if (processingTimeoutRef.current) {
+                clearTimeout(processingTimeoutRef.current);
+              }
+              processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+            }
+          }
+        }
+      } catch (e2) {
+        // Silently ignore decoding errors to avoid blocking
       }
     };
 
@@ -109,52 +172,72 @@ export const TranscriptCapture = () => {
 
     // Also listen for metadata changes - agent might put response in metadata
     const handleMetadataChanged = (participant: any) => {
-      console.log('[TranscriptCapture] 🔄 Metadata changed:', {
-        participant: participant?.identity,
-        hasMetadata: !!participant?.metadata,
-        metadataLength: participant?.metadata?.length || 0
-      });
+      // CRITICAL: Early return if not agent
+      if (!participant?.identity?.includes('agent') || !participant.metadata) {
+        return;
+      }
       
-      if (participant.identity.includes('agent') && participant.metadata) {
-        try {
-          const metadata = JSON.parse(participant.metadata);
-          console.log('[TranscriptCapture] Parsed metadata:', metadata);
+      try {
+        const metadata = JSON.parse(participant.metadata);
+        
+        // CRITICAL: Fast navigation check in metadata
+        if (metadata.navigate || metadata.pathname || metadata.type === 'navigation') {
+          return; // Skip navigation metadata immediately
+        }
+        
+        // Check for response text
+        if (metadata.response || metadata.text) {
+          const responseText = metadata.response || metadata.text;
           
-          // CRITICAL: Skip navigation metadata - handled by AgentNavigationListener
-          if (metadata.navigate || metadata.pathname || metadata.type === 'navigation') {
-            console.log('[TranscriptCapture] ⏭️ Skipping navigation metadata - handled by AgentNavigationListener');
-            return;
-          }
-          
-          // Create hash to prevent duplicates
-          const metadataHash = `${participant.identity}-${participant.metadata.substring(0, 100)}`;
-          if (processedMessagesRef.current.has(metadataHash)) {
-            console.log('[TranscriptCapture] ⏭️ Skipping duplicate metadata');
-            return;
-          }
-          processedMessagesRef.current.add(metadataHash);
-          
-          // Check for response text
-          if (metadata.response || metadata.text) {
-            const responseText = metadata.response || metadata.text;
-            // CRITICAL: Don't add if it contains navigation commands
-            if (responseText.includes('NAVIGATE:')) {
-              console.log('[TranscriptCapture] ⏭️ Skipping metadata response with navigation command');
-              return;
+          // Check for navigation in response
+          if (containsNavigation(responseText)) {
+            const nonNavText = extractNonNavigationText(responseText);
+            if (nonNavText) {
+              const responseHash = createMessageHash(nonNavText);
+              if (!processedMessagesRef.current.has(responseHash)) {
+                messageQueueRef.current.push({ role: 'assistant', content: nonNavText });
+                processedMessagesRef.current.add(responseHash);
+                
+                if (processingTimeoutRef.current) {
+                  clearTimeout(processingTimeoutRef.current);
+                }
+                processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+              }
             }
-            console.log('[TranscriptCapture] 📝📝📝 CAPTURED AGENT RESPONSE FROM METADATA! 📝📝📝', responseText);
-            addMessage('assistant', responseText);
+            return; // Skip navigation responses immediately
           }
-        } catch (e) {
-          // Metadata might be plain text
-          if (participant.metadata.length > 10) {
-            // CRITICAL: Don't add if it contains navigation commands
-            if (participant.metadata.includes('NAVIGATE:')) {
-              console.log('[TranscriptCapture] ⏭️ Skipping plain text metadata with navigation command');
-              return;
+          
+          // Queue non-navigation response for deferred processing
+          const responseHash = createMessageHash(responseText);
+          if (!processedMessagesRef.current.has(responseHash)) {
+            messageQueueRef.current.push({ role: 'assistant', content: responseText });
+            processedMessagesRef.current.add(responseHash);
+            
+            if (processingTimeoutRef.current) {
+              clearTimeout(processingTimeoutRef.current);
             }
-            console.log('[TranscriptCapture] 📝 Captured agent text from metadata (plain text):', participant.metadata.substring(0, 200));
-            addMessage('assistant', participant.metadata);
+            processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
+          }
+        }
+      } catch (e) {
+        // Metadata might be plain text
+        if (participant.metadata.length > 10) {
+          const metadataText = participant.metadata;
+          
+          // Fast navigation check
+          if (containsNavigation(metadataText)) {
+            return; // Skip navigation metadata immediately
+          }
+          
+          const metadataHash = createMessageHash(metadataText);
+          if (!processedMessagesRef.current.has(metadataHash)) {
+            messageQueueRef.current.push({ role: 'assistant', content: metadataText });
+            processedMessagesRef.current.add(metadataHash);
+            
+            if (processingTimeoutRef.current) {
+              clearTimeout(processingTimeoutRef.current);
+            }
+            processingTimeoutRef.current = setTimeout(processMessageQueue, 10);
           }
         }
       }
@@ -165,9 +248,21 @@ export const TranscriptCapture = () => {
     return () => {
       room.off(RoomEvent.DataReceived, handleDataReceived);
       room.off(RoomEvent.ParticipantMetadataChanged, handleMetadataChanged);
+      
+      // Clear processing timeout
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+        processingTimeoutRef.current = null;
+      }
+      
+      // Process any remaining queued messages
+      processMessageQueue();
+      
+      // Clear processed messages on cleanup
       processedMessagesRef.current.clear();
+      messageQueueRef.current = [];
     };
-  }, [room, addMessage]);
+  }, [room, addMessage, processMessageQueue]);
 
   return null;
 };

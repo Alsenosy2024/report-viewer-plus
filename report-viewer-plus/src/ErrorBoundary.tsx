@@ -26,24 +26,51 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold mb-4 text-destructive">
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f3f4f6',
+          padding: '2rem',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+          <div style={{ textAlign: 'center', maxWidth: '500px' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#dc2626' }}>
               Something went wrong
             </h1>
-            <p className="text-muted-foreground mb-4">
+            <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
             >
               Refresh Page
             </button>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <pre className="mt-4 text-xs text-left bg-muted p-4 rounded overflow-auto">
-                {this.state.error.stack}
-              </pre>
+            {this.state.error && (
+              <details style={{ marginTop: '1rem', textAlign: 'left' }}>
+                <summary style={{ cursor: 'pointer', color: '#6b7280' }}>Error Details</summary>
+                <pre style={{
+                  marginTop: '0.5rem',
+                  padding: '1rem',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '0.375rem',
+                  overflow: 'auto',
+                  fontSize: '0.75rem',
+                  color: '#1f2937'
+                }}>
+                  {this.state.error.stack}
+                </pre>
+              </details>
             )}
           </div>
         </div>

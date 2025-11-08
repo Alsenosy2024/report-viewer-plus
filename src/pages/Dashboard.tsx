@@ -4,6 +4,7 @@ import SmartDashboard from '@/components/dashboard/SmartDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, BarChart3, ArrowLeft, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'agentMood'>('dashboard');
@@ -201,4 +202,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default withPageAccessibility(Dashboard);

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { withPageAccessibility } from "@/lib/withPageAccessibility";
 
 interface ContentItem {
   id: string;
@@ -34,7 +35,7 @@ interface ContentItem {
   created_by: string;
 }
 
-export default function ContentIdeas() {
+function ContentIdeas() {
   const { user } = useAuth();
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -318,3 +319,5 @@ export default function ContentIdeas() {
     </DashboardLayout>
   );
 }
+
+export default withPageAccessibility(ContentIdeas);

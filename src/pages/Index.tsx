@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Shield, Users, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -121,4 +120,4 @@ const Index = () => {
   );
 };
 
-export default withPageAccessibility(Index);
+export default Index;

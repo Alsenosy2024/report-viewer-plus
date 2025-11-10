@@ -12,7 +12,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, ShieldX } from 'lucide-react';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 interface AdminProfileRow {
   id: string;
   email: string;
@@ -424,4 +423,4 @@ const AdminSettings = () => {
   );
 };
 
-export default withPageAccessibility(AdminSettings);
+export default AdminSettings;

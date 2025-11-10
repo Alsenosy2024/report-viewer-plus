@@ -22,26 +22,21 @@ import ContentIdeas from "./pages/ContentIdeas";
 import MeetingSummary from "./pages/MeetingSummary";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ConvAINavigator } from "@/components/ConvAINavigator";
-import { SimpleNavigationTest } from "@/components/SimpleNavigationTest";
 import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <VoiceAssistantProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <SidebarProvider className="flex-col">
-                <ConvAINavigator />
-                <SimpleNavigationTest />
-                <SiteHeader />
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <VoiceAssistantProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+          <SidebarProvider className="flex-col">
+            <SiteHeader />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -108,16 +103,15 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </SidebarProvider>
+          </SidebarProvider>
 
-            {/* LiveKit Voice Assistant Widget */}
-            <VoiceAssistantWidget />
-          </BrowserRouter>
-        </TooltipProvider>
+          {/* LiveKit Voice Assistant Widget */}
+          <VoiceAssistantWidget />
+        </BrowserRouter>
+      </TooltipProvider>
       </VoiceAssistantProvider>
     </AuthProvider>
   </QueryClientProvider>
-  );
-};
+);
 
 export default App;

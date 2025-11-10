@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Input } from '@/components/ui/input';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 interface MeetingSummary {
   id: string;
@@ -23,7 +22,7 @@ interface MeetingSummary {
   meeting_name: string | null;
 }
 
-function MeetingSummary() {
+export default function MeetingSummary() {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -764,5 +763,3 @@ function MeetingSummary() {
     </DashboardLayout>
   );
 }
-
-export default withPageAccessibility(MeetingSummary);

@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bot, Plus, Trash2, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 interface BotRow {
   id: string;
@@ -311,4 +310,4 @@ function BotRowItem({ bot, isAdmin, onSaveWebhook, onToggle, onRemove, savingId 
   );
 }
 
-export default withPageAccessibility(BotControls);
+export default BotControls;

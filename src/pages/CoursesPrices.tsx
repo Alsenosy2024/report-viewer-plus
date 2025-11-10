@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 interface Course {
   id: number;
@@ -394,4 +393,4 @@ const CoursesPrices = () => {
   );
 };
 
-export default withPageAccessibility(CoursesPrices);
+export default CoursesPrices;

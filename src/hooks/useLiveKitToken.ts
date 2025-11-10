@@ -14,6 +14,7 @@ export const useLiveKitToken = () => {
   const { toast } = useToast();
 
   const getToken = useCallback(async (
+    roomName: string = 'voice-assistant',
     participantName?: string
   ): Promise<LiveKitTokenResponse | null> => {
     setIsLoading(true);
@@ -27,15 +28,12 @@ export const useLiveKitToken = () => {
         throw new Error('No active session');
       }
 
-      // Generate unique room name based on user ID
-      const uniqueRoomName = `voice-assistant-${session.user.id}`;
-
       // Call Supabase Edge Function to generate token
       const { data, error: functionError } = await supabase.functions.invoke(
         'livekit-token',
         {
           body: {
-            roomName: uniqueRoomName,
+            roomName,
             participantName: participantName || session.user.email,
           },
         }

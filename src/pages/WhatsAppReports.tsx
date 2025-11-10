@@ -10,7 +10,6 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import DOMPurify from 'dompurify';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 const WhatsAppReports = () => {
   const [reports, setReports] = useState<any[]>([]);
@@ -578,4 +577,4 @@ const WhatsAppReports = () => {
   );
 };
 
-export default withPageAccessibility(WhatsAppReports);
+export default WhatsAppReports;

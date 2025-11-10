@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import DOMPurify from 'dompurify';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 const MailReports = () => {
   const [reports, setReports] = useState<any[]>([]);
@@ -478,4 +477,4 @@ const MailReports = () => {
   );
 };
 
-export default withPageAccessibility(MailReports);
+export default MailReports;

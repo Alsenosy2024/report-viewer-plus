@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { withPageAccessibility } from '@/lib/withPageAccessibility';
 
 const AwaitingApproval = () => {
   const { signOut, user, profile } = useAuth();
@@ -40,4 +39,4 @@ const AwaitingApproval = () => {
   );
 };
 
-export default withPageAccessibility(AwaitingApproval);
+export default AwaitingApproval;

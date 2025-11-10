@@ -1,121 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2, PhoneOff, Mic, MicOff } from 'lucide-react';
-import { 
-  LiveKitRoom, 
-  useLocalParticipant, 
-  RoomAudioRenderer, 
-  useRoomContext 
-} from '@livekit/components-react';
+import { Loader2, Phone, Globe } from 'lucide-react';
+import { LiveKitRoom, useLocalParticipant, RoomAudioRenderer } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
-import { cn } from '@/lib/utils';
+import { VoiceAssistantAvatar } from './VoiceAssistantAvatar';
+import { ConversationHistory } from './ConversationHistory';
 import '@livekit/components-styles';
 
-// Microphone enabler component (runs in background)
+// Component to enable microphone automatically
 const MicrophoneEnabler: React.FC = () => {
-  const room = useRoomContext();
-  const { setIsSpeaking } = useVoiceAssistantContext();
-
-  useEffect(() => {
-    if (!room) return;
-
-    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
-      console.log('[VoiceAssistant] Track subscribed:', track.kind);
-
-      if (track.kind === 'audio') {
-        const audioElement = track.attach();
-        audioElement.autoplay = true;
-        audioElement.playsInline = true;
-        document.body.appendChild(audioElement);
-        console.log('[VoiceAssistant] Audio element attached');
-      }
-    };
-
-    const handleTrackUnsubscribed = (track: any) => {
-      if (track.kind === 'audio') {
-        track.detach().forEach((element: HTMLMediaElement) => {
-          element.remove();
-        });
-      }
-    };
-
-    const handleParticipantMetadataChanged = (participant: any) => {
-      if (participant.isSpeaking !== undefined) {
-        setIsSpeaking(participant.isSpeaking);
-      }
-    };
-
-    room.on('trackSubscribed', handleTrackSubscribed);
-    room.on('trackUnsubscribed', handleTrackUnsubscribed);
-    room.on('participantMetadataChanged', handleParticipantMetadataChanged);
-
-    return () => {
-      room.off('trackSubscribed', handleTrackSubscribed);
-      room.off('trackUnsubscribed', handleTrackUnsubscribed);
-      room.off('participantMetadataChanged', handleParticipantMetadataChanged);
-    };
-  }, [room, setIsSpeaking]);
-
-  return null;
-};
-
-// Minimal voice controls component
-const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect }) => {
   const { localParticipant } = useLocalParticipant();
-  const [isMuted, setIsMuted] = useState(false);
 
-  const toggleMute = () => {
-    if (localParticipant) {
-      const newMutedState = !isMuted;
-      localParticipant.setMicrophoneEnabled(!newMutedState);
-      setIsMuted(newMutedState);
-      console.log('[VoiceAssistant] Microphone', newMutedState ? 'muted' : 'unmuted');
-    }
-  };
-
-  // Enable microphone on mount
   useEffect(() => {
-    if (localParticipant) {
-      localParticipant.setMicrophoneEnabled(true);
-      console.log('[VoiceAssistant] Microphone enabled on mount');
-    }
+    const enableMicrophone = async () => {
+      if (localParticipant) {
+        try {
+          console.log('[VoiceAssistant] Enabling microphone...');
+          await localParticipant.setMicrophoneEnabled(true);
+          console.log('[VoiceAssistant] Microphone enabled successfully');
+
+          // Log track status
+          const tracks = localParticipant.audioTrackPublications;
+          console.log('[VoiceAssistant] Audio tracks:', tracks.size);
+          tracks.forEach((publication, key) => {
+            console.log(`[VoiceAssistant] Track ${key}:`, {
+              kind: publication.kind,
+              source: publication.source,
+              isMuted: publication.isMuted,
+              isSubscribed: publication.isSubscribed,
+            });
+          });
+        } catch (error) {
+          console.error('[VoiceAssistant] Failed to enable microphone:', error);
+        }
+      }
+    };
+
+    enableMicrophone();
   }, [localParticipant]);
 
-  return (
-    <div className="flex items-center gap-2">
-      {/* Mute/Unmute Button */}
-      <Button
-        size="icon"
-        variant={isMuted ? "destructive" : "default"}
-        onClick={toggleMute}
-        className={cn(
-          "w-12 h-12 rounded-full transition-all duration-200 hover:scale-105",
-          isMuted 
-            ? "bg-destructive hover:bg-destructive/90" 
-            : "bg-primary hover:bg-primary/90"
-        )}
-        aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
-      >
-        {isMuted ? (
-          <MicOff className="w-5 h-5" />
-        ) : (
-          <Mic className="w-5 h-5" />
-        )}
-      </Button>
-
-      {/* End Call Button */}
-      <Button
-        size="icon"
-        variant="secondary"
-        onClick={onDisconnect}
-        className="w-12 h-12 rounded-full bg-secondary hover:bg-secondary/90 transition-all duration-200 hover:scale-105"
-        aria-label="End call"
-      >
-        <PhoneOff className="w-5 h-5" />
-      </Button>
-    </div>
-  );
+  return null;
 };
 
 interface VoiceAssistantModalProps {
@@ -131,6 +62,8 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   const {
     isConnected,
     setIsConnected,
+    language,
+    toggleLanguage,
     saveConversation,
     clearTranscript,
   } = useVoiceAssistantContext();
@@ -165,69 +98,107 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     onOpenChange(false);
   };
 
-  if (!open) return null;
-
   return (
-    <div
-      className={cn(
-        'fixed bottom-20 right-6 z-50 transition-all duration-300',
-        'bg-background/95 backdrop-blur-xl rounded-full shadow-glow',
-        'border border-primary/20 p-3'
-      )}
-    >
-      {tokenLoading || !token || !livekitUrl ? (
-        // Loading State
-        <div className="flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : (
-        <LiveKitRoom
-          serverUrl={livekitUrl}
-          token={token}
-          connect={true}
-          audio={true}
-          video={false}
-          options={{
-            publishDefaults: {
-              audioPreset: { maxBitrate: 32000 },
-              dtx: true,
-              red: true,
-            },
-            audioCaptureDefaults: {
-              autoGainControl: true,
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          }}
-          onConnected={() => {
-            console.log('[VoiceAssistant] Connected to LiveKit room');
-            setIsConnected(true);
-          }}
-          onDisconnected={() => {
-            console.log('[VoiceAssistant] Disconnected from LiveKit room');
-            setIsConnected(false);
-          }}
-          onError={(error) => {
-            console.error('[VoiceAssistant] LiveKit error:', error);
-          }}
-        >
-          <MicrophoneEnabler />
-          <RoomAudioRenderer />
-          
-          {/* Minimal Controls with Status Indicator */}
-          <div className="relative">
-            {/* Connection Status Indicator */}
-            <div
-              className={cn(
-                'absolute -top-1 -left-1 w-3 h-3 rounded-full transition-all duration-300',
-                isConnected ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-400'
-              )}
-            />
-            
-            <VoiceControls onDisconnect={handleDisconnect} />
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden"
+      >
+        <SheetHeader className="p-6 pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-xl">
+              {language === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Voice Assistant'}
+            </SheetTitle>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleLanguage}
+              title={language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+              <Globe className="w-4 h-4" />
+            </Button>
           </div>
-        </LiveKitRoom>
-      )}
-    </div>
+        </SheetHeader>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {tokenLoading || !token || !livekitUrl ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+                <p className="text-muted-foreground">
+                  {language === 'ar'
+                    ? 'جاري الاتصال بالمساعد...'
+                    : 'Connecting to assistant...'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <LiveKitRoom
+              serverUrl={livekitUrl}
+              token={token}
+              connect={true}
+              audio={true}
+              video={false}
+              options={{
+                publishDefaults: {
+                  audioPreset: {
+                    maxBitrate: 32000,
+                  },
+                  dtx: true,
+                  red: true,
+                },
+                audioCaptureDefaults: {
+                  autoGainControl: true,
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                },
+              }}
+              onConnected={() => {
+                console.log('[VoiceAssistant] Connected to LiveKit room');
+                setIsConnected(true);
+              }}
+              onDisconnected={() => {
+                console.log('[VoiceAssistant] Disconnected from LiveKit room');
+                setIsConnected(false);
+              }}
+              onError={(error) => {
+                console.error('[VoiceAssistant] LiveKit error:', error);
+              }}
+              className="flex-1 flex flex-col"
+            >
+              {/* Auto-enable microphone */}
+              <MicrophoneEnabler />
+              {/* Play remote audio */}
+              <RoomAudioRenderer />
+
+              {/* Avatar Video */}
+              <div className="flex-shrink-0">
+                <VoiceAssistantAvatar />
+              </div>
+
+              {/* Conversation History */}
+              <div className="flex-1 overflow-y-auto">
+                <ConversationHistory />
+              </div>
+
+              {/* Controls */}
+              <div className="p-4 border-t bg-background">
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    variant="destructive"
+                    size="lg"
+                    onClick={handleDisconnect}
+                    className="gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    {language === 'ar' ? 'إنهاء المكالمة' : 'End Call'}
+                  </Button>
+                </div>
+              </div>
+            </LiveKitRoom>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };

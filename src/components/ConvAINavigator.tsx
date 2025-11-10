@@ -273,16 +273,10 @@ Other:
 
     return () => {
       window.removeEventListener('message', handleConvAIMessage);
-
-      // Clean up window.client tools
-      if ((window as any).client) {
-        Object.keys(navigationTools).forEach(key => {
-          delete (window as any).client[key];
-        });
-      }
-
-      delete window.convaiNavigationTools;
-      console.log('[ConvAI Navigator] Cleanup complete');
+      // Note: We intentionally DON'T clean up window.client tools here.
+      // They should persist across route changes and component re-renders.
+      // This way, voice commands work consistently throughout the app.
+      console.log('[ConvAI Navigator] Event listener cleaned up (tools still available)');
     };
   }, [navigate, toast, signOut, user, location, toggleSidebar, setOpen, setOpenMobile, isMobile]);
 

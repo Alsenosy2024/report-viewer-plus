@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { withPageAccessibility } from "@/lib/withPageAccessibility";
 
 interface Post {
   id: string;
@@ -1367,4 +1368,4 @@ const SocialMediaPosts = () => {
   );
 };
 
-export default SocialMediaPosts;
+export default withPageAccessibility(SocialMediaPosts);

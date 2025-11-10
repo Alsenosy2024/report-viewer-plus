@@ -18,68 +18,66 @@ export const ConversationHistory: React.FC = () => {
 
   if (transcript.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
-        <p className="text-center text-muted-foreground">
+      <div className="flex items-center justify-center h-full">
+        <p className="text-center text-[8px] text-muted-foreground px-1">
           {language === 'ar'
-            ? 'ابدأ المحادثة بالتحدث إلى المساعد'
-            : 'Start the conversation by speaking to the assistant'}
+            ? 'ابدأ المحادثة...'
+            : 'Start speaking...'}
         </p>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-full p-4">
-      <div className="space-y-4">
-        {transcript.map((message, index) => (
+    <div className="space-y-1">
+      {transcript.map((message, index) => (
+        <div
+          key={index}
+          className={cn(
+            'flex gap-1 items-start',
+            message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+          )}
+        >
+          {/* Avatar */}
           <div
-            key={index}
             className={cn(
-              'flex gap-3',
-              message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+              'flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center',
+              message.role === 'user'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-secondary-foreground'
             )}
           >
-            {/* Avatar */}
+            {message.role === 'user' ? (
+              <User className="w-2 h-2" />
+            ) : (
+              <Bot className="w-2 h-2" />
+            )}
+          </div>
+
+          {/* Message Bubble */}
+          <div
+            className={cn(
+              'flex-1',
+              message.role === 'user' ? 'text-right' : 'text-left'
+            )}
+          >
             <div
               className={cn(
-                'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+                'inline-block px-1.5 py-0.5 rounded-lg text-[9px]',
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground'
+                  : 'bg-muted text-foreground'
               )}
             >
-              {message.role === 'user' ? (
-                <User className="w-4 h-4" />
-              ) : (
-                <Bot className="w-4 h-4" />
-              )}
+              <p className="whitespace-pre-wrap leading-tight">{message.content}</p>
             </div>
-
-            {/* Message Bubble */}
-            <div
-              className={cn(
-                'flex-1 max-w-[80%]',
-                message.role === 'user' ? 'text-right' : 'text-left'
-              )}
-            >
-              <div
-                className={cn(
-                  'inline-block px-4 py-2 rounded-lg',
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground'
-                )}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {format(new Date(message.timestamp), 'HH:mm:ss')}
-              </p>
-            </div>
+            <p className="text-[7px] text-muted-foreground mt-0.5 px-0.5">
+              {format(new Date(message.timestamp), 'HH:mm:ss')}
+            </p>
           </div>
-        ))}
-        <div ref={scrollRef} />
-      </div>
-    </ScrollArea>
+        </div>
+      ))}
+      <div ref={scrollRef} />
+    </div>
   );
 };

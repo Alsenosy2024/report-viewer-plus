@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, PhoneOff, Mic, MicOff } from 'lucide-react';
-import { 
-  LiveKitRoom, 
-  useLocalParticipant, 
-  RoomAudioRenderer, 
-  useRoomContext 
+import { Loader2, PhoneOff, Mic, MicOff, X } from 'lucide-react';
+import {
+  LiveKitRoom,
+  useLocalParticipant,
+  RoomAudioRenderer,
+  useRoomContext
 } from '@livekit/components-react';
 import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { AgentNavigationListener } from '@/components/AgentNavigationListener';
+import { VoiceAssistantUI } from './VoiceAssistantUI';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
@@ -450,65 +451,100 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   return (
     <div
       className={cn(
-        'fixed bottom-20 right-6 z-50 transition-all duration-300',
-        'bg-background/95 backdrop-blur-xl rounded-full shadow-glow',
-        'border border-primary/20 p-3'
+        'fixed inset-0 z-50 flex items-center justify-center',
+        'bg-background/80 backdrop-blur-sm'
       )}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleDisconnect();
+        }
+      }}
     >
-      {tokenLoading || !token || !livekitUrl ? (
-        // Loading State
-        <div className="flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : (
-        <LiveKitRoom
-          serverUrl={livekitUrl}
-          token={token}
-          connect={true}
-          audio={false}
-          video={false}
-          options={{
-            publishDefaults: {
-              audioPreset: { maxBitrate: 32000 },
-              dtx: true,
-              red: true,
-            },
-            audioCaptureDefaults: {
-              autoGainControl: true,
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          }}
-          onConnected={() => {
-            console.log('[VoiceAssistant] ✅✅✅ Connected to LiveKit room!');
-            setIsConnected(true);
-          }}
-          onDisconnected={() => {
-            console.log('[VoiceAssistant] Disconnected from LiveKit room');
-            setIsConnected(false);
-          }}
-          onError={(error) => {
-            console.error('[VoiceAssistant] ❌ LiveKit error:', error);
-          }}
+      <div
+        className={cn(
+          'relative w-full max-w-3xl max-h-[90vh] overflow-y-auto',
+          'bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl',
+          'border border-primary/20 p-6'
+        )}
+      >
+        {/* Close Button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={handleDisconnect}
+          className="absolute top-4 right-4 z-10"
+          aria-label="Close voice assistant"
         >
-          <MicrophoneEnabler />
-          <AgentNavigationListener />
-          <RoomAudioRenderer />
+          <X className="w-5 h-5" />
+        </Button>
 
-          {/* Minimal Controls with Status Indicator */}
-          <div className="relative">
-            {/* Connection Status Indicator */}
-            <div
-              className={cn(
-                'absolute -top-1 -left-1 w-3 h-3 rounded-full transition-all duration-300',
-                isConnected ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-400'
-              )}
-            />
-            
-            <VoiceControls onDisconnect={handleDisconnect} />
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+            <span>🤖</span>
+            <span>Lamie - Voice Assistant</span>
+          </h2>
+          {isConnected && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm text-muted-foreground">Connected</span>
+            </div>
+          )}
+        </div>
+
+        {tokenLoading || !token || !livekitUrl ? (
+          // Loading State
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <p className="text-muted-foreground">Connecting to voice assistant...</p>
           </div>
-        </LiveKitRoom>
-      )}
+        ) : (
+          <LiveKitRoom
+            serverUrl={livekitUrl}
+            token={token}
+            connect={true}
+            audio={false}
+            video={false}
+            options={{
+              publishDefaults: {
+                audioPreset: { maxBitrate: 32000 },
+                dtx: true,
+                red: true,
+              },
+              audioCaptureDefaults: {
+                autoGainControl: true,
+                echoCancellation: true,
+                noiseSuppression: true,
+              },
+            }}
+            onConnected={() => {
+              console.log('[VoiceAssistant] ✅✅✅ Connected to LiveKit room!');
+              setIsConnected(true);
+            }}
+            onDisconnected={() => {
+              console.log('[VoiceAssistant] Disconnected from LiveKit room');
+              setIsConnected(false);
+            }}
+            onError={(error) => {
+              console.error('[VoiceAssistant] ❌ LiveKit error:', error);
+            }}
+          >
+            <MicrophoneEnabler />
+            <AgentNavigationListener />
+            <RoomAudioRenderer />
+
+            {/* Enhanced Voice Assistant UI with Visualizer and Transcriptions */}
+            <div className="flex justify-center">
+              <VoiceAssistantUI />
+            </div>
+
+            {/* Manual Controls (in addition to VoiceAssistantControlBar) */}
+            <div className="flex justify-center gap-4 mt-6">
+              <VoiceControls onDisconnect={handleDisconnect} />
+            </div>
+          </LiveKitRoom>
+        )}
+      </div>
     </div>
   );
 };

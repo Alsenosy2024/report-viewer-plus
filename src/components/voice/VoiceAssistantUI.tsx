@@ -59,27 +59,13 @@ export const VoiceAssistantUI: React.FC = () => {
           state={state}
           barCount={7}
           trackRef={audioTrack}
-          options={{
-            barWidth: 8,
-            barSpacing: 4,
-            minHeight: 4,
-          }}
         />
       </div>
 
       {/* Status Indicator */}
       <div className="text-center">
-        <p className={cn(
-          'text-sm font-medium transition-colors',
-          state === 'listening' && 'text-green-500',
-          state === 'thinking' && 'text-yellow-500',
-          state === 'speaking' && 'text-primary',
-          state === 'idle' && 'text-muted-foreground'
-        )}>
-          {state === 'listening' && '🎤 Listening...'}
-          {state === 'thinking' && '🤔 Processing...'}
-          {state === 'speaking' && '🗣️ Speaking...'}
-          {state === 'idle' && '💬 Ready to help'}
+        <p className="text-sm font-medium transition-colors text-muted-foreground">
+          💬 Ready to help
         </p>
       </div>
 

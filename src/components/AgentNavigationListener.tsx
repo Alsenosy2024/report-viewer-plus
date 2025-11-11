@@ -244,11 +244,8 @@ export const AgentNavigationListener = () => {
       };
       room.on('participantConnected', handleParticipantConnected);
 
-      // Subscribe to data channel events if available
-      if (room.engine) {
-        console.log('[Agent Navigation] Room engine available, setting up data channel listener');
-        room.engine.on('data_received', handleDataReceived);
-      }
+      // Data channel events are handled via RoomEvent.DataReceived above
+      // No need for engine-level listeners
 
       // FALLBACK: Monitor agent transcription/responses for navigation commands
       // Parse "NAVIGATE:/path" from agent's spoken response
@@ -383,21 +380,8 @@ export const AgentNavigationListener = () => {
         // Store interval for cleanup
         (room as any)._navMetadataInterval = metadataCheckInterval;
         
-        // Set up transcription listeners
-        console.log('[Agent Navigation] Setting up transcription fallback listener');
-        
-        // Try multiple ways to listen to agent speech/transcription
-        room.on('transcriptionReceived', handleTranscription);
-        room.on('transcription', handleTranscription);
-        
-        // Also listen to remote participants for any text/data
-        room.remoteParticipants.forEach((participant) => {
-          if (participant.identity.includes('agent')) {
-            console.log('[Agent Navigation] Setting up listener for agent participant:', participant.identity);
-            participant.on('transcriptionReceived', handleTranscription);
-            participant.on('transcription', handleTranscription);
-          }
-        });
+        // Transcription events are handled via metadata polling above
+        // LiveKit doesn't expose direct transcription events in current version
 
       // Cleanup function
       const cleanup = () => {
@@ -406,8 +390,6 @@ export const AgentNavigationListener = () => {
         room.off('dataReceived', handleDataReceived);
         room.off('participantConnected', handleParticipantConnected);
         room.off('participantMetadataChanged', handleMetadataChange);
-        room.off('transcriptionReceived', handleTranscription);
-        room.off('transcription', handleTranscription);
         
         // Clear polling interval
         if ((room as any)._navMetadataInterval) {
@@ -417,13 +399,7 @@ export const AgentNavigationListener = () => {
         room.remoteParticipants.forEach((participant) => {
           participant.off('dataReceived', handleDataReceived);
           participant.off(RoomEvent.DataReceived, handleDataReceived);
-          participant.off('transcriptionReceived', handleTranscription);
-          participant.off('transcription', handleTranscription);
-          participant.off('metadataChanged', handleMetadataChange);
         });
-        if (room.engine) {
-          room.engine.off('data_received', handleDataReceived);
-        }
       };
       
       return cleanup;

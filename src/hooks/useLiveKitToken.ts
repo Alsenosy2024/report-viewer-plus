@@ -20,60 +20,43 @@ export const useLiveKitToken = () => {
     setError(null);
 
     try {
-      // Get backend URL from environment or use default
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL;
-
-      if (!backendUrl) {
-        throw new Error('VITE_BACKEND_URL not configured. Please add your Railway backend URL to .env');
-      }
-
-      if (!livekitUrl) {
-        throw new Error('VITE_LIVEKIT_URL not configured. Please add your LiveKit server URL to .env');
-      }
-
-      // Get current session for user info
+      // Get current session for user authentication
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Generate unique room name based on user ID or use default
-      const uniqueRoomName = session?.user?.id
-        ? `voice-assistant-${session.user.id}`
-        : `voice-assistant-${Date.now()}`;
-
-      const userName = participantName || session?.user?.email || 'Guest';
-
-      // Call Railway backend Flask server to generate token
-      const response = await fetch(
-        `${backendUrl}/getToken?name=${encodeURIComponent(userName)}&room=${encodeURIComponent(uniqueRoomName)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Token generation failed: ${response.statusText}`);
+      if (!session) {
+        throw new Error('User not authenticated');
       }
 
-      const token = await response.text();
+      // Generate unique room name based on user ID
+      const uniqueRoomName = `voice-assistant-${session.user.id}`;
+      const userName = participantName || session.user.email || 'Guest';
 
-      if (!token) {
-        throw new Error('Invalid token received from backend');
+      // Call Supabase edge function to generate LiveKit token
+      const { data, error } = await supabase.functions.invoke('livekit-token', {
+        body: {
+          roomName: uniqueRoomName,
+          participantName: userName,
+        },
+      });
+
+      if (error) {
+        throw new Error(`Token generation failed: ${error.message}`);
+      }
+
+      if (!data?.token || !data?.url) {
+        throw new Error('Invalid token response from edge function');
       }
 
       console.log('[LiveKit] Token generated successfully', {
-        roomName: uniqueRoomName,
+        roomName: data.roomName,
         userName,
-        backendUrl
       });
 
       setIsLoading(false);
       return {
-        token,
-        url: livekitUrl,
-        roomName: uniqueRoomName,
+        token: data.token,
+        url: data.url,
+        roomName: data.roomName,
       };
     } catch (err) {
       const error = err as Error;

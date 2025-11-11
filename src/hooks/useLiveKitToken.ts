@@ -31,6 +31,11 @@ export const useLiveKitToken = () => {
       const uniqueRoomName = `voice-assistant-${session.user.id}`;
       const userName = participantName || session.user.email || 'Guest';
 
+      console.log('[LiveKit] Requesting token from Supabase Edge Function', {
+        roomName: uniqueRoomName,
+        participantName: userName,
+      });
+
       // Call Supabase edge function to generate LiveKit token
       const { data, error } = await supabase.functions.invoke('livekit-token', {
         body: {
@@ -40,6 +45,7 @@ export const useLiveKitToken = () => {
       });
 
       if (error) {
+        console.error('[LiveKit] Edge Function error:', error);
         throw new Error(`Token generation failed: ${error.message}`);
       }
 
@@ -47,9 +53,9 @@ export const useLiveKitToken = () => {
         throw new Error('Invalid token response from edge function');
       }
 
-      console.log('[LiveKit] Token generated successfully', {
+      console.log('[LiveKit] ✅ Token generated successfully', {
         roomName: data.roomName,
-        userName,
+        url: data.url,
       });
 
       setIsLoading(false);
@@ -63,13 +69,13 @@ export const useLiveKitToken = () => {
       setError(error);
       setIsLoading(false);
 
+      console.error('[LiveKit] ❌ Token generation failed:', error);
+
       toast({
         title: 'Connection Error',
         description: error.message || 'Failed to connect to voice assistant',
         variant: 'destructive',
       });
-
-      console.error('[LiveKit] Token generation error:', error);
 
       return null;
     }

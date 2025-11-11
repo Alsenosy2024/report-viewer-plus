@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, PhoneOff, Mic, MicOff } from 'lucide-react';
+import { Loader2, PhoneOff, Mic, MicOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { 
   LiveKitRoom, 
   useLocalParticipant, 
@@ -14,6 +14,7 @@ import { AgentNavigationListener } from '@/components/AgentNavigationListener';
 import { PageContentSender } from './PageContentSender';
 import { DOMInteractionExecutor } from './DOMInteractionExecutor';
 import { TranscriptCapture } from './TranscriptCapture';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
@@ -880,7 +881,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { getToken, isLoading: tokenLoading } = useLiveKitToken();
+  const { getToken, isLoading: tokenLoading, error: tokenError } = useLiveKitToken();
   const {
     isConnected,
     setIsConnected,
@@ -1041,15 +1042,41 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     <div
       className={cn(
         'fixed bottom-20 right-6 z-50 transition-all duration-300',
-        'bg-background/95 backdrop-blur-xl rounded-full shadow-glow',
-        'border border-primary/20 p-3'
+        'bg-background/95 backdrop-blur-xl rounded-2xl shadow-glow',
+        'border border-primary/20 p-4 min-w-[280px]'
       )}
     >
+      {/* Connection Status Banner */}
+      <div className="mb-3">
+        {tokenError ? (
+          <Alert variant="destructive" className="py-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="ml-2 text-xs">
+              <div className="font-medium">Connection Error</div>
+              <div className="text-destructive/80 mt-1">{tokenError.message}</div>
+            </AlertDescription>
+          </Alert>
+        ) : tokenLoading || !token || !livekitUrl ? (
+          <Alert className="py-2 bg-muted/50 border-muted">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <AlertDescription className="ml-2 text-xs font-medium">
+              Connecting to voice assistant...
+            </AlertDescription>
+          </Alert>
+        ) : isConnected ? (
+          <Alert className="py-2 bg-green-500/10 border-green-500/20">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <AlertDescription className="ml-2 text-xs font-medium text-green-700 dark:text-green-400">
+              Connected
+            </AlertDescription>
+          </Alert>
+        ) : null}
+      </div>
+
       {tokenLoading || !token || !livekitUrl ? (
         // Loading State
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center py-2">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <span className="ml-2 text-sm text-muted-foreground">Connecting...</span>
         </div>
       ) : (
         <LiveKitRoom

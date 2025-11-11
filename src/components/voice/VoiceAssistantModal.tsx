@@ -17,6 +17,37 @@ import { TranscriptCapture } from './TranscriptCapture';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
+  // Cleanup handler component - ensures tracks are stopped when LiveKitRoom unmounts
+  const CleanupHandler: React.FC = () => {
+    const room = useRoomContext();
+    const { localParticipant } = useLocalParticipant();
+
+    useEffect(() => {
+      // Cleanup function that runs when component unmounts
+      return () => {
+        console.log('[VoiceAssistant] 🧹 CleanupHandler: Cleaning up on unmount...');
+        
+        if (localParticipant) {
+          const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
+          if (micPub && micPub.track) {
+            try {
+              const mediaStreamTrack = (micPub.track as any).mediaStreamTrack;
+              if (mediaStreamTrack && mediaStreamTrack.readyState === 'live') {
+                console.log('[VoiceAssistant] Stopping track on unmount, readyState:', mediaStreamTrack.readyState);
+                mediaStreamTrack.stop();
+                console.log('[VoiceAssistant] ✅ Stopped track on unmount');
+              }
+            } catch (e) {
+              console.warn('[VoiceAssistant] Error stopping track on unmount:', e);
+            }
+          }
+        }
+      };
+    }, [localParticipant]);
+
+    return null;
+  };
+
   // Microphone enabler component (runs in background)
   const MicrophoneEnabler: React.FC = () => {
     const room = useRoomContext();
@@ -758,7 +789,46 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       
       enableMicrophone();
     }
-  }, [localParticipant, room?.state]);
+    
+    // CLEANUP FUNCTION - Critical for reconnection!
+    return () => {
+      console.log('[VoiceAssistant] 🧹 Cleaning up microphone tracks...');
+      
+      // Stop the track reference if it exists
+      if (audioTrackRef) {
+        try {
+          console.log('[VoiceAssistant] Stopping audioTrackRef, readyState:', audioTrackRef.readyState);
+          audioTrackRef.stop();
+          console.log('[VoiceAssistant] ✅ Stopped audioTrackRef');
+        } catch (e) {
+          console.warn('[VoiceAssistant] Error stopping audioTrackRef:', e);
+        }
+      }
+      
+      // Unpublish and stop the track from LiveKit
+      if (localParticipant) {
+        const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
+        if (micPub && micPub.track) {
+          try {
+            const mediaStreamTrack = (micPub.track as any).mediaStreamTrack;
+            if (mediaStreamTrack) {
+              console.log('[VoiceAssistant] Stopping published track, readyState:', mediaStreamTrack.readyState);
+              mediaStreamTrack.stop();
+              console.log('[VoiceAssistant] ✅ Stopped published track');
+            }
+            localParticipant.unpublishTrack(micPub.track);
+            console.log('[VoiceAssistant] ✅ Unpublished track');
+          } catch (e) {
+            console.warn('[VoiceAssistant] Error cleaning up published track:', e);
+          }
+        }
+      }
+      
+      // Clear the ref
+      setAudioTrackRef(null);
+      console.log('[VoiceAssistant] ✅ Cleanup complete');
+    };
+  }, [localParticipant, room?.state, audioTrackRef, muteStateKey]);
 
   return (
     <div className="flex items-center gap-2">
@@ -884,8 +954,29 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   useEffect(() => {
     if (!open) {
       console.log('[VoiceAssistant] Modal closed, cleaning up...');
+      
+      // CRITICAL: Stop all microphone tracks before cleaning up state
+      // This is a failsafe in case the LiveKitRoom cleanup didn't run
+      try {
+        console.log('[VoiceAssistant] Stopping all microphone tracks...');
+        // Get all media stream tracks
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            stream.getTracks().forEach(track => {
+              console.log('[VoiceAssistant] Stopping track:', track.kind, track.readyState);
+              track.stop();
+            });
+          })
+          .catch(err => {
+            console.log('[VoiceAssistant] No active microphone stream to stop');
+          });
+      } catch (error) {
+        console.warn('[VoiceAssistant] Error during modal close cleanup:', error);
+      }
+      
       // Mark as disconnected first
       setIsConnected(false);
+      
       // Reset state when modal closes (without disconnecting if already disconnected)
       if (!isConnected) {
         setToken(null);
@@ -899,6 +990,21 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
   const handleDisconnect = async () => {
     console.log('[VoiceAssistant] 🔌 Disconnecting...');
+    
+    // CRITICAL: Stop all microphone tracks FIRST before any state changes
+    try {
+      console.log('[VoiceAssistant] Stopping all microphone tracks before disconnect...');
+      
+      // Get all active media stream tracks and stop them
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => {
+        console.log('[VoiceAssistant] Stopping track:', track.kind, 'readyState:', track.readyState);
+        track.stop();
+        console.log('[VoiceAssistant] ✅ Track stopped');
+      });
+    } catch (error) {
+      console.log('[VoiceAssistant] No active microphone stream to stop (expected if already stopped)');
+    }
     
     // Mark as disconnected first to prevent any pending operations
     setIsConnected(false);
@@ -984,6 +1090,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             // User can manually reconnect by closing and reopening the modal
           }}
         >
+          <CleanupHandler />
           <MicrophoneEnabler />
           <TranscriptCapture />
           <AgentNavigationListener />

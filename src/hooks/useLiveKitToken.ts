@@ -20,37 +20,61 @@ export const useLiveKitToken = () => {
     setError(null);
 
     try {
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get backend URL from environment or use default
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL;
 
-      if (!session) {
-        throw new Error('No active session');
+      if (!backendUrl) {
+        throw new Error('VITE_BACKEND_URL not configured. Please add your Railway backend URL to .env');
       }
 
-      // Generate unique room name based on user ID
-      const uniqueRoomName = `voice-assistant-${session.user.id}`;
+      if (!livekitUrl) {
+        throw new Error('VITE_LIVEKIT_URL not configured. Please add your LiveKit server URL to .env');
+      }
 
-      // Call Supabase Edge Function to generate token
-      const { data, error: functionError } = await supabase.functions.invoke(
-        'livekit-token',
+      // Get current session for user info
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Generate unique room name based on user ID or use default
+      const uniqueRoomName = session?.user?.id
+        ? `voice-assistant-${session.user.id}`
+        : `voice-assistant-${Date.now()}`;
+
+      const userName = participantName || session?.user?.email || 'Guest';
+
+      // Call Railway backend Flask server to generate token
+      const response = await fetch(
+        `${backendUrl}/getToken?name=${encodeURIComponent(userName)}&room=${encodeURIComponent(uniqueRoomName)}`,
         {
-          body: {
-            roomName: uniqueRoomName,
-            participantName: participantName || session.user.email,
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           },
         }
       );
 
-      if (functionError) {
-        throw functionError;
+      if (!response.ok) {
+        throw new Error(`Token generation failed: ${response.statusText}`);
       }
 
-      if (!data || !data.token) {
-        throw new Error('Invalid response from token service');
+      const token = await response.text();
+
+      if (!token) {
+        throw new Error('Invalid token received from backend');
       }
+
+      console.log('[LiveKit] Token generated successfully', {
+        roomName: uniqueRoomName,
+        userName,
+        backendUrl
+      });
 
       setIsLoading(false);
-      return data as LiveKitTokenResponse;
+      return {
+        token,
+        url: livekitUrl,
+        roomName: uniqueRoomName,
+      };
     } catch (err) {
       const error = err as Error;
       setError(error);
@@ -61,6 +85,8 @@ export const useLiveKitToken = () => {
         description: error.message || 'Failed to connect to voice assistant',
         variant: 'destructive',
       });
+
+      console.error('[LiveKit] Token generation error:', error);
 
       return null;
     }

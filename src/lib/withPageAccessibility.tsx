@@ -454,13 +454,11 @@ export function usePageAccessibility(config: AccessibilityConfig = {}) {
         setTimeout(applyAccessibilityEnhancements, 100);
       });
 
-      if (containerRef.current) {
-        observer.observe(containerRef.current, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-        });
-      }
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+      });
 
       return () => observer.disconnect();
     }

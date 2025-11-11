@@ -71,6 +71,30 @@ serve(async (req) => {
     // Generate JWT token
     const token = await at.toJwt()
 
+    // Notify Railway agent to join the room
+    const railwayUrl = Deno.env.get('RAILWAY_AGENT_URL')
+    if (railwayUrl) {
+      try {
+        const agentResponse = await fetch(`${railwayUrl}/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room_name: roomName || 'voice-assistant',
+            participant_identity: participantName || user.id,
+          }),
+        })
+        
+        if (!agentResponse.ok) {
+          console.warn('Failed to notify agent:', await agentResponse.text())
+        } else {
+          console.log('Agent notified successfully')
+        }
+      } catch (agentError) {
+        console.warn('Error notifying agent:', agentError)
+        // Don't fail the token generation if agent notification fails
+      }
+    }
+
     return new Response(
       JSON.stringify({
         token,

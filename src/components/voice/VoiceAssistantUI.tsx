@@ -52,9 +52,9 @@ export const VoiceAssistantUI: React.FC = () => {
   }, [agentTranscriptions, userTranscriptions]);
 
   return (
-    <div className="flex flex-col space-y-2 w-full">
+    <div className="flex flex-col space-y-2 w-full max-w-xl">
       {/* Audio Visualizer */}
-      <div className="w-full h-16 flex items-center justify-center bg-background/50 rounded-lg border border-primary/20">
+      <div className="w-full h-20 flex items-center justify-center bg-background/50 rounded-lg border border-primary/20">
         <BarVisualizer
           state={state}
           barCount={5}
@@ -71,7 +71,7 @@ export const VoiceAssistantUI: React.FC = () => {
       {messages.length > 0 && (
         <div className="w-full">
           <h3 className="text-xs font-semibold mb-1 text-muted-foreground">Conversation</h3>
-          <ScrollArea className="h-40 w-full border rounded-lg p-2 bg-background/30">
+          <ScrollArea className="h-48 w-full border rounded-lg p-2 bg-background/30">
             {messages.map((msg, idx) => (
               <Message key={idx} type={msg.type} text={msg.text} />
             ))}
@@ -80,8 +80,8 @@ export const VoiceAssistantUI: React.FC = () => {
       )}
 
       {/* Helper Text */}
-      <div className="text-center text-[10px] text-muted-foreground">
-        <p>Try: "افتح الداشبورد"</p>
+      <div className="text-center text-xs text-muted-foreground">
+        <p>Try: "افتح الداشبورد" or "Show me reports"</p>
       </div>
     </div>
   );

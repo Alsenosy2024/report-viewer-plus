@@ -348,25 +348,33 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string>('voice-assistant');
 
+  // Always get a fresh token when modal opens
   useEffect(() => {
-    if (open && !token) {
+    const handleConnect = async () => {
+      console.log('[VoiceAssistant] Connecting...');
+      const result = await getToken(roomName);
+      if (result) {
+        console.log('[VoiceAssistant] Token received, setting state...');
+        setToken(result.token);
+        setLivekitUrl(result.url);
+        setRoomName(result.roomName);
+      } else {
+        console.error('[VoiceAssistant] Failed to get token');
+      }
+    };
+
+    if (open) {
+      console.log('[VoiceAssistant] Modal opened, getting fresh token...');
       handleConnect();
     }
-  }, [open]);
-
-  const handleConnect = async () => {
-    const result = await getToken(roomName);
-    if (result) {
-      setToken(result.token);
-      setLivekitUrl(result.url);
-      setRoomName(result.roomName);
-    }
-  };
+  }, [open, getToken, roomName]);
 
   const handleDisconnect = async () => {
+    console.log('[VoiceAssistant] Disconnecting...');
     if (isConnected) {
       await saveConversation(roomName);
     }
+    // Clear all state to ensure fresh connection next time
     setToken(null);
     setLivekitUrl(null);
     setIsConnected(false);
@@ -421,6 +429,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           </div>
         ) : (
           <LiveKitRoom
+            key={token}
             serverUrl={livekitUrl}
             token={token}
             connect={true}

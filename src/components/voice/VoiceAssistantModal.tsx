@@ -298,18 +298,18 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
           toggleMute();
         }}
         className={cn(
-          "w-12 h-12 rounded-full transition-all duration-200 hover:scale-105",
-          isMuted 
-            ? "bg-red-500 hover:bg-red-600 text-white border-2 border-red-600" 
+          "w-9 h-9 rounded-full transition-all duration-200",
+          isMuted
+            ? "bg-red-500 hover:bg-red-600 text-white border-2 border-red-600"
             : "bg-primary hover:bg-primary/90 text-white"
         )}
         aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
         type="button"
       >
         {isMuted ? (
-          <MicOff className="w-5 h-5 text-white stroke-2" />
+          <MicOff className="w-4 h-4 text-white stroke-2" />
         ) : (
-          <Mic className="w-5 h-5 text-white" />
+          <Mic className="w-4 h-4 text-white" />
         )}
       </Button>
 
@@ -318,10 +318,10 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
         size="icon"
         variant="secondary"
         onClick={onDisconnect}
-        className="w-12 h-12 rounded-full bg-secondary hover:bg-secondary/90 transition-all duration-200 hover:scale-105"
+        className="w-9 h-9 rounded-full bg-secondary hover:bg-secondary/90 transition-all duration-200"
         aria-label="End call"
       >
-        <PhoneOff className="w-5 h-5" />
+        <PhoneOff className="w-4 h-4" />
       </Button>
     </div>
   );
@@ -379,52 +379,45 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center',
-        'bg-background/80 backdrop-blur-sm'
+        'fixed bottom-24 right-6 z-50',
+        'w-80 max-h-[500px]',
+        'bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl',
+        'border border-primary/20',
+        'flex flex-col'
       )}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          handleDisconnect();
-        }
-      }}
     >
-      <div
-        className={cn(
-          'relative w-full max-w-3xl max-h-[90vh] overflow-y-auto',
-          'bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl',
-          'border border-primary/20 p-6'
-        )}
-      >
-        {/* Close Button */}
+      {/* Compact Header */}
+      <div className="flex items-center justify-between p-3 border-b border-primary/10">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🤖</span>
+          <div className="flex flex-col">
+            <h3 className="text-sm font-semibold">Lamie</h3>
+            {isConnected && (
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs text-muted-foreground">Connected</span>
+              </div>
+            )}
+          </div>
+        </div>
         <Button
           size="icon"
           variant="ghost"
           onClick={handleDisconnect}
-          className="absolute top-4 right-4 z-10"
+          className="h-8 w-8"
           aria-label="Close voice assistant"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </Button>
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
-            <span>🤖</span>
-            <span>Lamie - Voice Assistant</span>
-          </h2>
-          {isConnected && (
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm text-muted-foreground">Connected</span>
-            </div>
-          )}
-        </div>
-
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto p-3">
         {tokenLoading || !token || !livekitUrl ? (
           // Loading State
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-muted-foreground">Connecting to voice assistant...</p>
+          <div className="flex flex-col items-center justify-center py-8 space-y-3">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-xs text-muted-foreground">Connecting...</p>
           </div>
         ) : (
           <LiveKitRoom
@@ -461,14 +454,14 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             <AgentNavigationListener />
             <RoomAudioRenderer />
 
-            {/* Enhanced Voice Assistant UI with Visualizer and Transcriptions */}
-            <div className="flex justify-center">
+            {/* Compact Voice Assistant UI */}
+            <div className="flex flex-col space-y-3">
               <VoiceAssistantUI />
-            </div>
 
-            {/* Manual Controls (in addition to VoiceAssistantControlBar) */}
-            <div className="flex justify-center gap-4 mt-6">
-              <VoiceControls onDisconnect={handleDisconnect} />
+              {/* Compact Controls */}
+              <div className="flex justify-center">
+                <VoiceControls onDisconnect={handleDisconnect} />
+              </div>
             </div>
           </LiveKitRoom>
         )}

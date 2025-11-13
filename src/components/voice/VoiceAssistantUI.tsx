@@ -19,13 +19,13 @@ interface Message {
 const Message: React.FC<{ type: 'agent' | 'user'; text: string }> = ({ type, text }) => {
   return (
     <div className={cn(
-      'mb-3 p-3 rounded-lg',
+      'mb-2 p-2 rounded-lg text-xs',
       type === 'agent'
         ? 'bg-primary/10 text-primary'
         : 'bg-secondary/10 text-secondary-foreground'
     )}>
-      <strong className="font-semibold">
-        {type === 'agent' ? '🤖 Lamie: ' : '👤 You: '}
+      <strong className="font-semibold text-[11px]">
+        {type === 'agent' ? '🤖 ' : '👤 '}
       </strong>
       <span>{text}</span>
     </div>
@@ -52,33 +52,28 @@ export const VoiceAssistantUI: React.FC = () => {
   }, [agentTranscriptions, userTranscriptions]);
 
   return (
-    <div className="flex flex-col space-y-4 w-full max-w-2xl">
-      {/* Audio Visualizer */}
-      <div className="w-full h-32 flex items-center justify-center bg-background/50 rounded-lg border border-primary/20">
+    <div className="flex flex-col space-y-2 w-full">
+      {/* Compact Audio Visualizer */}
+      <div className="w-full h-16 flex items-center justify-center bg-background/50 rounded-lg border border-primary/20">
         <BarVisualizer
           state={state}
-          barCount={7}
+          barCount={5}
           trackRef={audioTrack}
         />
       </div>
 
       {/* Status Indicator */}
       <div className="text-center">
-        <p className="text-sm font-medium transition-colors text-muted-foreground">
+        <p className="text-xs font-medium transition-colors text-muted-foreground">
           💬 Ready to help
         </p>
-      </div>
-
-      {/* Voice Assistant Controls */}
-      <div className="flex justify-center">
-        <VoiceAssistantControlBar />
       </div>
 
       {/* Transcription Display */}
       {messages.length > 0 && (
         <div className="w-full">
-          <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Conversation</h3>
-          <ScrollArea className="h-64 w-full border rounded-lg p-3 bg-background/30">
+          <h3 className="text-xs font-semibold mb-1 text-muted-foreground">Conversation</h3>
+          <ScrollArea className="h-40 w-full border rounded-lg p-2 bg-background/30">
             {messages.map((msg, idx) => (
               <Message key={idx} type={msg.type} text={msg.text} />
             ))}
@@ -86,9 +81,9 @@ export const VoiceAssistantUI: React.FC = () => {
         </div>
       )}
 
-      {/* Helper Text */}
-      <div className="text-center text-xs text-muted-foreground px-4">
-        <p>Try: "افتح الداشبورد" or "Show me WhatsApp reports"</p>
+      {/* Compact Helper Text */}
+      <div className="text-center text-[10px] text-muted-foreground">
+        <p>Try: "افتح الداشبورد"</p>
       </div>
     </div>
   );

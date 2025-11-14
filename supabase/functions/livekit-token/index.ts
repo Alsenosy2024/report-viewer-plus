@@ -42,7 +42,16 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { roomName, participantName } = await req.json()
+    const { participantName } = await req.json()
+
+
+    // Generate UNIQUE room name every time
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 8)
+    const uniqueRoomName = `voice-${timestamp}-${random}`
+
+
+    console.log(`🎯 Creating token for UNIQUE room: ${uniqueRoomName}`)
 
     // Get LiveKit credentials from environment
     const livekitUrl = Deno.env.get('LIVEKIT_URL')
@@ -62,7 +71,7 @@ serve(async (req) => {
     // Grant permissions to join the room
     at.addGrant({
       roomJoin: true,
-      room: roomName || 'voice-assistant',
+      room: uniqueRoomName,
       canPublish: true,
       canSubscribe: true,
       canPublishData: true,
@@ -79,11 +88,11 @@ serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            room_name: roomName || 'voice-assistant',
+            room_name: uniqueRoomName,
             participant_identity: participantName || user.id,
           }),
         })
-        
+
         if (!agentResponse.ok) {
           console.warn('Failed to notify agent:', await agentResponse.text())
         } else {
@@ -99,7 +108,7 @@ serve(async (req) => {
       JSON.stringify({
         token,
         url: livekitUrl,
-        roomName: roomName || 'voice-assistant',
+        roomName: uniqueRoomName,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

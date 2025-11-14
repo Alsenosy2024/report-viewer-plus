@@ -15,73 +15,73 @@ import { VoiceAssistantUI } from './VoiceAssistantUI';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
-  // Microphone enabler component (runs in background)
-  const MicrophoneEnabler: React.FC = () => {
-    const room = useRoomContext();
-    const { localParticipant } = useLocalParticipant();
-    const { setIsSpeaking } = useVoiceAssistantContext();
+// Microphone enabler component (runs in background)
+const MicrophoneEnabler: React.FC = () => {
+  const room = useRoomContext();
+  const { localParticipant } = useLocalParticipant();
+  const { setIsSpeaking } = useVoiceAssistantContext();
 
-    useEffect(() => {
-      if (!room || !localParticipant) return;
+  useEffect(() => {
+    if (!room || !localParticipant) return;
 
-      const handleConnected = () => {
-        console.log('[VoiceAssistant] Room connected in MicrophoneEnabler');
-      };
+    const handleConnected = () => {
+      console.log('[VoiceAssistant] Room connected in MicrophoneEnabler');
+    };
 
-      room.on('connected', handleConnected);
+    room.on('connected', handleConnected);
 
-      const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
-        console.log('[VoiceAssistant] Track subscribed:', {
-          kind: track.kind,
-          participant: participant.identity,
-          isLocal: participant === localParticipant
+    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
+      console.log('[VoiceAssistant] Track subscribed:', {
+        kind: track.kind,
+        participant: participant.identity,
+        isLocal: participant === localParticipant
+      });
+
+      if (track.kind === 'audio' && participant !== localParticipant) {
+        const audioElement = track.attach();
+        audioElement.autoplay = true;
+        audioElement.playsInline = true;
+        document.body.appendChild(audioElement);
+        console.log('[VoiceAssistant] Audio element attached');
+      }
+    };
+
+    const handleTrackUnsubscribed = (track: any) => {
+      if (track.kind === 'audio') {
+        track.detach().forEach((element: HTMLMediaElement) => {
+          element.remove();
         });
+      }
+    };
 
-        if (track.kind === 'audio' && participant !== localParticipant) {
-          const audioElement = track.attach();
-          audioElement.autoplay = true;
-          audioElement.playsInline = true;
-          document.body.appendChild(audioElement);
-          console.log('[VoiceAssistant] Audio element attached');
-        }
-      };
+    const handleTrackPublished = (publication: any, participant: any) => {
+      if (publication.kind === 'audio' && participant === localParticipant) {
+        console.log('[VoiceAssistant] ✅✅✅ LOCAL MICROPHONE TRACK PUBLISHED!', {
+          trackSid: publication.trackSid,
+          source: publication.source,
+          muted: publication.isMuted
+        });
+      }
+    };
 
-      const handleTrackUnsubscribed = (track: any) => {
-        if (track.kind === 'audio') {
-          track.detach().forEach((element: HTMLMediaElement) => {
-            element.remove();
-          });
-        }
-      };
+    const handleParticipantMetadataChanged = (participant: any) => {
+      if (participant.isSpeaking !== undefined) {
+        setIsSpeaking(participant.isSpeaking);
+      }
+    };
 
-      const handleTrackPublished = (publication: any, participant: any) => {
-        if (publication.kind === 'audio' && participant === localParticipant) {
-          console.log('[VoiceAssistant] ✅✅✅ LOCAL MICROPHONE TRACK PUBLISHED!', {
-            trackSid: publication.trackSid,
-            source: publication.source,
-            muted: publication.isMuted
-          });
-        }
-      };
+    room.on('trackSubscribed', handleTrackSubscribed);
+    room.on('trackUnsubscribed', handleTrackUnsubscribed);
+    room.on('trackPublished', handleTrackPublished);
+    room.on('participantMetadataChanged', handleParticipantMetadataChanged);
 
-      const handleParticipantMetadataChanged = (participant: any) => {
-        if (participant.isSpeaking !== undefined) {
-          setIsSpeaking(participant.isSpeaking);
-        }
-      };
-
-      room.on('trackSubscribed', handleTrackSubscribed);
-      room.on('trackUnsubscribed', handleTrackUnsubscribed);
-      room.on('trackPublished', handleTrackPublished);
-      room.on('participantMetadataChanged', handleParticipantMetadataChanged);
-
-      return () => {
-        room.off('connected', handleConnected);
-        room.off('trackSubscribed', handleTrackSubscribed);
-        room.off('trackUnsubscribed', handleTrackUnsubscribed);
-        room.off('trackPublished', handleTrackPublished);
-        room.off('participantMetadataChanged', handleParticipantMetadataChanged);
-      };
+    return () => {
+      room.off('connected', handleConnected);
+      room.off('trackSubscribed', handleTrackSubscribed);
+      room.off('trackUnsubscribed', handleTrackUnsubscribed);
+      room.off('trackPublished', handleTrackPublished);
+      room.off('participantMetadataChanged', handleParticipantMetadataChanged);
+    };
   }, [room, localParticipant, setIsSpeaking]);
 
   return null;
@@ -103,7 +103,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       const micPublication = localParticipant.getTrackPublication(Track.Source.Microphone);
       const hasTrack = !!micPublication?.track;
       const isTrackMuted = micPublication?.isMuted ?? false;
-      
+
       console.log('[VoiceAssistant] Mic Status Check:', {
         enabled: isEnabled,
         hasPublication: !!micPublication,
@@ -120,7 +120,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
     };
 
     checkMicStatus();
-    
+
     // Listen for mute state changes on the publication
     const handleTrackMuted = (publication: any) => {
       if (publication.kind === 'audio') {
@@ -128,7 +128,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
         console.log('[VoiceAssistant] Microphone mute state changed:', publication.isMuted);
       }
     };
-    
+
     // Listen for track published events
     const handleTrackPublished = (publication: any) => {
       if (publication.kind === 'audio') {
@@ -158,7 +158,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
 
     localParticipant.on('trackPublished', handleTrackPublished);
     localParticipant.on('trackUnpublished', handleTrackUnpublished);
-    
+
     // Subscribe to mute events if publication already exists
     const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
     if (micPub) {
@@ -170,7 +170,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       micPub.on('muted', handleMutedChange);
       micPub.on('unmuted', handleMutedChange);
     }
-    
+
     room.on('connected', () => {
       console.log('[VoiceAssistant] Room connected, checking mic...');
       checkMicStatus();
@@ -196,21 +196,21 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
 
   const toggleMute = async () => {
     console.log('[VoiceAssistant] 🔴 MUTE BUTTON CLICKED!');
-    
+
     // Get current state
     const currentMuted = isMuted;
     const newMutedState = !currentMuted;
-    
+
     console.log('[VoiceAssistant] Toggling mute state from', currentMuted, 'to', newMutedState);
-    
+
     // Update visual state
     setIsMuted(newMutedState);
-    
+
     if (!localParticipant) {
       console.warn('[VoiceAssistant] No local participant');
       return;
     }
-    
+
     // Use LiveKit's setMicrophoneEnabled method
     try {
       await localParticipant.setMicrophoneEnabled(!newMutedState);
@@ -226,12 +226,12 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
       const enableMicrophone = async () => {
         try {
           console.log('[VoiceAssistant] Room connected, enabling microphone...');
-          
+
           // Check if we have microphone permissions
           try {
             const permissions = await navigator.permissions.query({ name: 'microphone' as PermissionName });
             console.log('[VoiceAssistant] Microphone permission status:', permissions.state);
-            
+
             if (permissions.state === 'denied') {
               console.error('[VoiceAssistant] ❌ Microphone permission denied by user');
               alert('Please allow microphone access to use the voice assistant');
@@ -240,36 +240,36 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
           } catch (e) {
             console.log('[VoiceAssistant] Could not check permissions (may not be supported):', e);
           }
-          
+
           // Manually get and publish microphone since audio={false}
           console.log('[VoiceAssistant] Manually requesting microphone...');
-          
-          const stream = await navigator.mediaDevices.getUserMedia({ 
+
+          const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
               echoCancellation: true,
               noiseSuppression: true,
               autoGainControl: true
-            } 
+            }
           });
-          
+
           console.log('[VoiceAssistant] ✅ Got microphone stream:', stream.getAudioTracks());
-          
+
           const audioTrack = stream.getAudioTracks()[0];
           if (audioTrack) {
             console.log('[VoiceAssistant] Publishing microphone track...');
-            
+
             const publication = await localParticipant.publishTrack(audioTrack, {
               name: 'microphone',
               source: Track.Source.Microphone,
             });
-            
+
             console.log('[VoiceAssistant] ✅✅✅ MICROPHONE TRACK PUBLISHED!', {
               trackSid: publication.trackSid,
               kind: publication.kind,
               source: publication.source,
               track: !!publication.track
             });
-            
+
             // Store reference to the track
             if (publication.track) {
               setAudioTrackRef(publication.track as LocalTrack);
@@ -281,7 +281,7 @@ const VoiceControls: React.FC<{ onDisconnect: () => void }> = ({ onDisconnect })
           alert('Error enabling microphone: ' + (error instanceof Error ? error.message : 'Unknown error'));
         }
       };
-      
+
       enableMicrophone();
     }
   }, [localParticipant, room?.state]);
@@ -346,7 +346,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState<string>('voice-assistant');
+  const [roomName, setRoomName] = useState<string>('');
 
   useEffect(() => {
     if (open && !token) {
@@ -355,11 +355,12 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   }, [open]);
 
   const handleConnect = async () => {
-    const result = await getToken(roomName);
+    const result = await getToken('');
     if (result) {
       setToken(result.token);
       setLivekitUrl(result.url);
       setRoomName(result.roomName);
+      console.log(`✅ Connected to unique room: ${result.roomName}`);
     }
   };
 

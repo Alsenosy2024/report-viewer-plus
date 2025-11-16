@@ -633,6 +633,42 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_conversations: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          language: string | null
+          participant_name: string | null
+          room_name: string
+          transcript: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language?: string | null
+          participant_name?: string | null
+          room_name: string
+          transcript?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language?: string | null
+          participant_name?: string | null
+          room_name?: string
+          transcript?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_analyses: {
         Row: {
           analysis_data: Json

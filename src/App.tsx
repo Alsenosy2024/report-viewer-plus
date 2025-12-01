@@ -26,6 +26,7 @@ import { ConvAINavigator } from "@/components/ConvAINavigator";
 import { SimpleNavigationTest } from "@/components/SimpleNavigationTest";
 import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 import { VoiceAssistantWidget } from "@/components/voice/VoiceAssistantWidget";
+import { ClickAnimationOverlay } from "@/components/voice/ClickAnimationOverlay";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,9 @@ const App = () => {
 
             {/* LiveKit Voice Assistant Widget */}
             <VoiceAssistantWidget />
+
+            {/* Click Animation Overlay for agent interactions */}
+            <ClickAnimationOverlay />
           </BrowserRouter>
         </TooltipProvider>
       </VoiceAssistantProvider>

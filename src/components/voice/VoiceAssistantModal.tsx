@@ -12,6 +12,7 @@ import { useLiveKitToken } from '@/hooks/useLiveKitToken';
 import { useVoiceAssistantContext } from '@/contexts/VoiceAssistantContext';
 import { AgentNavigationListener } from '@/components/AgentNavigationListener';
 import { VoiceAssistantUI } from './VoiceAssistantUI';
+import { UIElementsReporter } from './UIElementsReporter';
 import { cn } from '@/lib/utils';
 import '@livekit/components-styles';
 
@@ -453,6 +454,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           >
             <MicrophoneEnabler />
             <AgentNavigationListener />
+            <UIElementsReporter />
             <RoomAudioRenderer />
 
             {/* Compact Voice Assistant UI */}

@@ -71,17 +71,15 @@ export function useDashboardData() {
         return;
       }
 
-      const row = dbData as N8nDashboardRow;
-
       // Check if we have JSON content (new format)
-      if (row.json_content) {
-        setData(row.json_content);
+      if (dbData.json_content) {
+        setData(dbData.json_content as unknown as DashboardData);
         return;
       }
 
       // Fallback: Try to parse html_content as JSON (for transition period)
       try {
-        const parsed = JSON.parse(row.html_content);
+        const parsed = JSON.parse(dbData.html_content);
         if (parsed.meta && parsed.kpis) {
           setData(parsed as DashboardData);
           return;

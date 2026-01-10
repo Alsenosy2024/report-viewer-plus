@@ -1,55 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { RefreshCw, Clock, Brain, MessageSquare, BarChart3, Users, Maximize2, Minimize2, CheckCircle2, DollarSign, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Maximize2, Minimize2, Workflow, Calendar, Clock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
-interface N8nDashboard {
-  id: string;
-  dashboard_name: string;
-  html_content: string;
-  workflow_id: string | null;
-  version: number;
-  is_active: boolean;
-  metadata: any;
-  created_by_workflow: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Dashboard Data Hook
+import { useDashboardData, MOCK_DASHBOARD_DATA } from '@/hooks/useDashboardData';
+
+// Widget Components
+import { KPICard, ExecutiveOverview, SectionCard, AlertsPanel, RecommendationsCard } from './widgets';
 
 const SmartDashboard = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [dashboard, setDashboard] = useState<N8nDashboard | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const { toast } = useToast();
+  const { data: dashboardData, isLoading, error, refresh, timerSeconds, isTimerActive } = useDashboardData();
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
 
-  // Timer effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (isTimerActive && timerSeconds > 0) {
-      interval = setInterval(() => {
-        setTimerSeconds(seconds => {
-          if (seconds <= 1) {
-            setIsTimerActive(false);
-            return 0;
-          }
-          return seconds - 1;
-        });
-      }, 1000);
-    } else if (timerSeconds === 0) {
-      setIsTimerActive(false);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isTimerActive, timerSeconds]);
+  // Use mock data in development or when no data is available
+  const data = dashboardData || MOCK_DASHBOARD_DATA;
 
   // Format timer display
   const formatTimer = (seconds: number) => {
@@ -58,345 +23,255 @@ const SmartDashboard = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const loadLatestDashboard = async () => {
-    setIsLoading(true);
-    setError('');
-    console.log('Loading latest n8n dashboard...');
-
-    try {
-      const { data, error } = await supabase
-        .from('n8n_dashboards')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading n8n dashboard:', error);
-        setError('خطأ في تحميل الداشبورد');
-        toast({
-          title: "خطأ في التحميل",
-          description: "فشل في تحميل الداشبورد من n8n",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data) {
-        setDashboard(data);
-        console.log(`Loaded dashboard: ${data.dashboard_name} v${data.version}`);
-        toast({
-          title: "تم التحميل بنجاح",
-          description: `تم تحميل الداشبورد: ${data.dashboard_name} v${data.version}`,
-        });
-      } else {
-        setError('لم يتم العثور على أي داشبورد نشط');
-        toast({
-          title: "لا يوجد داشبورد",
-          description: "لم يتم العثور على أي داشبورد نشط من n8n",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error loading n8n dashboard:', error);
-      setError(error.message);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحميل الداشبورد",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Handle refresh
   const handleRefresh = async () => {
     try {
-      // Start 5-minute timer
-      setTimerSeconds(300); // 5 minutes = 300 seconds
-      setIsTimerActive(true);
-      
-      // Trigger the webhook first
-      console.log('Triggering dashboard refresh webhook...');
-      await fetch('https://primary-production-245af.up.railway.app/webhook/dashboard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'refresh_dashboard',
-          timestamp: new Date().toISOString()
-        })
-      });
-      
-      toast({
-        title: "تم تفعيل التحديث",
-        description: "تم إرسال طلب تحديث الداشبورد بنجاح - سيتم التحديث خلال 5 دقائق",
-      });
-      
-      // Then load the latest dashboard
-      await loadLatestDashboard();
+      await refresh();
     } catch (error) {
-      console.error('Error triggering webhook:', error);
-      setIsTimerActive(false);
-      setTimerSeconds(0);
-      toast({
-        title: "خطأ في التحديث",
-        description: "فشل في تفعيل تحديث الداشبورد",
-        variant: "destructive",
-      });
+      console.error('Refresh failed:', error);
     }
   };
 
-  // Subscribe to real-time updates for new n8n dashboards
-  useEffect(() => {
-    const channel = supabase
-      .channel('n8n-dashboards-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'n8n_dashboards'
-        },
-        async (payload) => {
-          console.log('New n8n dashboard detected:', payload);
-          // Reload the latest dashboard
-          await loadLatestDashboard();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // Load latest dashboard on component mount
-  useEffect(() => {
-    loadLatestDashboard();
-  }, []);
-
+  // Toggle fullscreen
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
-  };
+  // Loading state
+  if (isLoading && !data) {
+    return (
+      <div className="min-h-[400px] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center rounded-2xl">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin mx-auto" />
+            <Brain className="absolute inset-0 m-auto w-8 h-8 text-cyan-400" />
+          </div>
+          <p className="mt-4 text-lg text-slate-400 font-[Tajawal]">جاري تحميل الداشبورد الذكي...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Error state
   if (error) {
     return (
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <Workflow className="h-5 w-5" />
-            خطأ في داشبورد n8n
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{error}</p>
-          <Button 
-            onClick={() => handleRefresh()} 
-            className="mt-4"
-            disabled={isLoading || isTimerActive}
-          >
+      <div className="min-h-[400px] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center rounded-2xl">
+        <div className="text-center p-8 rounded-2xl bg-slate-900/50 border border-rose-500/20 max-w-md">
+          <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4">
+            <Brain className="w-8 h-8 text-rose-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white font-[Tajawal] mb-2">خطأ في التحميل</h3>
+          <p className="text-slate-400 font-[Tajawal] mb-4">{error}</p>
+          <Button onClick={handleRefresh} disabled={isTimerActive}>
             {isTimerActive ? (
               <>
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-4 w-4 ml-2" />
                 {formatTimer(timerSeconds)}
               </>
             ) : (
               <>
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className="h-4 w-4 ml-2" />
                 إعادة المحاولة
               </>
             )}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
-  if (isLoading && !dashboard) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Workflow className="h-5 w-5" />
-            داشبورد n8n الذكي
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-3 text-lg">جاري تحميل الداشبورد...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (dashboard) {
-    if (isFullscreen) {
-      return (
-        <div className="fixed inset-0 z-50 bg-background">
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-2">
-              <Workflow className="h-5 w-5" />
-              <span className="font-semibold">{dashboard.dashboard_name} - وضع ملء الشاشة</span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                v{dashboard.version}
-              </span>
+  const dashboardContent = (
+    <div className={cn(
+      'min-h-screen p-4 md:p-6',
+      'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950',
+      isFullscreen && 'fixed inset-0 z-50 overflow-auto'
+    )} dir="rtl" lang="ar">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-cyan-400">
+              <Brain className="w-6 h-6" />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleRefresh()}
-                disabled={isLoading || isTimerActive}
-              >
-                {isTimerActive ? (
-                  <>
-                    <Clock className="h-4 w-4 mr-2" />
-                    {formatTimer(timerSeconds)}
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    تحديث
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleFullscreen}
-              >
-                <Minimize2 className="h-4 w-4 mr-2" />
-                إغلاق ملء الشاشة
-              </Button>
-            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
           </div>
-          <div className="h-[calc(100vh-80px)]">
-            <iframe
-              srcDoc={dashboard.html_content}
-              className="w-full h-full border-0"
-              title="n8n Dashboard Fullscreen"
-            />
+          <div>
+            <h1 className="text-2xl font-bold text-white font-[Tajawal]">
+              الداشبورد الذكي
+            </h1>
+            <p className="text-sm text-slate-500 font-[Tajawal]">
+              تحليل شامل بواسطة الذكاء الاصطناعي
+            </p>
           </div>
         </div>
-      );
-    }
 
-    return (
-      <Card>
-        <CardHeader className="p-3 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Workflow className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="truncate">{dashboard.dashboard_name}</span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
-                v{dashboard.version}
-              </span>
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleRefresh()}
-                disabled={isLoading || isTimerActive}
-                className="h-9 text-xs sm:text-sm"
-              >
-                {isTimerActive ? (
-                  <>
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">{formatTimer(timerSeconds)}</span>
-                    <span className="sm:hidden">{formatTimer(timerSeconds).split(':')[0]}m</span>
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    <span className="hidden sm:inline">تحديث</span>
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleFullscreen}
-                className="h-9 text-xs sm:text-sm"
-              >
-                <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">ملء الشاشة</span>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6">
-          <div className="h-64 sm:h-96 mb-4">
-            <iframe
-              srcDoc={dashboard.html_content}
-              className="w-full h-full border border-border rounded-md"
-              title="n8n Dashboard"
-            />
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>آخر تحديث: {formatDate(dashboard.updated_at)}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
-              {dashboard.workflow_id && (
-                <span className="truncate">Workflow: {dashboard.workflow_id}</span>
-              )}
-              {dashboard.created_by_workflow && (
-                <span className="truncate">مُولد بواسطة: {dashboard.created_by_workflow}</span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Workflow className="h-5 w-5" />
-          داشبورد n8n الذكي
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-12">
-          <Workflow className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">لم يتم العثور على داشبورد نشط</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            قم بتشغيل سير عمل n8n الخاص بك لإنشاء وتحميل داشبورد جديد
-          </p>
-          <Button 
-            onClick={() => handleRefresh()} 
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
             disabled={isLoading || isTimerActive}
-            size="lg"
+            className="bg-slate-800/50 border-white/10 text-white hover:bg-slate-700/50"
           >
             {isTimerActive ? (
               <>
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-4 w-4 ml-2 animate-pulse" />
                 {formatTimer(timerSeconds)}
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                البحث عن داشبورد
+                <RefreshCw className={cn('h-4 w-4 ml-2', isLoading && 'animate-spin')} />
+                تحديث
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleFullscreen}
+            className="bg-slate-800/50 border-white/10 text-white hover:bg-slate-700/50"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="h-4 w-4 ml-2" />
+                <span className="hidden sm:inline">تصغير</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="h-4 w-4 ml-2" />
+                <span className="hidden sm:inline">ملء الشاشة</span>
               </>
             )}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Meta Info Bar */}
+      {data.meta && (
+        <div className="mb-4 px-4 py-2 rounded-xl bg-slate-800/30 border border-white/[0.05] flex flex-wrap items-center gap-4 text-xs text-slate-500 font-[Tajawal]">
+          <span>الفترة: {new Date(data.meta.periodStart).toLocaleDateString('ar-EG')} - {new Date(data.meta.periodEnd).toLocaleDateString('ar-EG')}</span>
+          <span className="hidden sm:inline">|</span>
+          <span>اكتمال البيانات: <span className="text-cyan-400 font-[Outfit]">{data.meta.dataCompleteness}%</span></span>
+          <span className="hidden sm:inline">|</span>
+          <span>آخر تحديث: {new Date(data.meta.generatedAt).toLocaleTimeString('ar-EG')}</span>
+        </div>
+      )}
+
+      {/* Dashboard Grid */}
+      <div className="space-y-6">
+        {/* KPI Cards Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard
+            title="إجمالي التفاعلات"
+            icon={<Users className="w-5 h-5" />}
+            metric={data.kpis.totalInteractions}
+          />
+          <KPICard
+            title="معدل الإنجاز"
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            metric={data.kpis.completionRate}
+          />
+          <KPICard
+            title="متوسط زمن الرد"
+            icon={<Timer className="w-5 h-5" />}
+            metric={data.kpis.avgResponseTime}
+          />
+          <KPICard
+            title="الإيرادات"
+            icon={<DollarSign className="w-5 h-5" />}
+            metric={data.kpis.revenue}
+          />
+        </div>
+
+        {/* Executive Overview and Alerts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <ExecutiveOverview data={data.executiveOverview} />
+          </div>
+          <div>
+            <AlertsPanel alerts={data.alerts} />
+          </div>
+        </div>
+
+        {/* Section Cards Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SectionCard
+            title="واتساب"
+            icon={<MessageSquare className="w-5 h-5" />}
+            summary={data.sections.whatsapp.summary}
+            accentColor="emerald"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-white font-[Outfit]">
+                  {data.sections.whatsapp.metrics.totalCustomers.value.toLocaleString('ar-EG')}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">إجمالي العملاء</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-emerald-400 font-[Outfit]">
+                  {data.sections.whatsapp.metrics.newCustomers.value.toLocaleString('ar-EG')}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">عملاء جدد</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-cyan-400 font-[Outfit]">
+                  {data.sections.whatsapp.metrics.avgResponseTime.value} {data.sections.whatsapp.metrics.avgResponseTime.unit}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">متوسط زمن الرد</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-amber-400 font-[Outfit]">
+                  {data.sections.whatsapp.metrics.resolutionRate.value}%
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">معدل الحل</p>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="الإنتاجية"
+            icon={<BarChart3 className="w-5 h-5" />}
+            summary={data.sections.productivity.summary}
+            accentColor="amber"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-white font-[Outfit]">
+                  {data.sections.productivity.metrics.tasksCompleted.value.toLocaleString('ar-EG')}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">مهام مكتملة</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-rose-400 font-[Outfit]">
+                  {data.sections.productivity.metrics.tasksLate.value.toLocaleString('ar-EG')}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">مهام متأخرة</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-emerald-400 font-[Outfit]">
+                  {data.sections.productivity.metrics.completionRate.value}%
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">معدل الإنجاز</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
+                <p className="text-lg font-bold text-cyan-400 font-[Outfit]">
+                  {data.sections.productivity.metrics.avgTaskDuration.value} {data.sections.productivity.metrics.avgTaskDuration.unit}
+                </p>
+                <p className="text-xs text-slate-500 font-[Tajawal]">متوسط المدة</p>
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Recommendations */}
+        <RecommendationsCard recommendations={data.recommendations} />
+      </div>
+    </div>
   );
+
+  return dashboardContent;
 };
 
 export default SmartDashboard;

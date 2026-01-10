@@ -337,6 +337,24 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_chat_histories123: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       n8n_dashboards: {
         Row: {
           created_at: string
@@ -345,6 +363,7 @@ export type Database = {
           html_content: string
           id: string
           is_active: boolean
+          json_content: Json | null
           metadata: Json | null
           updated_at: string
           version: number
@@ -357,6 +376,7 @@ export type Database = {
           html_content: string
           id?: string
           is_active?: boolean
+          json_content?: Json | null
           metadata?: Json | null
           updated_at?: string
           version?: number
@@ -369,6 +389,7 @@ export type Database = {
           html_content?: string
           id?: string
           is_active?: boolean
+          json_content?: Json | null
           metadata?: Json | null
           updated_at?: string
           version?: number

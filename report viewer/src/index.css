@@ -1,0 +1,482 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Dashboard Design System */
+
+@layer base {
+  :root {
+    /* Brand: Professional Engineers */
+    /* Core Colors */
+    --background: 210 40% 98%;
+    --foreground: 222 33% 12%;
+
+    /* Brand palette */
+    --primary: 222 65% 26%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 12 78% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Dashboard specific */
+    --dashboard-primary: 12 78% 50%;
+    --dashboard-primary-foreground: 0 0% 100%;
+    --dashboard-secondary: 222 24% 96%;
+    --dashboard-secondary-foreground: 222 30% 20%;
+    
+    /* Status colors */
+    --success: 142 70% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --error: 0 72% 51%;
+    --error-foreground: 0 0% 100%;
+    --info: 222 65% 26%;
+    --info-foreground: 0 0% 100%;
+
+    /* Card and surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 222 33% 12%;
+    --card-border: 222 16% 88%;
+
+    /* Interactive elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 33% 12%;
+
+    --secondary: 222 24% 96%;
+    --secondary-foreground: 222 30% 20%;
+
+    --muted: 222 24% 96%;
+    --muted-foreground: 222 10% 40%;
+
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 222 16% 88%;
+    --input: 222 16% 88%;
+    --ring: 12 78% 50%;
+
+    /* Layout */
+    --radius: 0.75rem;
+    --header-height: 4rem;
+    --sidebar-width: 16rem;
+
+    /* Sidebar */
+    --sidebar-background: 222 24% 97%;
+    --sidebar-foreground: 222 30% 20%;
+    --sidebar-primary: 12 78% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 20% 92%;
+    --sidebar-accent-foreground: 222 30% 20%;
+    --sidebar-border: 222 16% 90%;
+    --sidebar-ring: 12 78% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--dashboard-secondary)), hsl(0 0% 100%));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 60% 48%));
+    --gradient-smart: linear-gradient(135deg, hsl(222 65% 26%), hsl(12 78% 50%), hsl(262 65% 35%));
+    --gradient-ai: linear-gradient(45deg, hsl(262 65% 35%), hsl(12 78% 50%), hsl(222 65% 26%));
+    --gradient-dashboard: linear-gradient(135deg, hsl(var(--dashboard-primary)), hsl(var(--accent)));
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.25), 0 0 28px hsl(var(--accent) / 0.18);
+    --shadow-smart: 0 8px 32px -12px hsl(262 65% 35% / 0.25);
+    --shadow-ai: 0 0 40px hsl(var(--accent) / 0.3);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    /* Core Colors */
+    --background: 222 35% 7%;
+    --foreground: 220 15% 88%;
+
+    /* Dashboard specific */
+    --dashboard-primary: 12 80% 56%;
+    --dashboard-primary-foreground: 0 0% 100%;
+    --dashboard-secondary: 222 24% 15%;
+    --dashboard-secondary-foreground: 220 20% 80%;
+    
+    /* Status colors */
+    --success: 142 70% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --error: 0 72% 55%;
+    --error-foreground: 0 0% 100%;
+    --info: 222 65% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Card and surfaces */
+    --card: 222 32% 9%;
+    --card-foreground: 220 15% 88%;
+    --card-border: 222 22% 18%;
+
+    /* Interactive elements */
+    --popover: 222 32% 9%;
+    --popover-foreground: 220 15% 88%;
+
+    --primary: 222 65% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 24% 15%;
+    --secondary-foreground: 220 20% 80%;
+
+    --muted: 222 24% 15%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 12 80% 56%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 222 22% 18%;
+    --input: 222 22% 18%;
+    --ring: 12 80% 56%;
+
+    /* Sidebar */
+    --sidebar-background: 222 35% 8%;
+    --sidebar-foreground: 220 20% 80%;
+    --sidebar-primary: 12 80% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 24% 12%;
+    --sidebar-accent-foreground: 220 20% 80%;
+    --sidebar-border: 222 22% 15%;
+    --sidebar-ring: 12 80% 56%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--dashboard-secondary)), hsl(222 30% 10%));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 65% 52%));
+    --gradient-smart: linear-gradient(135deg, hsl(222 65% 60%), hsl(12 80% 56%), hsl(262 65% 60%));
+    --gradient-ai: linear-gradient(45deg, hsl(262 65% 60%), hsl(12 80% 56%), hsl(222 65% 60%));
+    --gradient-dashboard: linear-gradient(135deg, hsl(var(--dashboard-primary)), hsl(var(--accent)));
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+    --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.4), 0 0 25px hsl(var(--accent) / 0.2);
+    --shadow-smart: 0 8px 32px -12px hsl(262 65% 60% / 0.3);
+    --shadow-ai: 0 0 40px hsl(var(--accent) / 0.25);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Interactive Animation Utilities */
+  .hover-lift {
+    @apply transform transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  .hover-glow {
+    @apply transform transition-all duration-200 ease-out hover:shadow-glow hover:scale-105;
+  }
+  
+  .hover-magnetic {
+    @apply transform transition-all duration-300 ease-out hover:scale-110 hover:animate-magnetic;
+  }
+  
+  .click-bounce {
+    @apply active:scale-95 transform transition-transform duration-100;
+  }
+  
+  .stagger-children > * {
+    animation-delay: calc(var(--stagger) * 100ms);
+  }
+  
+  .loading-pulse {
+    @apply animate-pulse bg-gradient-to-r from-muted via-background to-muted bg-[length:200%_100%];
+    animation: loading-shimmer 1.5s infinite;
+  }
+  
+  @keyframes loading-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .entrance-slide-up {
+    @apply animate-slide-up;
+  }
+  
+  .entrance-fade-in {
+    @apply animate-fade-in;
+  }
+  
+  .entrance-scale-in {
+    @apply animate-scale-in;
+  }
+  
+  /* Page transition utilities */
+  .page-enter {
+    @apply animate-fade-in;
+  }
+  
+  .page-exit {
+    @apply animate-fade-out;
+  }
+  
+  /* Success states */
+  .success-bounce {
+    @apply animate-bounce-subtle;
+  }
+  
+  .error-wiggle {
+    @apply animate-wiggle;
+  }
+  
+  /* Voice navigation specific */
+  .nav-overlay-enter {
+    @apply animate-fade-in;
+  }
+  
+  /* Performance optimizations */
+  .will-animate {
+    will-change: transform, opacity, box-shadow;
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift,
+    .hover-glow,
+    .hover-magnetic,
+    .click-bounce {
+      @apply transform-none transition-none;
+    }
+    
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-slide-up,
+    .animate-bounce-subtle,
+    .animate-pulse-glow,
+    .animate-wiggle,
+    .animate-float,
+    .animate-magnetic {
+      animation: none !important;
+    }
+  }
+}
+
+/* Text truncation utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Custom Scrollbar for Dashboard Widgets */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.5);
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.3) rgba(15, 23, 42, 0.3);
+}
+
+/* Shimmer Animation for Dashboard Cards */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* React Grid Layout Custom Styles */
+.react-grid-layout {
+  position: relative;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.resizing {
+  z-index: 1;
+  will-change: width, height;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 3;
+  will-change: transform;
+  opacity: 0.9;
+  box-shadow: 0 25px 50px -12px rgba(6, 182, 212, 0.25);
+}
+
+.react-grid-item.dropping {
+  visibility: hidden;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgba(6, 182, 212, 0.15);
+  border: 2px dashed rgba(6, 182, 212, 0.4);
+  border-radius: 1rem;
+  opacity: 1;
+  transition-duration: 100ms;
+  z-index: 2;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(6, 182, 212, 0.4);
+  border-bottom: 2px solid rgba(6, 182, 212, 0.4);
+  border-radius: 2px;
+}
+
+.react-grid-item > .react-resizable-handle:hover::after {
+  border-color: rgba(6, 182, 212, 0.8);
+}
+
+.react-resizable-hide > .react-resizable-handle {
+  display: none;
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
+  bottom: 0;
+  left: 0;
+  cursor: sw-resize;
+  transform: rotate(90deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-nw {
+  top: 0;
+  left: 0;
+  cursor: nw-resize;
+  transform: rotate(180deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-ne {
+  top: 0;
+  right: 0;
+  cursor: ne-resize;
+  transform: rotate(270deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-w,
+.react-grid-item > .react-resizable-handle.react-resizable-handle-e {
+  top: 50%;
+  margin-top: -10px;
+  cursor: ew-resize;
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-w {
+  left: 0;
+  transform: rotate(135deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-e {
+  right: 0;
+  transform: rotate(315deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-n,
+.react-grid-item > .react-resizable-handle.react-resizable-handle-s {
+  left: 50%;
+  margin-left: -10px;
+  cursor: ns-resize;
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-n {
+  top: 0;
+  transform: rotate(225deg);
+}
+
+.react-grid-item > .react-resizable-handle.react-resizable-handle-s {
+  bottom: 0;
+  transform: rotate(45deg);
+}
+
+/* Arabic RTL Support for Dashboard */
+[dir="rtl"] .react-grid-item > .react-resizable-handle.react-resizable-handle-se {
+  right: auto;
+  left: 0;
+  cursor: sw-resize;
+  transform: rotate(90deg);
+}
+
+[dir="rtl"] .react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
+  left: auto;
+  right: 0;
+  cursor: se-resize;
+  transform: rotate(0deg);
+}

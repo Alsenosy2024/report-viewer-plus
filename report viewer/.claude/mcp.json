@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-supabase",
+        "https://flojlnzqivsziumuebgy.supabase.co",
+        "sbp_45a6b6d017980ef5419210ac3a6a24b4f27ce296"
+      ]
+    }
+  }
+}

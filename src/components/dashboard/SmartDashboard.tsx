@@ -40,13 +40,13 @@ const SmartDashboard = () => {
   // Loading state
   if (isLoading && !data) {
     return (
-      <div className="min-h-[400px] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center rounded-2xl">
+      <div className="min-h-[400px] bg-background flex items-center justify-center rounded-2xl border border-border">
         <div className="text-center">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin mx-auto" />
-            <Brain className="absolute inset-0 m-auto w-8 h-8 text-cyan-400" />
+            <div className="w-20 h-20 rounded-full border-4 border-accent/20 border-t-accent animate-spin mx-auto" />
+            <Brain className="absolute inset-0 m-auto w-8 h-8 text-accent" />
           </div>
-          <p className="mt-4 text-lg text-slate-400 font-[Tajawal]">جاري تحميل الداشبورد الذكي...</p>
+          <p className="mt-4 text-lg text-muted-foreground font-[Tajawal]">جاري تحميل الداشبورد الذكي...</p>
         </div>
       </div>
     );
@@ -55,13 +55,13 @@ const SmartDashboard = () => {
   // Error state
   if (error) {
     return (
-      <div className="min-h-[400px] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center rounded-2xl">
-        <div className="text-center p-8 rounded-2xl bg-slate-900/50 border border-rose-500/20 max-w-md">
-          <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4">
-            <Brain className="w-8 h-8 text-rose-400" />
+      <div className="min-h-[400px] bg-background flex items-center justify-center rounded-2xl border border-border">
+        <div className="text-center p-8 rounded-2xl bg-card border border-error/20 max-w-md">
+          <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4">
+            <Brain className="w-8 h-8 text-error" />
           </div>
-          <h3 className="text-xl font-bold text-white font-[Tajawal] mb-2">خطأ في التحميل</h3>
-          <p className="text-slate-400 font-[Tajawal] mb-4">{error}</p>
+          <h3 className="text-xl font-bold text-foreground font-[Tajawal] mb-2">خطأ في التحميل</h3>
+          <p className="text-muted-foreground font-[Tajawal] mb-4">{error}</p>
           <Button onClick={handleRefresh} disabled={isTimerActive}>
             {isTimerActive ? (
               <>
@@ -83,23 +83,23 @@ const SmartDashboard = () => {
   const dashboardContent = (
     <div className={cn(
       'min-h-screen p-4 md:p-6',
-      'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950',
+      'bg-background',
       isFullscreen && 'fixed inset-0 z-50 overflow-auto'
     )} dir="rtl" lang="ar">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-cyan-400">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-accent/20 to-primary/20 text-accent">
               <Brain className="w-6 h-6" />
             </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full animate-pulse" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white font-[Tajawal]">
+            <h1 className="text-2xl font-bold text-foreground font-[Tajawal]">
               الداشبورد الذكي
             </h1>
-            <p className="text-sm text-slate-500 font-[Tajawal]">
+            <p className="text-sm text-muted-foreground font-[Tajawal]">
               تحليل شامل بواسطة الذكاء الاصطناعي
             </p>
           </div>
@@ -111,7 +111,6 @@ const SmartDashboard = () => {
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading || isTimerActive}
-            className="bg-slate-800/50 border-white/10 text-white hover:bg-slate-700/50"
           >
             {isTimerActive ? (
               <>
@@ -130,7 +129,6 @@ const SmartDashboard = () => {
             variant="outline"
             size="sm"
             onClick={toggleFullscreen}
-            className="bg-slate-800/50 border-white/10 text-white hover:bg-slate-700/50"
           >
             {isFullscreen ? (
               <>
@@ -149,10 +147,10 @@ const SmartDashboard = () => {
 
       {/* Meta Info Bar */}
       {data.meta && (
-        <div className="mb-4 px-4 py-2 rounded-xl bg-slate-800/30 border border-white/[0.05] flex flex-wrap items-center gap-4 text-xs text-slate-500 font-[Tajawal]">
+        <div className="mb-4 px-4 py-2 rounded-xl bg-muted/50 border border-border flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-[Tajawal]">
           <span>الفترة: {new Date(data.meta.periodStart).toLocaleDateString('ar-EG')} - {new Date(data.meta.periodEnd).toLocaleDateString('ar-EG')}</span>
           <span className="hidden sm:inline">|</span>
-          <span>اكتمال البيانات: <span className="text-cyan-400 font-[Outfit]">{data.meta.dataCompleteness}%</span></span>
+          <span>اكتمال البيانات: <span className="text-accent font-[Outfit]">{data.meta.dataCompleteness}%</span></span>
           <span className="hidden sm:inline">|</span>
           <span>آخر تحديث: {new Date(data.meta.generatedAt).toLocaleTimeString('ar-EG')}</span>
         </div>
@@ -200,32 +198,32 @@ const SmartDashboard = () => {
             title="واتساب"
             icon={<MessageSquare className="w-5 h-5" />}
             summary={data.sections.whatsapp.summary}
-            accentColor="emerald"
+            accentColor="success"
           >
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-white font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-foreground font-[Outfit]">
                   {data.sections.whatsapp.metrics.totalCustomers.value.toLocaleString('ar-EG')}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">إجمالي العملاء</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">إجمالي العملاء</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-emerald-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-success font-[Outfit]">
                   {data.sections.whatsapp.metrics.newCustomers.value.toLocaleString('ar-EG')}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">عملاء جدد</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">عملاء جدد</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-cyan-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-accent font-[Outfit]">
                   {data.sections.whatsapp.metrics.avgResponseTime.value} {data.sections.whatsapp.metrics.avgResponseTime.unit}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">متوسط زمن الرد</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">متوسط زمن الرد</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-amber-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-warning font-[Outfit]">
                   {data.sections.whatsapp.metrics.resolutionRate.value}%
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">معدل الحل</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">معدل الحل</p>
               </div>
             </div>
           </SectionCard>
@@ -234,32 +232,32 @@ const SmartDashboard = () => {
             title="الإنتاجية"
             icon={<BarChart3 className="w-5 h-5" />}
             summary={data.sections.productivity.summary}
-            accentColor="amber"
+            accentColor="warning"
           >
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-white font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-foreground font-[Outfit]">
                   {data.sections.productivity.metrics.tasksCompleted.value.toLocaleString('ar-EG')}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">مهام مكتملة</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">مهام مكتملة</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-rose-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-error font-[Outfit]">
                   {data.sections.productivity.metrics.tasksLate.value.toLocaleString('ar-EG')}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">مهام متأخرة</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">مهام متأخرة</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-emerald-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-success font-[Outfit]">
                   {data.sections.productivity.metrics.completionRate.value}%
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">معدل الإنجاز</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">معدل الإنجاز</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/[0.05]">
-                <p className="text-lg font-bold text-cyan-400 font-[Outfit]">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-lg font-bold text-accent font-[Outfit]">
                   {data.sections.productivity.metrics.avgTaskDuration.value} {data.sections.productivity.metrics.avgTaskDuration.unit}
                 </p>
-                <p className="text-xs text-slate-500 font-[Tajawal]">متوسط المدة</p>
+                <p className="text-xs text-muted-foreground font-[Tajawal]">متوسط المدة</p>
               </div>
             </div>
           </SectionCard>

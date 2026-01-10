@@ -10,37 +10,33 @@ interface AlertsPanelProps {
 const severityConfig = {
   critical: {
     icon: AlertCircle,
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
-    text: 'text-rose-400',
-    glow: 'shadow-rose-500/20',
+    bg: 'bg-error/10',
+    border: 'border-error/30',
+    text: 'text-error',
     label: 'حرج',
     pulse: true,
   },
   high: {
     icon: AlertTriangle,
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
-    text: 'text-amber-400',
-    glow: 'shadow-amber-500/20',
+    bg: 'bg-warning/10',
+    border: 'border-warning/30',
+    text: 'text-warning',
     label: 'عالي',
     pulse: false,
   },
   medium: {
     icon: Info,
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/30',
-    text: 'text-blue-400',
-    glow: 'shadow-blue-500/20',
+    bg: 'bg-info/10',
+    border: 'border-info/30',
+    text: 'text-info',
     label: 'متوسط',
     pulse: false,
   },
   low: {
     icon: Bell,
-    bg: 'bg-slate-500/10',
-    border: 'border-slate-500/30',
-    text: 'text-slate-400',
-    glow: 'shadow-slate-500/20',
+    bg: 'bg-muted',
+    border: 'border-border',
+    text: 'text-muted-foreground',
     label: 'منخفض',
     pulse: false,
   },
@@ -78,52 +74,51 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
   return (
     <div className={cn(
       'relative overflow-hidden rounded-2xl h-full',
-      'bg-gradient-to-br from-slate-900/90 via-slate-800/60 to-slate-900/90',
-      'backdrop-blur-xl border border-white/[0.08]',
-      criticalCount > 0 && 'shadow-[0_0_60px_rgba(244,63,94,0.15)]'
+      'bg-card border border-border',
+      criticalCount > 0 && 'shadow-[0_0_30px_hsl(var(--error)/0.15)]'
     )}>
       {/* Animated gradient background for critical alerts */}
       {criticalCount > 0 && (
-        <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-transparent to-rose-500/5 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-error/5 via-transparent to-error/5 animate-pulse" />
       )}
 
       {/* Header */}
       <div
-        className="relative flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
+        className="relative flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
           <div className={cn(
             'relative p-2.5 rounded-xl',
-            criticalCount > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'
+            criticalCount > 0 ? 'bg-error/20 text-error' : 'bg-warning/20 text-warning'
           )}>
             <Zap className="w-5 h-5" />
             {criticalCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full animate-ping" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-error rounded-full animate-ping" />
             )}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white font-[Tajawal] flex items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground font-[Tajawal] flex items-center gap-2">
               التنبيهات والإشعارات
-              <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-[Outfit]">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-[Outfit]">
                 {alerts.length}
               </span>
             </h3>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {criticalCount > 0 && (
-                <span className="text-rose-400">{criticalCount} حرج</span>
+                <span className="text-error">{criticalCount} حرج</span>
               )}
               {highCount > 0 && (
-                <span className="text-amber-400">{highCount} عالي</span>
+                <span className="text-warning">{highCount} عالي</span>
               )}
             </div>
           </div>
         </div>
-        <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-slate-400" />
+            <ChevronUp className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           )}
         </button>
       </div>
@@ -133,7 +128,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
         'relative overflow-hidden transition-all duration-500 ease-out',
         isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
       )}>
-        <div className="px-4 pb-4 space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+        <div className="px-4 pb-4 space-y-2 max-h-[500px] overflow-y-auto">
           {sortedAlerts.map((alert, index) => {
             const config = severityConfig[alert.severity];
             const SeverityIcon = config.icon;
@@ -146,7 +141,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                   'group p-3 rounded-xl border transition-all duration-300 cursor-pointer',
                   config.bg,
                   config.border,
-                  'hover:shadow-lg',
+                  'hover:shadow-md',
                   config.pulse && 'animate-pulse'
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -172,33 +167,33 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                       )}>
                         {config.label}
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-400">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                         {typeLabels[alert.type]}
                       </span>
                     </div>
 
                     <p className={cn(
-                      'text-xs text-slate-400 font-[Tajawal] leading-relaxed',
+                      'text-xs text-muted-foreground font-[Tajawal] leading-relaxed',
                       !isAlertExpanded && 'line-clamp-1'
                     )}>
                       {alert.description}
                     </p>
 
                     {isAlertExpanded && alert.suggestedAction && (
-                      <div className="mt-2 p-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                        <p className="text-xs text-cyan-400 font-[Tajawal]">
-                          <span className="text-slate-500">الإجراء المقترح: </span>
+                      <div className="mt-2 p-2 rounded-lg bg-muted/50 border border-border">
+                        <p className="text-xs text-accent font-[Tajawal]">
+                          <span className="text-muted-foreground">الإجراء المقترح: </span>
                           {alert.suggestedAction}
                         </p>
                       </div>
                     )}
                   </div>
 
-                  <button className="p-1 hover:bg-white/5 rounded transition-colors">
+                  <button className="p-1 hover:bg-muted rounded transition-colors">
                     {isAlertExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                      <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </button>
                 </div>
@@ -208,8 +203,8 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
 
           {alerts.length === 0 && (
             <div className="text-center py-8">
-              <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-500 font-[Tajawal]">لا توجد تنبيهات</p>
+              <Bell className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground font-[Tajawal]">لا توجد تنبيهات</p>
             </div>
           )}
         </div>

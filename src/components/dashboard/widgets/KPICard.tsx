@@ -13,15 +13,15 @@ interface KPICardProps {
 
 export function KPICard({ title, icon, metric, className }: KPICardProps) {
   const trendConfig = {
-    up: { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    down: { icon: TrendingDown, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-    stable: { icon: Minus, color: 'text-slate-400', bg: 'bg-slate-500/10' },
+    up: { icon: TrendingUp, color: 'text-success', bg: 'bg-success/10' },
+    down: { icon: TrendingDown, color: 'text-error', bg: 'bg-error/10' },
+    stable: { icon: Minus, color: 'text-muted-foreground', bg: 'bg-muted' },
   };
 
   const statusConfig = {
-    good: 'from-emerald-500/20 to-transparent',
-    warning: 'from-amber-500/20 to-transparent',
-    critical: 'from-rose-500/20 to-transparent',
+    good: 'from-success/20 to-transparent',
+    warning: 'from-warning/20 to-transparent',
+    critical: 'from-error/20 to-transparent',
   };
 
   const TrendIcon = trendConfig[metric.trend].icon;
@@ -38,10 +38,9 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
     <div
       className={cn(
         'group relative overflow-hidden rounded-2xl h-full',
-        'bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80',
-        'backdrop-blur-xl border border-white/[0.08]',
-        'hover:border-cyan-500/30 transition-all duration-500',
-        'hover:shadow-[0_0_40px_rgba(6,182,212,0.15)]',
+        'bg-card border border-border',
+        'hover:border-accent/30 transition-all duration-500',
+        'hover:shadow-lg',
         className
       )}
     >
@@ -52,27 +51,27 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
       )} />
 
       {/* Glow effect on hover */}
-      <div className="absolute -inset-px bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+      <div className="absolute -inset-px bg-gradient-to-r from-accent/0 via-accent/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
 
       <div className="relative p-5 flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
+            <div className="p-2 rounded-xl bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
               {icon}
             </div>
-            <span className="text-sm font-medium text-slate-300 font-[Tajawal]">{title}</span>
+            <span className="text-sm font-medium text-muted-foreground font-[Tajawal]">{title}</span>
           </div>
         </div>
 
         {/* Value */}
         <div className="mb-3">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-white font-[Outfit] tracking-tight">
+            <span className="text-3xl font-bold text-foreground font-[Outfit] tracking-tight">
               {formatValue(metric.value)}
             </span>
             {metric.unit && (
-              <span className="text-lg text-slate-400 font-[Tajawal]">{metric.unit}</span>
+              <span className="text-lg text-muted-foreground font-[Tajawal]">{metric.unit}</span>
             )}
           </div>
         </div>
@@ -92,7 +91,7 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
             )}
           </div>
           {metric.changeLabel && (
-            <span className="text-xs text-slate-500 font-[Tajawal]">{metric.changeLabel}</span>
+            <span className="text-xs text-muted-foreground font-[Tajawal]">{metric.changeLabel}</span>
           )}
         </div>
 
@@ -103,14 +102,14 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
               <AreaChart data={sparklineData}>
                 <defs>
                   <linearGradient id={`sparkGradient-${title}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#06b6d4"
+                  stroke="hsl(var(--accent))"
                   strokeWidth={2}
                   fill={`url(#sparkGradient-${title})`}
                   animationDuration={1500}

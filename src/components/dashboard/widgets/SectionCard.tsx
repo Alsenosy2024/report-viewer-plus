@@ -7,46 +7,41 @@ interface SectionCardProps {
   icon: React.ReactNode;
   summary?: string;
   children: React.ReactNode;
-  accentColor?: 'cyan' | 'emerald' | 'amber' | 'rose' | 'blue';
+  accentColor?: 'accent' | 'success' | 'warning' | 'error' | 'info';
   defaultExpanded?: boolean;
   className?: string;
 }
 
 const accentColors = {
-  cyan: {
-    gradient: 'from-cyan-500/20 to-blue-500/20',
-    border: 'border-cyan-500/20 hover:border-cyan-500/40',
-    glow: 'hover:shadow-[0_0_40px_rgba(6,182,212,0.12)]',
-    icon: 'text-cyan-400',
-    badge: 'bg-cyan-500/10 text-cyan-400',
+  accent: {
+    gradient: 'from-accent/20 to-primary/20',
+    border: 'border-accent/20 hover:border-accent/40',
+    icon: 'text-accent',
+    badge: 'bg-accent/10 text-accent',
   },
-  emerald: {
-    gradient: 'from-emerald-500/20 to-teal-500/20',
-    border: 'border-emerald-500/20 hover:border-emerald-500/40',
-    glow: 'hover:shadow-[0_0_40px_rgba(16,185,129,0.12)]',
-    icon: 'text-emerald-400',
-    badge: 'bg-emerald-500/10 text-emerald-400',
+  success: {
+    gradient: 'from-success/20 to-success/10',
+    border: 'border-success/20 hover:border-success/40',
+    icon: 'text-success',
+    badge: 'bg-success/10 text-success',
   },
-  amber: {
-    gradient: 'from-amber-500/20 to-orange-500/20',
-    border: 'border-amber-500/20 hover:border-amber-500/40',
-    glow: 'hover:shadow-[0_0_40px_rgba(245,158,11,0.12)]',
-    icon: 'text-amber-400',
-    badge: 'bg-amber-500/10 text-amber-400',
+  warning: {
+    gradient: 'from-warning/20 to-warning/10',
+    border: 'border-warning/20 hover:border-warning/40',
+    icon: 'text-warning',
+    badge: 'bg-warning/10 text-warning',
   },
-  rose: {
-    gradient: 'from-rose-500/20 to-pink-500/20',
-    border: 'border-rose-500/20 hover:border-rose-500/40',
-    glow: 'hover:shadow-[0_0_40px_rgba(244,63,94,0.12)]',
-    icon: 'text-rose-400',
-    badge: 'bg-rose-500/10 text-rose-400',
+  error: {
+    gradient: 'from-error/20 to-error/10',
+    border: 'border-error/20 hover:border-error/40',
+    icon: 'text-error',
+    badge: 'bg-error/10 text-error',
   },
-  blue: {
-    gradient: 'from-blue-500/20 to-indigo-500/20',
-    border: 'border-blue-500/20 hover:border-blue-500/40',
-    glow: 'hover:shadow-[0_0_40px_rgba(59,130,246,0.12)]',
-    icon: 'text-blue-400',
-    badge: 'bg-blue-500/10 text-blue-400',
+  info: {
+    gradient: 'from-info/20 to-primary/20',
+    border: 'border-info/20 hover:border-info/40',
+    icon: 'text-info',
+    badge: 'bg-info/10 text-info',
   },
 };
 
@@ -55,7 +50,7 @@ export function SectionCard({
   icon,
   summary,
   children,
-  accentColor = 'cyan',
+  accentColor = 'accent',
   defaultExpanded = true,
   className,
 }: SectionCardProps) {
@@ -66,10 +61,9 @@ export function SectionCard({
     <div
       className={cn(
         'relative overflow-hidden rounded-2xl transition-all duration-500 h-full',
-        'bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80',
-        'backdrop-blur-xl border',
+        'bg-card border',
+        'hover:shadow-lg',
         colors.border,
-        colors.glow,
         className
       )}
     >
@@ -81,7 +75,7 @@ export function SectionCard({
 
       {/* Header */}
       <div
-        className="relative flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
+        className="relative flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
@@ -92,13 +86,13 @@ export function SectionCard({
           )}>
             {icon}
           </div>
-          <h3 className="text-base font-bold text-white font-[Tajawal]">{title}</h3>
+          <h3 className="text-base font-bold text-foreground font-[Tajawal]">{title}</h3>
         </div>
-        <button className="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+        <button className="p-1.5 hover:bg-muted rounded-lg transition-colors">
           {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           )}
         </button>
       </div>
@@ -106,7 +100,7 @@ export function SectionCard({
       {/* Summary (always visible) */}
       {summary && (
         <div className="relative px-4 pb-3">
-          <p className="text-xs text-slate-400 font-[Tajawal] leading-relaxed line-clamp-2">
+          <p className="text-xs text-muted-foreground font-[Tajawal] leading-relaxed line-clamp-2">
             {summary}
           </p>
         </div>

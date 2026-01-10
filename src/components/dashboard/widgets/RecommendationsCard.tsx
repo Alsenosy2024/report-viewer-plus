@@ -10,36 +10,33 @@ interface RecommendationsCardProps {
 const categoryConfig = {
   immediate: {
     icon: Zap,
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
+    color: 'text-error',
+    bg: 'bg-error/10',
+    border: 'border-error/30',
     label: 'فوري',
-    glow: 'shadow-rose-500/20',
   },
   short_term: {
     icon: Clock,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
+    color: 'text-warning',
+    bg: 'bg-warning/10',
+    border: 'border-warning/30',
     label: 'قريب المدى',
-    glow: 'shadow-amber-500/20',
   },
   long_term: {
     icon: Calendar,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/30',
+    color: 'text-accent',
+    bg: 'bg-accent/10',
+    border: 'border-accent/30',
     label: 'بعيد المدى',
-    glow: 'shadow-cyan-500/20',
   },
 };
 
 const priorityColors = [
-  'bg-rose-500',    // Priority 1
-  'bg-amber-500',   // Priority 2
-  'bg-yellow-500',  // Priority 3
-  'bg-cyan-500',    // Priority 4
-  'bg-slate-500',   // Priority 5
+  'bg-error',      // Priority 1
+  'bg-warning',    // Priority 2
+  'bg-warning/80', // Priority 3
+  'bg-accent',     // Priority 4
+  'bg-muted-foreground', // Priority 5
 ];
 
 export function RecommendationsCard({ recommendations }: RecommendationsCardProps) {
@@ -64,42 +61,41 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
   return (
     <div className={cn(
       'relative overflow-hidden rounded-2xl h-full',
-      'bg-gradient-to-br from-slate-900/90 via-slate-800/60 to-slate-900/90',
-      'backdrop-blur-xl border border-white/[0.08]',
-      'shadow-[0_0_60px_rgba(6,182,212,0.08)]'
+      'bg-card border border-border',
+      'hover:shadow-lg transition-shadow'
     )}>
       {/* Decorative gradient */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-48 h-48 bg-warning/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
       {/* Header */}
       <div
-        className="relative flex items-center justify-between p-5 cursor-pointer hover:bg-white/[0.02] transition-colors border-b border-white/[0.05]"
+        className="relative flex items-center justify-between p-5 cursor-pointer hover:bg-muted/30 transition-colors border-b border-border"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-400">
+          <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-warning/20 to-accent/20 text-warning">
             <Lightbulb className="w-5 h-5" />
-            <Sparkles className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <Sparkles className="absolute -top-1 -right-1 w-3.5 h-3.5 text-warning animate-pulse" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white font-[Tajawal] flex items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground font-[Tajawal] flex items-center gap-2">
               التوصيات الذكية
-              <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-[Outfit]">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-[Outfit]">
                 {recommendations.length}
               </span>
             </h3>
             {immediateCount > 0 && (
-              <p className="text-xs text-rose-400 font-[Tajawal]">
+              <p className="text-xs text-error font-[Tajawal]">
                 {immediateCount} توصية تحتاج إجراء فوري
               </p>
             )}
           </div>
         </div>
-        <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-slate-400" />
+            <ChevronUp className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           )}
         </button>
       </div>
@@ -109,7 +105,7 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
         'relative overflow-hidden transition-all duration-500 ease-out',
         isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
       )}>
-        <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+        <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
           {sortedRecommendations.map((rec, index) => {
             const config = categoryConfig[rec.category];
             const CategoryIcon = config.icon;
@@ -120,9 +116,9 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
                 key={rec.id}
                 className={cn(
                   'group p-4 rounded-xl border transition-all duration-300',
-                  'bg-slate-800/30 hover:bg-slate-800/50',
+                  'bg-card hover:bg-muted/50',
                   config.border,
-                  'hover:shadow-lg cursor-pointer'
+                  'hover:shadow-md cursor-pointer'
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
                 onClick={(e) => toggleItem(rec.id, e)}
@@ -140,7 +136,7 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
                     {/* Title and Category */}
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <CategoryIcon className={cn('w-4 h-4', config.color)} />
-                      <h4 className="font-semibold text-white font-[Tajawal] text-sm">
+                      <h4 className="font-semibold text-foreground font-[Tajawal] text-sm">
                         {rec.title}
                       </h4>
                       <span className={cn(
@@ -154,7 +150,7 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
 
                     {/* Description */}
                     <p className={cn(
-                      'text-xs text-slate-400 font-[Tajawal] leading-relaxed',
+                      'text-xs text-muted-foreground font-[Tajawal] leading-relaxed',
                       !isItemExpanded && 'line-clamp-2'
                     )}>
                       {rec.description}
@@ -164,13 +160,13 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
                     {isItemExpanded && (
                       <div className="mt-3 space-y-2">
                         {/* Expected Impact */}
-                        <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="p-2 rounded-lg bg-success/10 border border-success/20">
                           <p className="text-xs font-[Tajawal]">
-                            <span className="text-emerald-400 flex items-center gap-1 mb-1">
+                            <span className="text-success flex items-center gap-1 mb-1">
                               <TrendingUp className="w-3 h-3" />
                               التأثير المتوقع
                             </span>
-                            <span className="text-slate-300">{rec.expectedImpact}</span>
+                            <span className="text-foreground">{rec.expectedImpact}</span>
                           </p>
                         </div>
 
@@ -179,7 +175,7 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
                           {rec.relatedMetrics.map((metric, i) => (
                             <span
                               key={i}
-                              className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-400 border border-white/[0.05] font-[Tajawal]"
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-[Tajawal]"
                             >
                               {metric}
                             </span>
@@ -188,16 +184,16 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
 
                         {/* Confidence */}
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-500 font-[Tajawal]">
+                          <span className="text-[10px] text-muted-foreground font-[Tajawal]">
                             مستوى الثقة:
                           </span>
-                          <div className="flex-1 h-1.5 rounded-full bg-slate-700/50 overflow-hidden">
+                          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-cyan-500 transition-all duration-500"
+                              className="h-full rounded-full bg-accent transition-all duration-500"
                               style={{ width: `${rec.confidence}%` }}
                             />
                           </div>
-                          <span className="text-[10px] font-bold text-cyan-400 font-[Outfit]">
+                          <span className="text-[10px] font-bold text-accent font-[Outfit]">
                             {rec.confidence}%
                           </span>
                         </div>
@@ -206,11 +202,11 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
                   </div>
 
                   {/* Expand/Collapse Button */}
-                  <button className="p-1 hover:bg-white/5 rounded transition-colors flex-shrink-0">
+                  <button className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0">
                     {isItemExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-slate-500" />
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
                 </div>
@@ -220,8 +216,8 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
 
           {recommendations.length === 0 && (
             <div className="text-center py-8">
-              <Lightbulb className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-500 font-[Tajawal]">لا توجد توصيات حالياً</p>
+              <Lightbulb className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground font-[Tajawal]">لا توجد توصيات حالياً</p>
             </div>
           )}
         </div>

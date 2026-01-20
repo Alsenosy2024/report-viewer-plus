@@ -203,25 +203,25 @@ const SmartDashboard = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-foreground font-[Outfit]">
-                  {data.sections.whatsapp.metrics.totalCustomers.value.toLocaleString('ar-EG')}
+                  {data.sections.whatsapp.metrics.totalCustomers?.value?.toLocaleString('ar-EG') ?? '—'}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">إجمالي العملاء</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-success font-[Outfit]">
-                  {data.sections.whatsapp.metrics.newCustomers.value.toLocaleString('ar-EG')}
+                  {data.sections.whatsapp.metrics.newCustomers?.value?.toLocaleString('ar-EG') ?? '—'}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">عملاء جدد</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-accent font-[Outfit]">
-                  {data.sections.whatsapp.metrics.avgResponseTime.value} {data.sections.whatsapp.metrics.avgResponseTime.unit}
+                  {data.sections.whatsapp.metrics.avgResponseTime?.value ?? '—'} {data.sections.whatsapp.metrics.avgResponseTime?.unit ?? ''}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">متوسط زمن الرد</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-warning font-[Outfit]">
-                  {data.sections.whatsapp.metrics.resolutionRate.value}%
+                  {data.sections.whatsapp.metrics.resolutionRate?.value ?? '—'}%
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">معدل الحل</p>
               </div>
@@ -237,25 +237,25 @@ const SmartDashboard = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-foreground font-[Outfit]">
-                  {data.sections.productivity.metrics.tasksCompleted.value.toLocaleString('ar-EG')}
+                  {data.sections.productivity.metrics.tasksCompleted?.value?.toLocaleString('ar-EG') ?? '—'}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">مهام مكتملة</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-error font-[Outfit]">
-                  {data.sections.productivity.metrics.tasksLate.value.toLocaleString('ar-EG')}
+                  {data.sections.productivity.metrics.tasksLate?.value?.toLocaleString('ar-EG') ?? '—'}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">مهام متأخرة</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-success font-[Outfit]">
-                  {data.sections.productivity.metrics.completionRate.value}%
+                  {data.sections.productivity.metrics.completionRate?.value ?? '—'}%
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">معدل الإنجاز</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-lg font-bold text-accent font-[Outfit]">
-                  {data.sections.productivity.metrics.avgTaskDuration.value} {data.sections.productivity.metrics.avgTaskDuration.unit}
+                  {data.sections.productivity.metrics.avgTaskDuration?.value ?? '—'} {data.sections.productivity.metrics.avgTaskDuration?.unit ?? ''}
                 </p>
                 <p className="text-xs text-muted-foreground font-[Tajawal]">متوسط المدة</p>
               </div>

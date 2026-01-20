@@ -27,7 +27,8 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
   const TrendIcon = trendConfig[metric.trend].icon;
   const sparklineData = metric.sparkline?.map((value, index) => ({ value, index })) || [];
 
-  const formatValue = (value: number | string) => {
+  const formatValue = (value: number | string | undefined) => {
+    if (value === undefined || value === null) return '—';
     if (typeof value === 'number') {
       return value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value.toLocaleString('ar-EG');
     }

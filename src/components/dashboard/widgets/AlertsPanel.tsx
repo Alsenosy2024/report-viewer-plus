@@ -130,7 +130,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
       )}>
         <div className="px-4 pb-4 space-y-2 max-h-[500px] overflow-y-auto">
           {sortedAlerts.map((alert, index) => {
-            const config = severityConfig[alert.severity];
+            const config = severityConfig[alert.severity] || severityConfig.low;
             const SeverityIcon = config.icon;
             const isAlertExpanded = expandedAlerts.has(alert.id);
 

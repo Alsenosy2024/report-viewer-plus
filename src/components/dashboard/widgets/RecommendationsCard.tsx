@@ -107,7 +107,7 @@ export function RecommendationsCard({ recommendations }: RecommendationsCardProp
       )}>
         <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
           {sortedRecommendations.map((rec, index) => {
-            const config = categoryConfig[rec.category];
+            const config = categoryConfig[rec.category] || categoryConfig.long_term;
             const CategoryIcon = config.icon;
             const isItemExpanded = expandedItems.has(rec.id);
 

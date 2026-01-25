@@ -97,7 +97,7 @@ export function ExecutiveOverview({ data }: ExecutiveOverviewProps) {
             </h4>
             <div className="space-y-2">
               {data.strategicActions.map((action, index) => {
-                const config = categoryConfig[action.category];
+                const config = categoryConfig[action.category] || categoryConfig.opportunity;
                 const CategoryIcon = config.icon;
 
                 return (

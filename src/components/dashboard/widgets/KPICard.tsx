@@ -24,7 +24,8 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
     critical: 'from-error/20 to-transparent',
   };
 
-  const TrendIcon = trendConfig[metric.trend].icon;
+  const trendData = trendConfig[metric.trend] || trendConfig.stable;
+  const TrendIcon = trendData.icon;
   const sparklineData = metric.sparkline?.map((value, index) => ({ value, index })) || [];
 
   const formatValue = (value: number | string | undefined) => {
@@ -81,8 +82,8 @@ export function KPICard({ title, icon, metric, className }: KPICardProps) {
         <div className="flex items-center gap-2 mb-4">
           <div className={cn(
             'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-            trendConfig[metric.trend].bg,
-            trendConfig[metric.trend].color
+            trendData.bg,
+            trendData.color
           )}>
             <TrendIcon className="w-3 h-3" />
             {metric.changePercent !== undefined && (
